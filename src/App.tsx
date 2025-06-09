@@ -9,7 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import ContractNew from "./pages/ContractNew";
+import ContractBuilder from "./pages/ContractBuilder";
 import Contracts from "./pages/Contracts";
 import AIAssistant from "./pages/AIAssistant";
 import Pricing from "./pages/Pricing";
@@ -32,7 +32,7 @@ const App = () => (
               <Route path="/auth/register" element={<Auth />} />
               <Route path="/auth/login" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/contract/new" element={<ContractNew />} />
+              <Route path="/contract/new" element={<ContractBuilder />} />
               <Route path="/contracts" element={<Contracts />} />
               <Route path="/ai-assistant" element={<AIAssistant />} />
               <Route path="/pricing" element={<Pricing />} />
