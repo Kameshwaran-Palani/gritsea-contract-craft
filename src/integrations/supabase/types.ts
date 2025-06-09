@@ -9,7 +9,233 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ai_logs: {
+        Row: {
+          created_at: string
+          id: string
+          prompt: string
+          response: string
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prompt: string
+          response: string
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prompt?: string
+          response?: string
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          clauses_json: Json | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          client_signature_url: string | null
+          contract_amount: number | null
+          created_at: string
+          id: string
+          payment_terms: string | null
+          pdf_url: string | null
+          project_timeline: string | null
+          public_link_id: string | null
+          scope_of_work: string | null
+          signature_url: string | null
+          status: Database["public"]["Enums"]["contract_status"] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clauses_json?: Json | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          client_signature_url?: string | null
+          contract_amount?: number | null
+          created_at?: string
+          id?: string
+          payment_terms?: string | null
+          pdf_url?: string | null
+          project_timeline?: string | null
+          public_link_id?: string | null
+          scope_of_work?: string | null
+          signature_url?: string | null
+          status?: Database["public"]["Enums"]["contract_status"] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clauses_json?: Json | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          client_signature_url?: string | null
+          contract_amount?: number | null
+          created_at?: string
+          id?: string
+          payment_terms?: string | null
+          pdf_url?: string | null
+          project_timeline?: string | null
+          public_link_id?: string | null
+          scope_of_work?: string | null
+          signature_url?: string | null
+          status?: Database["public"]["Enums"]["contract_status"] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          plan: Database["public"]["Enums"]["user_plan"] | null
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["user_plan"] | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          plan?: Database["public"]["Enums"]["user_plan"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      signatures: {
+        Row: {
+          contract_id: string
+          id: string
+          ip_address: string | null
+          signature_image_url: string
+          signed_at: string
+          signer_email: string | null
+          signer_name: string
+          signer_type: Database["public"]["Enums"]["signer_type"]
+        }
+        Insert: {
+          contract_id: string
+          id?: string
+          ip_address?: string | null
+          signature_image_url: string
+          signed_at?: string
+          signer_email?: string | null
+          signer_name: string
+          signer_type: Database["public"]["Enums"]["signer_type"]
+        }
+        Update: {
+          contract_id?: string
+          id?: string
+          ip_address?: string | null
+          signature_image_url?: string
+          signed_at?: string
+          signer_email?: string | null
+          signer_name?: string
+          signer_type?: Database["public"]["Enums"]["signer_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          plan_name: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: Database["public"]["Enums"]["subscription_status"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan_name: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan_name?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +244,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      contract_status: "draft" | "sent" | "signed" | "cancelled"
+      signer_type: "freelancer" | "client"
+      subscription_status: "active" | "cancelled" | "expired" | "pending"
+      user_plan: "free" | "pro" | "agency"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +362,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contract_status: ["draft", "sent", "signed", "cancelled"],
+      signer_type: ["freelancer", "client"],
+      subscription_status: ["active", "cancelled", "expired", "pending"],
+      user_plan: ["free", "pro", "agency"],
+    },
   },
 } as const
