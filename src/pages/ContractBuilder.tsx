@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, ChevronRight, Save, Eye, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Step Components
 import TemplateSelection from '@/components/contract-builder/TemplateSelection';
@@ -24,7 +24,7 @@ import IntellectualProperty from '@/components/contract-builder/IntellectualProp
 import TerminationDispute from '@/components/contract-builder/TerminationDispute';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ReviewExport from '@/components/contract-builder/ReviewExport';
-import AIAssistantSidebar from '@/components/contract-builder/AIAssistantSidebar';
+import ContractPreview from '@/components/contract-builder/ContractPreview';
 
 export interface ContractData {
   // Template
@@ -101,15 +101,15 @@ const STEPS = [
   { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
   { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
   { id: 'signature', title: 'Signature', component: SignatureStep },
-  { id: 'review', title: 'Review & Export', component: ReviewExport }
 ];
 
 const ContractBuilder = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { id } = useParams();
   
-  const [currentStep, setCurrentStep] = useState(0);
+  const [activeSection, setActiveSection] = useState('template');
   const [contractData, setContractData] = useState<ContractData>({
     freelancerName: '',
     freelancerAddress: '',
@@ -137,13 +137,11 @@ const ContractBuilder = () => {
     arbitrationClause: true
   });
   
-  const [contractId, setContractId] = useState<string | null>(null);
+  const [contractId, setContractId] = useState<string | null>(id || null);
   const [saving, setSaving] = useState(false);
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   useEffect(() => {
     if (user) {
-      // Initialize with user data
       setContractData(prev => ({
         ...prev,
         freelancerName: user.user_metadata?.full_name || '',
@@ -151,6 +149,37 @@ const ContractBuilder = () => {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (id && user) {
+      loadContract(id);
+    }
+  }, [id, user]);
+
+  const loadContract = async (contractId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('id', contractId)
+        .eq('user_id', user?.id)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setContractData(data.clauses_json as ContractData);
+        setContractId(data.id);
+      }
+    } catch (error) {
+      console.error('Error loading contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load contract",
+        variant: "destructive"
+      });
+    }
+  };
 
   const saveProgress = async () => {
     if (!user) return;
@@ -168,7 +197,7 @@ const ContractBuilder = () => {
         payment_terms: JSON.stringify(contractData.paymentSchedule),
         project_timeline: contractData.endDate,
         contract_amount: contractData.totalAmount || contractData.rate,
-        clauses_json: contractData as any // Type assertion to fix JSON compatibility
+        clauses_json: contractData as any
       };
 
       if (contractId) {
@@ -185,29 +214,22 @@ const ContractBuilder = () => {
           .single();
         if (error) throw error;
         setContractId(data.id);
+        navigate(`/contract/edit/${data.id}`, { replace: true });
       }
       
       toast({
-        title: "Progress Saved",
-        description: "Your contract has been saved automatically."
+        title: "Contract Saved",
+        description: "Your progress has been saved successfully."
       });
     } catch (error) {
       console.error('Error saving contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save contract",
+        variant: "destructive"
+      });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const nextStep = () => {
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-      saveProgress();
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -227,9 +249,6 @@ const ContractBuilder = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const CurrentStepComponent = STEPS[currentStep].component;
-  const progress = ((currentStep + 1) / STEPS.length) * 100;
-
   return (
     <>
       <SEOHead 
@@ -238,133 +257,91 @@ const ContractBuilder = () => {
       />
       <DashboardLayout>
         <div className="min-h-screen bg-background">
-          <div className="flex">
-            {/* Main Content */}
-            <div className={`flex-1 transition-all duration-300 ${showAIAssistant ? 'mr-80' : ''}`}>
-              <div className="max-w-4xl mx-auto p-6">
-                {/* Header */}
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-8"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h1 className="text-3xl font-bold text-foreground">Contract Builder</h1>
-                      <p className="text-muted-foreground">Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].title}</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAIAssistant(!showAIAssistant)}
-                      className="flex items-center gap-2"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      AI Assistant
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Progress</span>
-                      <span>{Math.round(progress)}% Complete</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                </motion.div>
+          <div className="flex h-screen">
+            {/* Left Panel - Accordion Inputs */}
+            <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-foreground mb-2">Contract Builder</h1>
+                <p className="text-muted-foreground">Build your contract step by step</p>
+              </div>
 
-                {/* Step Content */}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentStep}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Card className="mb-8">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          {STEPS[currentStep].title}
-                          {saving && <Save className="h-4 w-4 animate-pulse text-muted-foreground" />}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CurrentStepComponent
+              <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-4">
+                {STEPS.map((step, index) => {
+                  const Component = step.component;
+                  return (
+                    <AccordionItem key={step.id} value={step.id} className="border rounded-2xl px-4">
+                      <AccordionTrigger className="text-left hover:no-underline">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="font-medium">{step.title}</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-4">
+                        <Component
                           data={contractData}
                           updateData={updateContractData}
-                          onNext={nextStep}
-                          onPrev={prevStep}
-                          isFirst={currentStep === 0}
-                          isLast={currentStep === STEPS.length - 1}
+                          onNext={() => {}}
+                          onPrev={() => {}}
+                          isFirst={index === 0}
+                          isLast={index === STEPS.length - 1}
                         />
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Navigation */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex justify-between items-center"
-                >
-                  <Button
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={currentStep === 0}
-                    className="flex items-center gap-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={saveProgress}
-                      disabled={saving}
-                      className="flex items-center gap-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      {saving ? 'Saving...' : 'Save Draft'}
-                    </Button>
-                    
-                    {currentStep < STEPS.length - 1 ? (
-                      <Button
-                        onClick={nextStep}
-                        className="flex items-center gap-2 bg-accent hover:bg-accent/90"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => navigate('/contracts')}
-                        className="flex items-center gap-2 bg-accent hover:bg-accent/90"
-                      >
-                        <Eye className="h-4 w-4" />
-                        View Contracts
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-              </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
             </div>
 
-            {/* AI Assistant Sidebar */}
-            <AnimatePresence>
-              {showAIAssistant && (
-                <AIAssistantSidebar
-                  contractData={contractData}
-                  currentStep={STEPS[currentStep].id}
-                  onClose={() => setShowAIAssistant(false)}
-                  onSuggestion={(suggestion) => {
-                    // Handle AI suggestions
-                    console.log('AI Suggestion:', suggestion);
-                  }}
-                />
-              )}
-            </AnimatePresence>
+            {/* Right Panel - Live Preview */}
+            <div className="w-1/2 bg-muted/20">
+              <ContractPreview data={contractData} />
+            </div>
+          </div>
+
+          {/* Bottom Sticky Bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-50">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+              
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={saveProgress}
+                  disabled={saving}
+                  className="flex items-center gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? 'Saving...' : 'Save Draft'}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Preview PDF
+                </Button>
+                
+                <Button
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+                  disabled={!contractData.clientName || !contractData.services}
+                >
+                  <Send className="h-4 w-4" />
+                  Share Link
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -373,3 +350,5 @@ const ContractBuilder = () => {
 };
 
 export default ContractBuilder;
+
+}
