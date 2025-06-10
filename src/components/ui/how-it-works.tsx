@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FileTemplate, Edit, Share } from 'lucide-react';
+import { FileText, Edit, Share } from 'lucide-react';
 
 const steps = [
   {
-    icon: FileTemplate,
+    icon: FileText,
     title: "Select Template",
     description: "Choose from 10+ professional templates or start from scratch",
     color: "text-primary",
@@ -124,7 +124,7 @@ const HowItWorksSection = () => {
                 }}
               >
                 <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileTemplate className="w-8 h-8 text-primary" />
+                  <FileText className="w-8 h-8 text-primary" />
                 </div>
                 <p className="text-muted-foreground">Interactive demo coming soon...</p>
               </motion.div>

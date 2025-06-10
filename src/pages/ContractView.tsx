@@ -17,7 +17,7 @@ interface Contract {
   client_name: string;
   client_email: string;
   contract_amount: number;
-  payment_type: string;
+  payment_type?: string;
   project_timeline: string;
   scope_of_work: string;
   payment_terms: string;
@@ -47,7 +47,24 @@ const ContractView = () => {
         .single();
 
       if (error) throw error;
-      setContract(data);
+      
+      // Map the data to match our interface
+      const mappedContract: Contract = {
+        id: data.id,
+        title: data.title,
+        status: data.status,
+        client_name: data.client_name || '',
+        client_email: data.client_email || '',
+        contract_amount: data.contract_amount || 0,
+        payment_type: 'fixed', // Default value since it's not in the database
+        project_timeline: data.project_timeline || '',
+        scope_of_work: data.scope_of_work || '',
+        payment_terms: data.payment_terms || '',
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+      
+      setContract(mappedContract);
     } catch (error) {
       console.error('Error fetching contract:', error);
     } finally {
