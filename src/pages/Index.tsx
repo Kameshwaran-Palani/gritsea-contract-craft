@@ -1,4 +1,3 @@
-
 import { Helmet } from 'react-helmet-async';
 import Navbar from "@/components/ui/navbar";
 import HeroSection from "@/components/ui/hero-section";
@@ -8,6 +7,11 @@ import TestimonialsSection from "@/components/ui/testimonials-section";
 import ContactSection from "@/components/ui/contact-section";
 import Footer from "@/components/ui/footer";
 import SEOHead from "@/components/SEOHead";
+import HowItWorksSection from "@/components/ui/how-it-works";
+import UseCasesSection from "@/components/ui/use-cases";
+import AIPoweredSection from "@/components/ui/ai-powered";
+import BuiltForIndiaSection from "@/components/ui/built-for-india";
+import CommunitySection from "@/components/ui/community-section";
 
 const Index = () => {
   return (
@@ -36,9 +40,14 @@ const Index = () => {
       <Navbar />
       <main>
         <HeroSection />
+        <HowItWorksSection />
+        <UseCasesSection />
+        <AIPoweredSection />
+        <BuiltForIndiaSection />
         <FeaturesSection />
-        <PricingSection />
         <TestimonialsSection />
+        <CommunitySection />
+        <PricingSection />
         <ContactSection />
       </main>
       <Footer />

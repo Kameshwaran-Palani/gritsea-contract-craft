@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,7 @@ import AIAssistant from "./pages/AIAssistant";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import ContractView from "./pages/ContractView";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +33,7 @@ const App = () => (
               <Route path="/auth/login" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/contract/new" element={<ContractBuilder />} />
+              <Route path="/contract/:id" element={<ContractView />} />
               <Route path="/contracts" element={<Contracts />} />
               <Route path="/ai-assistant" element={<AIAssistant />} />
               <Route path="/pricing" element={<Pricing />} />
