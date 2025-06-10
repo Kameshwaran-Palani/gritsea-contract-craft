@@ -168,7 +168,7 @@ const ContractBuilder = () => {
         payment_terms: JSON.stringify(contractData.paymentSchedule),
         project_timeline: contractData.endDate,
         contract_amount: contractData.totalAmount || contractData.rate,
-        clauses_json: contractData
+        clauses_json: contractData as any // Type assertion to fix JSON compatibility
       };
 
       if (contractId) {
@@ -233,7 +233,7 @@ const ContractBuilder = () => {
   return (
     <>
       <SEOHead 
-        title="Contract Builder - GritSea"
+        title="Contract Builder - Agrezy"
         description="Create professional service contracts with our AI-powered step-by-step builder"
       />
       <DashboardLayout>

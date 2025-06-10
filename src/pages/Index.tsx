@@ -14,13 +14,15 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <SEOHead />
       <Helmet>
+        <title>Agrezy - Legal Service Agreements Made Simple</title>
+        <meta name="description" content="Craft Legal Service Agreements in Minutes with Agrezy. Fast, Freelance-Friendly & Fully Compliant Contracts with AI Assistance for Indian freelancers." />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "GritSea",
-            "description": "Professional contract management platform for freelancers and agencies",
-            "url": "https://gritsea.com",
+            "name": "Agrezy",
+            "description": "AI-powered contract builder for freelancers and clients to create legally valid service agreements in India",
+            "url": "https://agrezy.com",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
             "offers": {

@@ -26,10 +26,10 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center space-x-2"
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-sm font-heading">A</span>
             </div>
-            <span className="text-xl font-bold gradient-text">GritSea</span>
+            <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
           </motion.div>
 
           {/* Desktop Navigation */}
@@ -41,7 +41,7 @@ const Navbar = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="text-muted-foreground hover:text-foreground transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium"
               >
                 {item.name}
               </motion.a>
@@ -56,18 +56,18 @@ const Navbar = () => {
           >
             {user ? (
               <Link to="/dashboard">
-                <Button className="bg-accent hover:bg-accent/90">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                   Dashboard
                 </Button>
               </Link>
             ) : (
               <>
                 <Link to="/auth">
-                  <Button variant="ghost">Sign In</Button>
+                  <Button variant="ghost" className="rounded-xl">Sign In</Button>
                 </Link>
                 <Link to="/auth">
-                  <Button className="bg-accent hover:bg-accent/90">
-                    Get Started
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
+                    Get Started Free
                   </Button>
                 </Link>
               </>
@@ -80,6 +80,7 @@ const Navbar = () => {
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(!isOpen)}
+              className="rounded-xl"
             >
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -100,7 +101,7 @@ const Navbar = () => {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="block px-3 py-2 text-muted-foreground hover:text-foreground transition-colors rounded-xl"
                 >
                   {item.name}
                 </a>
@@ -108,20 +109,20 @@ const Navbar = () => {
               <div className="pt-4 space-y-2">
                 {user ? (
                   <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full bg-accent hover:bg-accent/90">
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                       Dashboard
                     </Button>
                   </Link>
                 ) : (
                   <>
                     <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start">
+                      <Button variant="ghost" className="w-full justify-start rounded-xl">
                         Sign In
                       </Button>
                     </Link>
                     <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full bg-accent hover:bg-accent/90">
-                        Get Started
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
+                        Get Started Free
                       </Button>
                     </Link>
                   </>

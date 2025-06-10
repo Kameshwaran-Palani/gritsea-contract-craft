@@ -45,6 +45,10 @@ export default {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
@@ -145,7 +149,8 @@ export default {
 				'float': 'float 3s ease-in-out infinite'
 			},
 			fontFamily: {
-				'sans': ['Inter', 'sans-serif']
+				'sans': ['Inter', 'sans-serif'],
+				'heading': ['Poppins', 'sans-serif']
 			}
 		}
 	},

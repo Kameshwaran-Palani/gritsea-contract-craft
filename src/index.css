@@ -3,86 +3,89 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GritSea Design System */
+/* Agrezy Design System */
 
 @layer base {
   :root {
-    --background: 47 25% 95%; /* #F5ECD5 cream */
-    --foreground: 83 25% 25%; /* #626F47 dark green */
+    --background: 217 100% 98%; /* #F9FAFF ghost white */
+    --foreground: 210 20% 18%; /* #2A2E35 charcoal gray */
 
-    --card: 47 25% 98%;
-    --card-foreground: 83 25% 25%;
+    --card: 217 100% 98%;
+    --card-foreground: 210 20% 18%;
 
-    --popover: 47 25% 98%;
-    --popover-foreground: 83 25% 25%;
+    --popover: 217 100% 98%;
+    --popover-foreground: 210 20% 18%;
 
-    --primary: 83 25% 35%; /* #626F47 dark green */
-    --primary-foreground: 47 25% 95%;
+    --primary: 240 45% 40%; /* #3B3C91 deep indigo */
+    --primary-foreground: 217 100% 98%;
 
-    --secondary: 65 29% 55%; /* #A4B465 olive */
-    --secondary-foreground: 83 25% 25%;
+    --secondary: 180 50% 50%; /* #3BBFBF teal blue */
+    --secondary-foreground: 210 20% 18%;
 
-    --muted: 47 25% 90%;
-    --muted-foreground: 83 15% 45%;
+    --muted: 215 25% 90%; /* #E6E9F0 pale gray */
+    --muted-foreground: 210 15% 45%;
 
-    --accent: 35 65% 70%; /* #F0BB78 accent */
-    --accent-foreground: 83 25% 25%;
+    --accent: 0 79% 70%; /* #FF6B6B coral red */
+    --accent-foreground: 217 100% 98%;
+
+    --success: 160 60% 60%; /* #4CD4B0 mint green */
+    --success-foreground: 210 20% 18%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 83 25% 80%;
-    --input: 83 25% 85%;
-    --ring: 83 25% 35%;
+    --border: 215 25% 85%;
+    --input: 215 25% 90%;
+    --ring: 240 45% 40%;
 
-    --radius: 0.5rem;
+    --radius: 1rem; /* 2xl rounded corners */
 
-    --sidebar-background: 47 25% 95%;
-    --sidebar-foreground: 83 25% 25%;
-    --sidebar-primary: 83 25% 35%;
-    --sidebar-primary-foreground: 47 25% 95%;
-    --sidebar-accent: 47 25% 90%;
-    --sidebar-accent-foreground: 83 25% 25%;
-    --sidebar-border: 83 25% 80%;
-    --sidebar-ring: 83 25% 35%;
+    --sidebar-background: 217 100% 98%;
+    --sidebar-foreground: 210 20% 18%;
+    --sidebar-primary: 240 45% 40%;
+    --sidebar-primary-foreground: 217 100% 98%;
+    --sidebar-accent: 215 25% 90%;
+    --sidebar-accent-foreground: 210 20% 18%;
+    --sidebar-border: 215 25% 85%;
+    --sidebar-ring: 240 45% 40%;
   }
 
   .dark {
-    --background: 83 25% 8%;
-    --foreground: 47 25% 95%;
+    --background: 210 20% 8%;
+    --foreground: 217 100% 95%;
 
-    --card: 83 25% 10%;
-    --card-foreground: 47 25% 95%;
+    --card: 210 20% 10%;
+    --card-foreground: 217 100% 95%;
 
-    --popover: 83 25% 10%;
-    --popover-foreground: 47 25% 95%;
+    --popover: 210 20% 10%;
+    --popover-foreground: 217 100% 95%;
 
-    --primary: 65 29% 55%;
-    --primary-foreground: 83 25% 8%;
+    --primary: 180 50% 50%;
+    --primary-foreground: 210 20% 8%;
 
-    --secondary: 83 25% 15%;
-    --secondary-foreground: 47 25% 95%;
+    --secondary: 210 20% 15%;
+    --secondary-foreground: 217 100% 95%;
 
-    --muted: 83 25% 15%;
-    --muted-foreground: 47 25% 70%;
+    --muted: 210 20% 15%;
+    --muted-foreground: 217 50% 70%;
 
-    --accent: 35 65% 70%;
-    --accent-foreground: 83 25% 8%;
+    --accent: 0 79% 70%;
+    --accent-foreground: 210 20% 8%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 83 25% 20%;
-    --input: 83 25% 20%;
-    --ring: 65 29% 55%;
-    --sidebar-background: 83 25% 8%;
-    --sidebar-foreground: 47 25% 95%;
-    --sidebar-primary: 65 29% 55%;
-    --sidebar-primary-foreground: 83 25% 8%;
-    --sidebar-accent: 83 25% 15%;
-    --sidebar-accent-foreground: 47 25% 95%;
-    --sidebar-border: 83 25% 20%;
-    --sidebar-ring: 65 29% 55%;
+    --border: 210 20% 20%;
+    --input: 210 20% 20%;
+    --ring: 180 50% 50%;
+    --sidebar-background: 210 20% 8%;
+    --sidebar-foreground: 217 100% 95%;
+    --sidebar-primary: 180 50% 50%;
+    --sidebar-primary-foreground: 210 20% 8%;
+    --sidebar-accent: 210 20% 15%;
+    --sidebar-accent-foreground: 217 100% 95%;
+    --sidebar-border: 210 20% 20%;
+    --sidebar-ring: 180 50% 50%;
   }
 }
 
@@ -96,7 +99,7 @@
   }
 }
 
-/* Custom animations for GritSea */
+/* Custom animations for Agrezy */
 @layer utilities {
   .animate-fade-in-up {
     animation: fadeInUp 0.6s ease-out;
@@ -120,12 +123,12 @@
 
   .glass-effect {
     backdrop-filter: blur(10px);
-    background: rgba(245, 236, 213, 0.8);
+    background: rgba(249, 250, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #626F47, #A4B465);
+    background: linear-gradient(135deg, #3B3C91, #3BBFBF);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -185,9 +188,13 @@
   }
 }
 
-/* Font import */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Font imports for Agrezy */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 body {
   font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
 }
