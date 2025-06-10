@@ -2,47 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Plus, 
-  Search, 
-  FileText, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  MoreHorizontal,
-  Calendar,
-  User,
-  Download,
-  Share
-} from 'lucide-react';
+import { Plus, FileText, Edit, Trash2, Share, Download, Eye } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 
 interface Contract {
   id: string;
   title: string;
-  status: 'draft' | 'shared' | 'signed';
+  status: 'draft' | 'signed' | 'shared';
   client_name: string;
   client_email: string;
   contract_amount: number;
@@ -52,36 +25,45 @@ interface Contract {
 
 const Contracts = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loadingContracts, setLoadingContracts] = useState(true);
+  const [contractsLoading, setContractsLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchContracts();
+      loadContracts();
     }
   }, [user]);
 
-  const fetchContracts = async () => {
+  const loadContracts = async () => {
     try {
+      setContractsLoading(true);
       const { data, error } = await supabase
         .from('contracts')
         .select('*')
         .eq('user_id', user?.id)
-        .order('updated_at', { ascending: false });
-
+        .order('created_at', { ascending: false });
+      
       if (error) throw error;
-      setContracts(data || []);
+      
+      if (data) {
+        // Map the database status to our Contract interface status
+        const mappedContracts = data.map(contract => ({
+          ...contract,
+          status: contract.status === 'sent' ? 'shared' : contract.status as 'draft' | 'signed' | 'shared'
+        }));
+        setContracts(mappedContracts);
+      }
     } catch (error) {
-      console.error('Error fetching contracts:', error);
+      console.error('Error loading contracts:', error);
       toast({
         title: "Error",
         description: "Failed to load contracts",
         variant: "destructive"
       });
     } finally {
-      setLoadingContracts(false);
+      setContractsLoading(false);
     }
   };
 
@@ -92,9 +74,9 @@ const Contracts = () => {
         .delete()
         .eq('id', contractId)
         .eq('user_id', user?.id);
-
+      
       if (error) throw error;
-
+      
       setContracts(prev => prev.filter(contract => contract.id !== contractId));
       toast({
         title: "Contract Deleted",
@@ -110,23 +92,14 @@ const Contracts = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft':
-        return <Badge variant="outline">Draft</Badge>;
-      case 'shared':
-        return <Badge variant="secondary">Shared</Badge>;
-      case 'signed':
-        return <Badge variant="default" className="bg-success">Signed</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'shared': return 'bg-blue-100 text-blue-800';
+      case 'signed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const filteredContracts = contracts.filter(contract =>
-    contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contract.client_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -144,157 +117,126 @@ const Contracts = () => {
     <>
       <SEOHead 
         title="My Contracts - Agrezy"
-        description="Manage all your service contracts in one place"
+        description="Manage all your contracts in one place"
       />
       <DashboardLayout>
         <div className="space-y-6">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-          >
+          <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-foreground">My Contracts</h1>
-              <p className="text-muted-foreground">Manage and track all your service agreements</p>
+              <p className="text-muted-foreground mt-1">Manage all your contracts in one place</p>
             </div>
-            <Link to="/contract/new">
-              <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4" />
-                Create Contract
-              </Button>
-            </Link>
-          </motion.div>
+            <Button
+              onClick={() => navigate('/contract/new')}
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              Create New Contract
+            </Button>
+          </div>
 
-          {/* Search and Filters */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search contracts by name or client..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contracts Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                All Contracts ({filteredContracts.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingContracts ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : filteredContracts.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-lg font-medium mb-2">No contracts found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first contract'}
-                  </p>
-                  <Link to="/contract/new">
-                    <Button>Create Your First Contract</Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Contract</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Updated</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredContracts.map((contract) => (
-                        <TableRow key={contract.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{contract.title}</div>
-                              <div className="text-sm text-muted-foreground">
-                                ID: {contract.id.slice(0, 8)}...
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{contract.client_name}</div>
-                              <div className="text-sm text-muted-foreground">{contract.client_email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium">₹{contract.contract_amount?.toLocaleString() || '0'}</span>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(contract.status)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(contract.updated_at).toLocaleDateString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/contract/view/${contract.id}`} className="flex items-center gap-2">
-                                    <Eye className="h-4 w-4" />
-                                    View
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link to={`/contract/edit/${contract.id}`} className="flex items-center gap-2">
-                                    <Edit className="h-4 w-4" />
-                                    Edit
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2">
-                                  <Download className="h-4 w-4" />
-                                  Download PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2">
-                                  <Share className="h-4 w-4" />
-                                  Share Link
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="flex items-center gap-2 text-destructive"
-                                  onClick={() => deleteContract(contract.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {contractsLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : contracts.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No contracts yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create your first professional contract to get started
+                </p>
+                <Button
+                  onClick={() => navigate('/contract/new')}
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Your First Contract
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {contracts.map((contract) => (
+                <motion.div
+                  key={contract.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className="hover:shadow-lg transition-shadow duration-200">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg font-semibold truncate">
+                          {contract.title}
+                        </CardTitle>
+                        <Badge className={getStatusColor(contract.status)}>
+                          {contract.status}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Client: {contract.client_name}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2 mb-4">
+                        <div className="text-sm">
+                          <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Created: {new Date(contract.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/contract/${contract.id}`)}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/contract/edit/${contract.id}`)}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="h-3 w-3" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deleteContract(contract.id)}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </DashboardLayout>
     </>

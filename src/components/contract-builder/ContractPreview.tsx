@@ -1,11 +1,10 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { ContractData } from '@/pages/ContractBuilder';
-import { FileText, Calendar, User, Building, Mail, Phone, MapPin, Clock, Banknote } from 'lucide-react';
+import { FileText, Calendar } from 'lucide-react';
 
 interface ContractPreviewProps {
   data: ContractData;
@@ -13,231 +12,264 @@ interface ContractPreviewProps {
 
 const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <div className="sticky top-0 bg-muted/20 pb-4 mb-6 border-b">
+    <div className="h-full overflow-y-auto bg-gray-100 p-4">
+      <div className="sticky top-0 bg-gray-100 pb-4 mb-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Live Preview
           </h2>
-          <Badge variant="outline">Auto-updating</Badge>
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            Auto-updating
+          </Badge>
         </div>
       </div>
 
+      {/* PDF-style document */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-none"
+        className="max-w-[210mm] mx-auto bg-white shadow-lg rounded-none min-h-[297mm]"
+        style={{ 
+          fontFamily: 'serif',
+          lineHeight: '1.6',
+          padding: '20mm',
+          fontSize: '12px'
+        }}
       >
-        <Card className="mb-6">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold mb-2">SERVICE AGREEMENT</CardTitle>
-            <p className="text-muted-foreground">
-              {data.templateName || 'Professional Service Contract'}
+        {/* Document Header */}
+        <div className="text-center mb-8 border-b-2 border-gray-800 pb-6">
+          <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">
+            SERVICE AGREEMENT
+          </h1>
+          <p className="text-sm text-gray-600 uppercase tracking-wide">
+            {data.templateName || 'Professional Service Contract'}
+          </p>
+          {data.startDate && (
+            <p className="text-xs text-gray-500 mt-2">
+              Effective Date: {new Date(data.startDate).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
             </p>
-            {data.startDate && (
-              <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-                <Calendar className="h-4 w-4" />
-                Effective from: {new Date(data.startDate).toLocaleDateString()}
-              </p>
-            )}
-          </CardHeader>
-        </Card>
+          )}
+        </div>
+
+        {/* Agreement Introduction */}
+        <div className="mb-6">
+          <p className="text-justify">
+            This Service Agreement ("Agreement") is entered into on{' '}
+            <span className="font-semibold underline">
+              {data.startDate ? new Date(data.startDate).toLocaleDateString() : '____________'}
+            </span>{' '}
+            between the parties identified below for the purpose of establishing the terms and conditions 
+            of professional services to be provided.
+          </p>
+        </div>
 
         {/* Parties Section */}
-        {(data.freelancerName || data.clientName) && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                PARTIES
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-primary">Service Provider:</h4>
-                  {data.freelancerName && <p className="font-medium">{data.freelancerName}</p>}
-                  {data.freelancerBusinessName && <p className="text-sm text-muted-foreground">{data.freelancerBusinessName}</p>}
-                  {data.freelancerEmail && (
-                    <p className="text-sm flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {data.freelancerEmail}
-                    </p>
-                  )}
-                  {data.freelancerPhone && (
-                    <p className="text-sm flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {data.freelancerPhone}
-                    </p>
-                  )}
-                  {data.freelancerAddress && (
-                    <p className="text-sm flex items-start gap-1">
-                      <MapPin className="h-3 w-3 mt-0.5" />
-                      {data.freelancerAddress}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-primary">Client:</h4>
-                  {data.clientName && <p className="font-medium">{data.clientName}</p>}
-                  {data.clientCompany && <p className="text-sm text-muted-foreground">{data.clientCompany}</p>}
-                  {data.clientEmail && (
-                    <p className="text-sm flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {data.clientEmail}
-                    </p>
-                  )}
-                  {data.clientPhone && (
-                    <p className="text-sm flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {data.clientPhone}
-                    </p>
-                  )}
-                </div>
+        <div className="mb-8">
+          <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-1">
+            1. PARTIES
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+              <h3 className="font-bold text-sm uppercase mb-2 text-gray-700">Service Provider:</h3>
+              <div className="space-y-1 text-sm">
+                {data.freelancerName && <p className="font-semibold">{data.freelancerName}</p>}
+                {data.freelancerBusinessName && <p className="italic">{data.freelancerBusinessName}</p>}
+                {data.freelancerAddress && <p>{data.freelancerAddress}</p>}
+                {data.freelancerEmail && <p>Email: {data.freelancerEmail}</p>}
+                {data.freelancerPhone && <p>Phone: {data.freelancerPhone}</p>}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-sm uppercase mb-2 text-gray-700">Client:</h3>
+              <div className="space-y-1 text-sm">
+                {data.clientName && <p className="font-semibold">{data.clientName}</p>}
+                {data.clientCompany && <p className="italic">{data.clientCompany}</p>}
+                {data.clientEmail && <p>Email: {data.clientEmail}</p>}
+                {data.clientPhone && <p>Phone: {data.clientPhone}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Scope of Work */}
         {data.services && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                SCOPE OF WORK
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">Services Description:</h4>
-                <p className="text-sm leading-relaxed">{data.services}</p>
-              </div>
-              
-              {data.deliverables && (
-                <div>
-                  <h4 className="font-medium mb-2">Deliverables:</h4>
-                  <p className="text-sm leading-relaxed">{data.deliverables}</p>
-                </div>
-              )}
+          <div className="mb-8">
+            <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-1">
+              2. SCOPE OF WORK
+            </h2>
+            
+            <h3 className="font-semibold mb-2">2.1 Services Description</h3>
+            <p className="text-justify mb-4 text-sm leading-relaxed">
+              {data.services}
+            </p>
+            
+            {data.deliverables && (
+              <>
+                <h3 className="font-semibold mb-2">2.2 Deliverables</h3>
+                <p className="text-justify mb-4 text-sm leading-relaxed">
+                  {data.deliverables}
+                </p>
+              </>
+            )}
 
-              {data.milestones.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">Project Milestones:</h4>
-                  <div className="space-y-2">
-                    {data.milestones.map((milestone, index) => (
-                      <div key={index} className="border rounded-lg p-3 bg-muted/50">
-                        <div className="flex justify-between items-start mb-1">
-                          <h5 className="font-medium text-sm">{milestone.title}</h5>
-                          {milestone.dueDate && (
-                            <span className="text-xs text-muted-foreground">
-                              Due: {new Date(milestone.dueDate).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                        {milestone.description && (
-                          <p className="text-xs text-muted-foreground">{milestone.description}</p>
-                        )}
-                        {milestone.amount && (
-                          <p className="text-xs font-medium text-primary mt-1">₹{milestone.amount.toLocaleString()}</p>
+            {data.milestones.length > 0 && (
+              <>
+                <h3 className="font-semibold mb-2">2.3 Project Milestones</h3>
+                <div className="space-y-2 mb-4">
+                  {data.milestones.map((milestone, index) => (
+                    <div key={index} className="border-l-2 border-gray-300 pl-3 text-sm">
+                      <div className="flex justify-between items-start">
+                        <span className="font-medium">{milestone.title}</span>
+                        {milestone.dueDate && (
+                          <span className="text-xs text-gray-500">
+                            Due: {new Date(milestone.dueDate).toLocaleDateString()}
+                          </span>
                         )}
                       </div>
-                    ))}
-                  </div>
+                      {milestone.description && (
+                        <p className="text-xs text-gray-600 mt-1">{milestone.description}</p>
+                      )}
+                      {milestone.amount && (
+                        <p className="text-xs font-medium mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </>
+            )}
+          </div>
         )}
 
         {/* Payment Terms */}
         {(data.rate > 0 || data.totalAmount) && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Banknote className="h-5 w-5" />
-                PAYMENT TERMS
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm">
-                    <span className="font-medium">Payment Type:</span> {data.paymentType === 'fixed' ? 'Fixed Price' : 'Hourly Rate'}
-                  </p>
-                  {data.paymentType === 'fixed' && data.totalAmount ? (
-                    <p className="text-lg font-semibold text-primary">₹{data.totalAmount.toLocaleString()}</p>
-                  ) : (
-                    <p className="text-lg font-semibold text-primary">₹{data.rate}/hour</p>
-                  )}
-                </div>
-                
-                {data.paymentSchedule.length > 0 && (
-                  <div>
-                    <h5 className="font-medium text-sm mb-2">Payment Schedule:</h5>
-                    {data.paymentSchedule.map((payment, index) => (
-                      <div key={index} className="text-sm">
-                        • {payment.description}: {payment.percentage}%
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {data.lateFeeEnabled && data.lateFeeAmount && (
-                <div className="pt-2 border-t">
-                  <p className="text-sm">
-                    <span className="font-medium">Late Fee:</span> ₹{data.lateFeeAmount} per day after due date
-                  </p>
-                </div>
+          <div className="mb-8">
+            <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-1">
+              3. PAYMENT TERMS
+            </h2>
+            
+            <h3 className="font-semibold mb-2">3.1 Compensation</h3>
+            <p className="text-sm mb-3">
+              The Client agrees to pay the Service Provider as follows:
+            </p>
+            
+            <div className="bg-gray-50 p-3 rounded mb-4">
+              <p className="text-sm">
+                <span className="font-semibold">Payment Structure:</span> {data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}
+              </p>
+              {data.paymentType === 'fixed' && data.totalAmount ? (
+                <p className="text-lg font-bold text-gray-800 mt-1">
+                  Total Amount: ₹{data.totalAmount.toLocaleString()}
+                </p>
+              ) : (
+                <p className="text-lg font-bold text-gray-800 mt-1">
+                  Hourly Rate: ₹{data.rate}/hour
+                </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+
+            {data.paymentSchedule.length > 0 && (
+              <>
+                <h3 className="font-semibold mb-2">3.2 Payment Schedule</h3>
+                <ul className="space-y-1 mb-4 text-sm">
+                  {data.paymentSchedule.map((payment, index) => (
+                    <li key={index} className="flex justify-between">
+                      <span>• {payment.description}</span>
+                      <span className="font-medium">{payment.percentage}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {data.lateFeeEnabled && data.lateFeeAmount && (
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold">Late Payment Fee:</span> ₹{data.lateFeeAmount} per day after the due date.
+              </p>
+            )}
+          </div>
         )}
 
         {/* Service Level Agreement */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              SERVICE LEVEL AGREEMENT
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm">
-              <span className="font-medium">Response Time:</span> {data.responseTime}
-            </p>
-            <p className="text-sm">
-              <span className="font-medium">Revisions Included:</span> {data.revisionLimit === 0 ? 'Unlimited' : data.revisionLimit}
-            </p>
+        <div className="mb-8">
+          <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-1">
+            4. SERVICE LEVEL AGREEMENT
+          </h2>
+          
+          <div className="space-y-2 text-sm">
+            <p><span className="font-semibold">Response Time:</span> {data.responseTime}</p>
+            <p><span className="font-semibold">Revision Limit:</span> {data.revisionLimit === 0 ? 'Unlimited revisions' : `${data.revisionLimit} revisions included`}</p>
             {data.uptimeRequirement && (
-              <p className="text-sm">
-                <span className="font-medium">Uptime Requirement:</span> {data.uptimeRequirement}
-              </p>
+              <p><span className="font-semibold">Uptime Requirement:</span> {data.uptimeRequirement}</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Additional Terms */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>ADDITIONAL TERMS</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p><span className="font-medium">Confidentiality:</span> {data.includeNDA ? 'Included' : 'Not included'}</p>
-            <p><span className="font-medium">IP Ownership:</span> {data.ipOwnership}</p>
-            <p><span className="font-medium">Jurisdiction:</span> {data.jurisdiction}</p>
-            <p><span className="font-medium">Notice Period:</span> {data.noticePeriod}</p>
-            {data.arbitrationClause && (
-              <p><span className="font-medium">Dispute Resolution:</span> Arbitration</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="mb-8">
+          <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-1">
+            5. ADDITIONAL TERMS AND CONDITIONS
+          </h2>
+          
+          <div className="space-y-3 text-sm">
+            <div>
+              <h3 className="font-semibold">5.1 Confidentiality</h3>
+              <p>{data.includeNDA ? 'Both parties agree to maintain confidentiality of all proprietary information shared during the course of this agreement.' : 'No specific confidentiality terms apply to this agreement.'}</p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold">5.2 Intellectual Property</h3>
+              <p>All intellectual property rights shall be owned by: <span className="font-medium capitalize">{data.ipOwnership}</span></p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold">5.3 Termination</h3>
+              <p>{data.terminationConditions}</p>
+              <p className="mt-1">Notice Period: {data.noticePeriod}</p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold">5.4 Governing Law</h3>
+              <p>This agreement shall be governed by the laws of {data.jurisdiction}.</p>
+              {data.arbitrationClause && (
+                <p className="mt-1">Any disputes arising under this agreement shall be resolved through arbitration.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Signature Section */}
+        <div className="mt-12 pt-8 border-t-2 border-gray-800">
+          <h2 className="text-lg font-bold uppercase mb-6 text-center">
+            SIGNATURES
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="text-center">
+              <div className="h-16 border-b-2 border-gray-400 mb-2"></div>
+              <p className="font-semibold text-sm">{data.freelancerName || 'Service Provider'}</p>
+              <p className="text-xs text-gray-600">Service Provider</p>
+              <p className="text-xs text-gray-600 mt-2">Date: ________________</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="h-16 border-b-2 border-gray-400 mb-2"></div>
+              <p className="font-semibold text-sm">{data.clientName || 'Client'}</p>
+              <p className="text-xs text-gray-600">Client</p>
+              <p className="text-xs text-gray-600 mt-2">Date: ________________</p>
+            </div>
+          </div>
+        </div>
 
         {/* Footer */}
-        <div className="text-center text-xs text-muted-foreground pt-8 border-t">
-          <p>This contract is governed by Indian Contract Act, 1872</p>
+        <div className="text-center text-xs text-gray-500 mt-12 pt-8 border-t border-gray-300">
+          <p>This contract is governed by the Indian Contract Act, 1872</p>
           <p className="mt-1">Generated by Agrezy • agrezy.com</p>
         </div>
       </motion.div>

@@ -168,8 +168,8 @@ const ContractBuilder = () => {
       
       if (error) throw error;
       
-      if (data) {
-        setContractData(data.clauses_json as ContractData);
+      if (data && data.clauses_json) {
+        setContractData(data.clauses_json as unknown as ContractData);
         setContractId(data.id);
       }
     } catch (error) {
