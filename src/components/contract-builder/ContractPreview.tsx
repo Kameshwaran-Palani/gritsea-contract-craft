@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +24,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
       </div>
 
       {/* A4 Document Container with Page Breaks */}
-      <div className="space-y-8">
+      <div className="space-y-8 contract-preview">
         {/* Page 1 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

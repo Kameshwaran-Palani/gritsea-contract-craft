@@ -19,7 +19,9 @@ import {
   User,
   Users,
   Bookmark,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -30,6 +32,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -47,13 +50,19 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex h-full flex-col bg-card border-r">
       {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center px-6 border-b">
-        <Link to="/" className="flex items-center space-x-2">
+      <div className={`flex h-16 shrink-0 items-center border-b ${sidebarCollapsed && !mobile ? 'px-4 justify-center' : 'px-6'}`}>
+        {!sidebarCollapsed || mobile ? (
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
+              <span className="text-white font-bold text-sm font-heading">A</span>
+            </div>
+            <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
+          </Link>
+        ) : (
           <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
             <span className="text-white font-bold text-sm font-heading">A</span>
           </div>
-          <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
-        </Link>
+        )}
       </div>
 
       {/* Navigation */}
@@ -65,54 +74,85 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               key={item.name}
               to={item.href}
               onClick={() => mobile && setSidebarOpen(false)}
-              className={`group flex items-center px-3 py-2 text-sm font-medium rounded-2xl transition-all duration-200 ${
+              className={`group flex items-center ${sidebarCollapsed && !mobile ? 'px-3 py-3 justify-center' : 'px-3 py-2'} text-sm font-medium rounded-2xl transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-primary text-white shadow-lg'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
+              title={sidebarCollapsed && !mobile ? item.name : undefined}
             >
-              <Icon className="mr-3 h-5 w-5 shrink-0" />
-              {item.name}
+              <Icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed && !mobile ? '' : 'mr-3'}`} />
+              {(!sidebarCollapsed || mobile) && item.name}
             </Link>
           );
         })}
       </nav>
 
+      {/* Collapse Button - Desktop Only */}
+      {!mobile && (
+        <div className="border-t p-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`w-full rounded-2xl ${sidebarCollapsed ? 'justify-center px-0' : 'justify-start'}`}
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4 mr-2" />Collapse</>}
+          </Button>
+        </div>
+      )}
+
       {/* User section */}
-      <div className="border-t p-4">
-        <div className="flex items-center space-x-3 mb-4">
-          <Avatar className="h-10 w-10">
+      {(!sidebarCollapsed || mobile) && (
+        <div className="border-t p-4">
+          <div className="flex items-center space-x-3 mb-4">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback className="bg-primary text-white">
+                {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {user?.user_metadata?.full_name || 'User'}
+              </p>
+              <div className="flex items-center space-x-2">
+                <Badge variant="secondary" className="text-xs">Free Plan</Badge>
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground hover:text-foreground rounded-2xl"
+            onClick={signOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
+          </Button>
+        </div>
+      )}
+
+      {/* Collapsed User Avatar */}
+      {sidebarCollapsed && !mobile && (
+        <div className="border-t p-4 flex justify-center">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback className="bg-primary text-white">
+            <AvatarFallback className="bg-primary text-white text-xs">
               {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {user?.user_metadata?.full_name || 'User'}
-            </p>
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="text-xs">Free Plan</Badge>
-            </div>
-          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-foreground rounded-2xl"
-          onClick={signOut}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign out
-        </Button>
-      </div>
+      )}
     </div>
   );
 
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+      <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
+      }`}>
         <Sidebar />
       </div>
 
@@ -124,12 +164,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col lg:pl-64">
+      <div className={`flex flex-1 flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
+      }`}>
         {/* Top Bar */}
         <header className="flex h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl">
+              <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Open sidebar</span>
               </Button>

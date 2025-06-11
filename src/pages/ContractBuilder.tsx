@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -140,6 +139,8 @@ const ContractBuilder = () => {
   
   const [contractId, setContractId] = useState<string | null>(id || null);
   const [saving, setSaving] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -238,6 +239,84 @@ const ContractBuilder = () => {
     setContractData(prev => ({ ...prev, ...updates }));
   };
 
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      // Import html2canvas dynamically
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Get the contract preview element
+      const previewElement = document.querySelector('.contract-preview');
+      if (!previewElement) {
+        throw new Error('Contract preview not found');
+      }
+
+      // Generate canvas from the preview
+      const canvas = await html2canvas(previewElement as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Create PDF-like download
+      const link = document.createElement('a');
+      link.download = `${contractData.templateName || 'contract'}-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      toast({
+        title: "PDF Downloaded",
+        description: "Your contract has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleShareLink = async () => {
+    if (!contractId) {
+      // Save the contract first
+      await saveProgress();
+    }
+
+    setIsSharing(true);
+    try {
+      const shareableLink = `${window.location.origin}/contract/view/${contractId}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Contract Sharing',
+          text: 'Please review and sign this contract',
+          url: shareableLink
+        });
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(shareableLink);
+        toast({
+          title: "Link Copied",
+          description: "Contract sharing link copied to clipboard."
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to share contract",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -328,18 +407,21 @@ const ContractBuilder = () => {
                 
                 <Button
                   variant="outline"
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Preview PDF
+                  {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
                 </Button>
                 
                 <Button
+                  onClick={handleShareLink}
+                  disabled={isSharing || !contractData.clientName || !contractData.services}
                   className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-                  disabled={!contractData.clientName || !contractData.services}
                 >
                   <Send className="h-4 w-4" />
-                  Share Link
+                  {isSharing ? 'Sharing...' : 'Share Link'}
                 </Button>
               </div>
             </div>
