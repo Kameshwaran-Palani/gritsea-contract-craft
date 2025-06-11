@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Download, Share, Edit, Calendar, User, DollarSign, Clock } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import DashboardLayout from '@/components/DashboardLayout';
 
 interface Contract {
   id: string;
@@ -23,12 +25,14 @@ interface Contract {
   payment_terms: string;
   created_at: string;
   updated_at: string;
+  clauses_json?: any;
 }
 
 const ContractView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { toast } = useToast();
   const [contract, setContract] = useState<Contract | null>(null);
   const [loadingContract, setLoadingContract] = useState(true);
 
@@ -48,7 +52,6 @@ const ContractView = () => {
 
       if (error) throw error;
       
-      // Map the data to match our interface
       const mappedContract: Contract = {
         id: data.id,
         title: data.title,
@@ -56,20 +59,46 @@ const ContractView = () => {
         client_name: data.client_name || '',
         client_email: data.client_email || '',
         contract_amount: data.contract_amount || 0,
-        payment_type: 'fixed', // Default value since it's not in the database
+        payment_type: 'fixed',
         project_timeline: data.project_timeline || '',
         scope_of_work: data.scope_of_work || '',
         payment_terms: data.payment_terms || '',
         created_at: data.created_at,
-        updated_at: data.updated_at
+        updated_at: data.updated_at,
+        clauses_json: data.clauses_json
       };
       
       setContract(mappedContract);
     } catch (error) {
       console.error('Error fetching contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load contract",
+        variant: "destructive"
+      });
     } finally {
       setLoadingContract(false);
     }
+  };
+
+  const handleEditContract = () => {
+    navigate(`/contract/edit/${id}`);
+  };
+
+  const handleDownloadPDF = () => {
+    // Implement PDF download functionality
+    toast({
+      title: "PDF Download",
+      description: "PDF download feature will be implemented soon."
+    });
+  };
+
+  const handleShareContract = () => {
+    // Implement share functionality
+    toast({
+      title: "Share Contract",
+      description: "Share feature will be implemented soon."
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -94,26 +123,30 @@ const ContractView = () => {
 
   if (loading || loadingContract) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (!contract) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Contract Not Found</h2>
-          <p className="text-muted-foreground mb-6">The contract you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button onClick={() => navigate('/contracts')}>Back to Contracts</Button>
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Contract Not Found</h2>
+            <p className="text-muted-foreground mb-6">The contract you're looking for doesn't exist or you don't have permission to view it.</p>
+            <Button onClick={() => navigate('/contracts')}>Back to Contracts</Button>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/5 to-primary/5">
+    <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -137,15 +170,15 @@ const ContractView = () => {
             </div>
             <div className="flex items-center space-x-3">
               {getStatusBadge(contract.status)}
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleEditContract}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleShareContract}>
                 <Share className="w-4 h-4 mr-2" />
                 Share
               </Button>
-              <Button size="sm" className="bg-accent hover:bg-accent/90">
+              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={handleDownloadPDF}>
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF
               </Button>
@@ -256,15 +289,15 @@ const ContractView = () => {
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4">Contract Actions</h3>
               <div className="flex flex-wrap gap-3">
-                <Button className="bg-primary hover:bg-primary/90">
+                <Button className="bg-primary hover:bg-primary/90" onClick={handleEditContract}>
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Contract
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleShareContract}>
                   <Share className="w-4 h-4 mr-2" />
                   Send to Client
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleDownloadPDF}>
                   <Download className="w-4 h-4 mr-2" />
                   Download PDF
                 </Button>
@@ -278,7 +311,7 @@ const ContractView = () => {
           </Card>
         </motion.div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

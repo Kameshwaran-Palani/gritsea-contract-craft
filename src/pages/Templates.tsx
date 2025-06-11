@@ -13,7 +13,6 @@ import {
   Search, 
   Star, 
   Eye, 
-  Download,
   Code,
   Palette,
   PenTool,
@@ -34,7 +33,8 @@ const templateCategories = [
     icon: Code,
     description: 'Full-stack development contracts',
     price: '₹25,000 - ₹150,000',
-    popular: true
+    popular: true,
+    preview: '/lovable-uploads/f0f24f10-3a69-457a-9030-f7d3b296c61f.png'
   },
   {
     id: 'ui-ux-designer',
@@ -42,7 +42,8 @@ const templateCategories = [
     icon: Palette,
     description: 'Design and user experience services',
     price: '₹15,000 - ₹80,000',
-    popular: true
+    popular: true,
+    preview: '/lovable-uploads/ece41733-256f-4385-8389-e60688b636b0.png'
   },
   {
     id: 'content-writer',
@@ -50,7 +51,8 @@ const templateCategories = [
     icon: PenTool,
     description: 'Blog posts, articles, and copywriting',
     price: '₹5,000 - ₹30,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/752d5555-b5d5-4820-84cd-a4206196b8e0.png'
   },
   {
     id: 'digital-marketer',
@@ -58,7 +60,8 @@ const templateCategories = [
     icon: Megaphone,
     description: 'SEO, social media, and online campaigns',
     price: '₹10,000 - ₹50,000',
-    popular: true
+    popular: true,
+    preview: '/lovable-uploads/f0f24f10-3a69-457a-9030-f7d3b296c61f.png'
   },
   {
     id: 'app-developer',
@@ -66,7 +69,8 @@ const templateCategories = [
     icon: Smartphone,
     description: 'Mobile app development services',
     price: '₹50,000 - ₹300,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/ece41733-256f-4385-8389-e60688b636b0.png'
   },
   {
     id: 'video-editor',
@@ -74,7 +78,8 @@ const templateCategories = [
     icon: Video,
     description: 'Video production and editing',
     price: '₹8,000 - ₹40,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/752d5555-b5d5-4820-84cd-a4206196b8e0.png'
   },
   {
     id: 'translator',
@@ -82,7 +87,8 @@ const templateCategories = [
     icon: Globe,
     description: 'Language translation services',
     price: '₹3,000 - ₹20,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/f0f24f10-3a69-457a-9030-f7d3b296c61f.png'
   },
   {
     id: 'virtual-assistant',
@@ -90,7 +96,8 @@ const templateCategories = [
     icon: Users,
     description: 'Administrative and support services',
     price: '₹5,000 - ₹25,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/ece41733-256f-4385-8389-e60688b636b0.png'
   },
   {
     id: 'consultant',
@@ -98,7 +105,8 @@ const templateCategories = [
     icon: Calculator,
     description: 'Strategic business advisory',
     price: '₹20,000 - ₹100,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/752d5555-b5d5-4820-84cd-a4206196b8e0.png'
   },
   {
     id: 'photographer',
@@ -106,7 +114,8 @@ const templateCategories = [
     icon: Camera,
     description: 'Photography and visual content',
     price: '₹8,000 - ₹50,000',
-    popular: false
+    popular: false,
+    preview: '/lovable-uploads/f0f24f10-3a69-457a-9030-f7d3b296c61f.png'
   }
 ];
 
@@ -114,6 +123,7 @@ const Templates = () => {
   const { user, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
 
   const filteredTemplates = templateCategories.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,22 +206,33 @@ const Templates = () => {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -5 }}
                   >
-                    <Card className="h-full hover:shadow-lg transition-all duration-300 rounded-2xl border-2 hover:border-primary/20">
+                    <Card className="h-full hover:shadow-lg transition-all duration-300 rounded-2xl border-2 hover:border-primary/20 overflow-hidden">
+                      {/* Template Preview Image */}
+                      <div className="h-32 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
+                        <img 
+                          src={template.preview} 
+                          alt={template.name}
+                          className="w-full h-full object-cover opacity-80"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                          <Icon className="w-8 h-8 text-primary" />
+                        </div>
+                      </div>
+                      
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-                              <Icon className="w-6 h-6 text-primary" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg font-heading">{template.name}</CardTitle>
-                              {template.popular && (
-                                <Badge variant="secondary" className="mt-1">
-                                  <Star className="w-3 h-3 mr-1" />
-                                  Popular
-                                </Badge>
-                              )}
-                            </div>
+                          <div>
+                            <CardTitle className="text-lg font-heading">{template.name}</CardTitle>
+                            {template.popular && (
+                              <Badge variant="secondary" className="mt-1">
+                                <Star className="w-3 h-3 mr-1" />
+                                Popular
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <CardDescription className="mt-3">{template.description}</CardDescription>
@@ -228,7 +249,12 @@ const Templates = () => {
                               Use Template
                             </Link>
                           </Button>
-                          <Button variant="outline" size="sm" className="rounded-xl">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="rounded-xl"
+                            onClick={() => setPreviewTemplate(template.id)}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                         </div>
@@ -256,20 +282,31 @@ const Templates = () => {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -5 }}
                   >
-                    <Card className="h-full hover:shadow-lg transition-all duration-300 rounded-2xl border-2 hover:border-primary/20">
+                    <Card className="h-full hover:shadow-lg transition-all duration-300 rounded-2xl border-2 hover:border-primary/20 overflow-hidden">
+                      {/* Template Preview Image */}
+                      <div className="h-32 bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
+                        <img 
+                          src={template.preview} 
+                          alt={template.name}
+                          className="w-full h-full object-cover opacity-80"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                          <Icon className="w-8 h-8 text-primary" />
+                        </div>
+                      </div>
+                      
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-                              <Icon className="w-6 h-6 text-primary" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg font-heading">{template.name}</CardTitle>
-                              <Badge variant="secondary" className="mt-1">
-                                <Star className="w-3 h-3 mr-1" />
-                                Popular
-                              </Badge>
-                            </div>
+                          <div>
+                            <CardTitle className="text-lg font-heading">{template.name}</CardTitle>
+                            <Badge variant="secondary" className="mt-1">
+                              <Star className="w-3 h-3 mr-1" />
+                              Popular
+                            </Badge>
                           </div>
                         </div>
                         <CardDescription className="mt-3">{template.description}</CardDescription>
@@ -286,7 +323,12 @@ const Templates = () => {
                               Use Template
                             </Link>
                           </Button>
-                          <Button variant="outline" size="sm" className="rounded-xl">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="rounded-xl"
+                            onClick={() => setPreviewTemplate(template.id)}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                         </div>

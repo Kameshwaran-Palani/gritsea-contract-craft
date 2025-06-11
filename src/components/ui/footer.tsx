@@ -38,9 +38,9 @@ const Footer = () => {
           <div className="col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">GS</span>
+                <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="text-xl font-bold gradient-text">GritSea</span>
+              <span className="text-xl font-bold gradient-text">Agrezy</span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-xs">
               AI-powered contract builder for Indian freelancers. Create legally binding service agreements in minutes.
@@ -72,7 +72,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground mb-4 md:mb-0">
-            © 2024 GritSea. All rights reserved.
+            © 2024 Agrezy. All rights reserved.
           </p>
           
           <div className="flex items-center space-x-6 text-sm text-muted-foreground">

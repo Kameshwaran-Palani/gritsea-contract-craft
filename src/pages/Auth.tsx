@@ -1,17 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, User, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -35,6 +35,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema)
@@ -50,23 +52,72 @@ const Auth = () => {
 
   const handleSignIn = async (data: SignInFormData) => {
     setIsLoading(true);
-    const { error } = await signIn(data.email, data.password);
-    if (!error) {
-      window.location.href = '/dashboard';
+    try {
+      const { error } = await signIn(data.email, data.password);
+      if (error) {
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully."
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
-    const { error } = await signUp(data.email, data.password, data.fullName);
-    setIsLoading(false);
+    try {
+      const { error } = await signUp(data.email, data.password, data.fullName);
+      if (error) {
+        toast({
+          title: "Sign Up Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to verify your account."
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    await signInWithGoogle();
-    setIsLoading(false);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign in with Google. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -84,7 +135,7 @@ const Auth = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            GritSea
+            Agrezy
           </motion.h1>
           <p className="text-muted-foreground">Your AI-powered contract companion</p>
         </div>
@@ -145,7 +196,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
                   <div className="relative w-full">
@@ -190,7 +241,7 @@ const Auth = () => {
             <TabsContent value="signup">
               <CardHeader>
                 <CardTitle>Create an account</CardTitle>
-                <CardDescription>Join thousands of freelancers using GritSea</CardDescription>
+                <CardDescription>Join thousands of freelancers using Agrezy</CardDescription>
               </CardHeader>
               <form onSubmit={signUpForm.handleSubmit(handleSignUp)}>
                 <CardContent className="space-y-4">
@@ -270,7 +321,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
                   <div className="relative w-full">
