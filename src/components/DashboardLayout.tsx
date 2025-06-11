@@ -21,7 +21,8 @@ import {
   Bookmark,
   Zap,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  PanelLeft
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -49,22 +50,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex h-full flex-col bg-card border-r">
-      {/* Logo */}
-      <div className={`flex h-16 shrink-0 items-center border-b ${sidebarCollapsed && !mobile ? 'px-4 justify-center' : 'px-6'}`}>
-        {!sidebarCollapsed || mobile ? (
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm font-heading">A</span>
-            </div>
-            <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
-          </Link>
-        ) : (
-          <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
-            <span className="text-white font-bold text-sm font-heading">A</span>
-          </div>
-        )}
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-4 py-6">
         {navigation.map((item) => {
@@ -87,20 +72,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           );
         })}
       </nav>
-
-      {/* Collapse Button - Desktop Only */}
-      {!mobile && (
-        <div className="border-t p-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`w-full rounded-2xl ${sidebarCollapsed ? 'justify-center px-0' : 'justify-start'}`}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4 mr-2" />Collapse</>}
-          </Button>
-        </div>
-      )}
 
       {/* User section */}
       {(!sidebarCollapsed || mobile) && (
@@ -169,34 +140,47 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       }`}>
         {/* Top Bar */}
         <header className="flex h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open sidebar</span>
+          <div className="flex items-center space-x-4">
+            {/* Mobile menu trigger */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open sidebar</span>
+                </Button>
+              </SheetTrigger>
+            </Sheet>
+
+            {/* Desktop sidebar toggle with logo */}
+            <div className="hidden lg:flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="rounded-2xl"
+              >
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Toggle sidebar</span>
               </Button>
-            </SheetTrigger>
-          </Sheet>
-
-          <div className="flex flex-1 justify-between items-center ml-4 lg:ml-0">
-            <div className="flex items-center space-x-4">
-              <Link to="/" className="lg:hidden">
-                <Button variant="ghost" size="sm" className="rounded-2xl">
-                  <Home className="h-4 w-4" />
-                </Button>
+              
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
+                  <span className="text-white font-bold text-sm font-heading">A</span>
+                </div>
+                <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
               </Link>
             </div>
+          </div>
 
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="hidden sm:flex">
-                3 free contracts left
-              </Badge>
-              <Link to="/settings">
-                <Button variant="ghost" size="sm" className="rounded-2xl">
-                  <User className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+          <div className="flex flex-1 justify-end items-center space-x-4">
+            <Badge variant="outline" className="hidden sm:flex">
+              3 free contracts left
+            </Badge>
+            <Link to="/settings">
+              <Button variant="ghost" size="sm" className="rounded-2xl">
+                <User className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </header>
 

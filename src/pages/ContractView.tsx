@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -35,6 +34,8 @@ const ContractView = () => {
   const { toast } = useToast();
   const [contract, setContract] = useState<Contract | null>(null);
   const [loadingContract, setLoadingContract] = useState(true);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (user && id) {
@@ -85,20 +86,138 @@ const ContractView = () => {
     navigate(`/contract/edit/${id}`);
   };
 
-  const handleDownloadPDF = () => {
-    // Implement PDF download functionality
-    toast({
-      title: "PDF Download",
-      description: "PDF download feature will be implemented soon."
-    });
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      // Create a new window with the contract content for printing/PDF
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Failed to open print window');
+      }
+
+      const contractHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${contract?.title || 'Contract'}</title>
+          <style>
+            body { font-family: serif; line-height: 1.6; margin: 0; padding: 20mm; }
+            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+            .section { margin-bottom: 30px; }
+            .section h2 { border-bottom: 1px solid #666; padding-bottom: 5px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .signature-section { margin-top: 50px; border-top: 2px solid #000; padding-top: 20px; }
+            .signature-box { height: 60px; border-bottom: 2px solid #666; margin-bottom: 10px; }
+            @media print { body { margin: 0; padding: 20mm; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>SERVICE AGREEMENT</h1>
+            <p>${contract?.title || 'Professional Service Contract'}</p>
+          </div>
+          
+          <div class="section">
+            <h2>1. PARTIES</h2>
+            <div class="grid">
+              <div>
+                <h3>Service Provider:</h3>
+                <p><strong>${contract?.clauses_json?.freelancerName || 'Service Provider'}</strong></p>
+                <p>${contract?.clauses_json?.freelancerEmail || ''}</p>
+              </div>
+              <div>
+                <h3>Client:</h3>
+                <p><strong>${contract?.client_name || 'Client'}</strong></p>
+                <p>${contract?.client_email || ''}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>2. SCOPE OF WORK</h2>
+            <p>${contract?.scope_of_work || 'No scope of work specified'}</p>
+          </div>
+          
+          <div class="section">
+            <h2>3. PAYMENT TERMS</h2>
+            <p>Total Amount: ₹${contract?.contract_amount?.toLocaleString() || '0'}</p>
+            <p>${contract?.payment_terms || 'No payment terms specified'}</p>
+          </div>
+          
+          <div class="signature-section">
+            <h2>SIGNATURES</h2>
+            <div class="grid">
+              <div>
+                <div class="signature-box"></div>
+                <p><strong>${contract?.clauses_json?.freelancerName || 'Service Provider'}</strong></p>
+                <p>Service Provider</p>
+                <p>Date: ________________</p>
+              </div>
+              <div>
+                <div class="signature-box"></div>
+                <p><strong>${contract?.client_name || 'Client'}</strong></p>
+                <p>Client</p>
+                <p>Date: ________________</p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(contractHTML);
+      printWindow.document.close();
+      
+      // Trigger print dialog
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+
+      toast({
+        title: "PDF Generated",
+        description: "Print dialog opened. You can save as PDF from the print options."
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
-  const handleShareContract = () => {
-    // Implement share functionality
-    toast({
-      title: "Share Contract",
-      description: "Share feature will be implemented soon."
-    });
+  const handleShareContract = async () => {
+    setIsSharing(true);
+    try {
+      const shareableLink = `${window.location.origin}/contract/view/${id}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: contract?.title || 'Contract',
+          text: 'Please review this contract',
+          url: shareableLink
+        });
+      } else {
+        await navigator.clipboard.writeText(shareableLink);
+        toast({
+          title: "Link Copied",
+          description: "Contract sharing link copied to clipboard."
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to share contract",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -147,14 +266,14 @@ const ContractView = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-4xl mx-auto space-y-6"
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button 
                 variant="outline" 
@@ -164,7 +283,7 @@ const ContractView = () => {
                 ← Back
               </Button>
               <div>
-                <h1 className="text-3xl font-bold font-heading">{contract.title}</h1>
+                <h1 className="text-2xl font-bold font-heading">{contract.title}</h1>
                 <p className="text-muted-foreground">Contract ID: {contract.id.slice(0, 8)}...</p>
               </div>
             </div>
@@ -174,21 +293,21 @@ const ContractView = () => {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
-              <Button variant="outline" size="sm" onClick={handleShareContract}>
+              <Button variant="outline" size="sm" onClick={handleShareContract} disabled={isSharing}>
                 <Share className="w-4 h-4 mr-2" />
-                Share
+                {isSharing ? 'Sharing...' : 'Share'}
               </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={handleDownloadPDF}>
+              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
                 <Download className="w-4 h-4 mr-2" />
-                Download PDF
+                {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
               </Button>
             </div>
           </div>
 
           {/* Contract Overview */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="grid md:grid-cols-3 gap-4">
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
                     <User className="w-5 h-5 text-primary" />
@@ -203,7 +322,7 @@ const ContractView = () => {
             </Card>
 
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-success/10 rounded-2xl flex items-center justify-center">
                     <DollarSign className="w-5 h-5 text-success" />
@@ -220,7 +339,7 @@ const ContractView = () => {
             </Card>
 
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-secondary/10 rounded-2xl flex items-center justify-center">
                     <Clock className="w-5 h-5 text-secondary" />
@@ -236,19 +355,19 @@ const ContractView = () => {
           </div>
 
           {/* Contract Details */}
-          <Card className="mb-8">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FileText className="w-5 h-5 mr-2" />
                 Contract Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {/* Scope of Work */}
               <div>
-                <h3 className="text-lg font-semibold mb-3 text-primary">Scope of Work</h3>
-                <div className="bg-muted/20 rounded-xl p-4">
-                  <p className="whitespace-pre-wrap">{contract.scope_of_work || 'No scope of work specified'}</p>
+                <h3 className="text-lg font-semibold mb-2 text-primary">Scope of Work</h3>
+                <div className="bg-muted/20 rounded-xl p-3">
+                  <p className="whitespace-pre-wrap text-sm">{contract.scope_of_work || 'No scope of work specified'}</p>
                 </div>
               </div>
 
@@ -256,16 +375,16 @@ const ContractView = () => {
 
               {/* Payment Terms */}
               <div>
-                <h3 className="text-lg font-semibold mb-3 text-secondary">Payment Terms</h3>
-                <div className="bg-muted/20 rounded-xl p-4">
-                  <p className="whitespace-pre-wrap">{contract.payment_terms || 'No payment terms specified'}</p>
+                <h3 className="text-lg font-semibold mb-2 text-secondary">Payment Terms</h3>
+                <div className="bg-muted/20 rounded-xl p-3">
+                  <p className="whitespace-pre-wrap text-sm">{contract.payment_terms || 'No payment terms specified'}</p>
                 </div>
               </div>
 
               <Separator />
 
               {/* Contract Metadata */}
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold mb-2">Created</h4>
                   <div className="flex items-center text-sm text-muted-foreground">
@@ -280,32 +399,6 @@ const ContractView = () => {
                     {new Date(contract.updated_at).toLocaleDateString()} at {new Date(contract.updated_at).toLocaleTimeString()}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Contract Actions</h3>
-              <div className="flex flex-wrap gap-3">
-                <Button className="bg-primary hover:bg-primary/90" onClick={handleEditContract}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Contract
-                </Button>
-                <Button variant="outline" onClick={handleShareContract}>
-                  <Share className="w-4 h-4 mr-2" />
-                  Send to Client
-                </Button>
-                <Button variant="outline" onClick={handleDownloadPDF}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
-                {contract.status === 'draft' && (
-                  <Button variant="outline" className="text-destructive hover:text-destructive">
-                    Cancel Contract
-                  </Button>
-                )}
               </div>
             </CardContent>
           </Card>
