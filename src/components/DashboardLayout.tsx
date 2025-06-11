@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
@@ -48,6 +48,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const isActive = (href: string) => location.pathname === href;
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex h-full flex-col bg-card border-r">
       {/* Navigation */}
@@ -74,7 +82,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </nav>
 
       {/* User section */}
-      {(!sidebarCollapsed || mobile) && (
+      {(!sidebarCollapsed || mobile) && user && (
         <div className="border-t p-4">
           <div className="flex items-center space-x-3 mb-4">
             <Avatar className="h-10 w-10">
@@ -96,7 +104,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-muted-foreground hover:text-foreground rounded-2xl"
-            onClick={signOut}
+            onClick={handleSignOut}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
@@ -105,7 +113,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       )}
 
       {/* Collapsed User Avatar */}
-      {sidebarCollapsed && !mobile && (
+      {sidebarCollapsed && !mobile && user && (
         <div className="border-t p-4 flex justify-center">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -151,7 +159,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </SheetTrigger>
             </Sheet>
 
-            {/* Desktop sidebar toggle with logo */}
+            {/* Desktop sidebar toggle */}
             <div className="hidden lg:flex items-center space-x-4">
               <Button
                 variant="ghost"
@@ -162,14 +170,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Toggle sidebar</span>
               </Button>
-              
-              <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
-                  <span className="text-white font-bold text-sm font-heading">A</span>
-                </div>
-                <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
-              </Link>
             </div>
+            
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
+                <span className="text-white font-bold text-sm font-heading">A</span>
+              </div>
+              <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
+            </Link>
           </div>
 
           <div className="flex flex-1 justify-end items-center space-x-4">

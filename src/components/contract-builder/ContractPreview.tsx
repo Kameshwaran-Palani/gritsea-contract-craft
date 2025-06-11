@@ -1,19 +1,96 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ContractData } from '@/pages/ContractBuilder';
-import { FileText } from 'lucide-react';
+import { FileText, Download, Share2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { toast } from 'sonner';
 
 interface ContractPreviewProps {
   data: ContractData;
 }
 
 const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
+  const contractRef = useRef<HTMLDivElement>(null);
+
+  const downloadPDF = async () => {
+    try {
+      if (!contractRef.current) {
+        toast.error('Contract preview not found');
+        return;
+      }
+
+      toast.info('Generating PDF...');
+      
+      // Create canvas from the contract content
+      const canvas = await html2canvas(contractRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        height: contractRef.current.scrollHeight,
+        width: contractRef.current.scrollWidth
+      });
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download the PDF
+      const fileName = `${data.templateName || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  const shareContract = async () => {
+    try {
+      const shareData = {
+        title: `Service Agreement - ${data.templateName || 'Contract'}`,
+        text: `Service Agreement between ${data.freelancerName || 'Service Provider'} and ${data.clientName || 'Client'}`,
+        url: window.location.href
+      };
+
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback to copying link to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Contract link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing contract:', error);
+      toast.error('Failed to share contract');
+    }
+  };
+
   return (
-    <div className="h-full overflow-y-auto bg-gray-100 p-4">
-      <div className="sticky top-0 bg-gray-100 pb-3 mb-3 border-b border-gray-200 z-10">
-        <div className="flex items-center justify-between">
+    <div className="h-full overflow-y-auto bg-gray-50 p-4">
+      <div className="sticky top-0 bg-gray-50 pb-3 mb-3 border-b border-gray-200 z-10">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Live Preview
@@ -22,25 +99,37 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             Auto-updating
           </Badge>
         </div>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button onClick={downloadPDF} size="sm" className="rounded-xl">
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
+          </Button>
+          <Button onClick={shareContract} variant="outline" size="sm" className="rounded-xl">
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </div>
       </div>
 
-      {/* A4 Document Container with proper spacing */}
-      <div className="space-y-6 contract-preview">
+      {/* A4 Document Container */}
+      <div ref={contractRef} className="space-y-4 contract-preview">
         {/* Page 1 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-[210mm] h-[297mm] mx-auto bg-white shadow-lg overflow-hidden"
+          className="w-[210mm] h-[297mm] mx-auto bg-white shadow-lg"
           style={{ 
             fontFamily: 'serif',
-            lineHeight: '1.4',
-            fontSize: '11px'
+            lineHeight: '1.3',
+            fontSize: '10px'
           }}
         >
-          <div className="p-[15mm] h-full flex flex-col">
+          <div className="p-[12mm] h-full flex flex-col">
             {/* Document Header */}
-            <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
-              <h1 className="text-xl font-bold uppercase tracking-wider mb-1">
+            <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
+              <h1 className="text-lg font-bold uppercase tracking-wider mb-1">
                 SERVICE AGREEMENT
               </h1>
               <p className="text-xs text-gray-600 uppercase tracking-wide">
@@ -58,8 +147,8 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </div>
 
             {/* Agreement Introduction */}
-            <div className="mb-4">
-              <p className="text-justify text-xs">
+            <div className="mb-3">
+              <p className="text-justify text-xs leading-relaxed">
                 This Service Agreement ("Agreement") is entered into on{' '}
                 <span className="font-semibold underline">
                   {data.startDate ? new Date(data.startDate).toLocaleDateString() : '____________'}
@@ -69,12 +158,12 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </div>
 
             {/* Parties Section */}
-            <div className="mb-6">
-              <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
+            <div className="mb-4">
+              <h2 className="text-sm font-bold uppercase mb-2 border-b border-gray-400 pb-1">
                 1. PARTIES
               </h2>
               
-              <div className="grid grid-cols-2 gap-4 mb-3">
+              <div className="grid grid-cols-2 gap-3 mb-2">
                 <div>
                   <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Service Provider:</h3>
                   <div className="space-y-0.5 text-xs">
@@ -98,128 +187,94 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
               </div>
             </div>
 
-            {/* Scope of Work - First Part */}
-            <div className="flex-1">
-              <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
+            {/* Scope of Work */}
+            <div className="flex-1 mb-3">
+              <h2 className="text-sm font-bold uppercase mb-2 border-b border-gray-400 pb-1">
                 2. SCOPE OF WORK
               </h2>
               
               <h3 className="font-semibold mb-1 text-xs">2.1 Services Description</h3>
-              <p className="text-justify mb-3 text-xs leading-relaxed">
-                {data.services ? data.services.substring(0, 600) + (data.services.length > 600 ? '...' : '') : 'Services to be defined...'}
+              <p className="text-justify mb-2 text-xs leading-relaxed">
+                {data.services ? data.services.substring(0, 500) + (data.services.length > 500 ? '...' : '') : 'Services to be defined...'}
               </p>
 
               {data.deliverables && (
-                <div className="mb-3">
+                <div className="mb-2">
                   <h3 className="font-semibold mb-1 text-xs">2.2 Deliverables</h3>
                   <p className="text-justify text-xs leading-relaxed">
-                    {data.deliverables.substring(0, 400) + (data.deliverables.length > 400 ? '...' : '')}
+                    {data.deliverables.substring(0, 300) + (data.deliverables.length > 300 ? '...' : '')}
                   </p>
+                </div>
+              )}
+
+              {/* Payment Terms */}
+              {(data.rate > 0 || data.totalAmount) && (
+                <div className="mb-2">
+                  <h3 className="font-semibold mb-1 text-xs">2.3 Payment Terms</h3>
+                  <div className="bg-gray-50 p-2 rounded text-xs">
+                    <p>
+                      <span className="font-semibold">Structure:</span> {data.paymentType === 'fixed' ? 'Fixed Price' : 'Hourly Rate'}
+                    </p>
+                    {data.paymentType === 'fixed' && data.totalAmount ? (
+                      <p className="font-bold text-gray-800">
+                        Total: ₹{data.totalAmount.toLocaleString()}
+                      </p>
+                    ) : (
+                      <p className="font-bold text-gray-800">
+                        Rate: ₹{data.rate}/hour
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="text-center text-xs text-gray-500 mt-auto pt-3 border-t border-gray-300">
-              <p>Page 1 of 2</p>
-              <p className="mt-0.5">Generated by Agrezy • agrezy.com</p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Page 2 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-[210mm] h-[297mm] mx-auto bg-white shadow-lg overflow-hidden"
-          style={{ 
-            fontFamily: 'serif',
-            lineHeight: '1.4',
-            fontSize: '11px'
-          }}
-        >
-          <div className="p-[15mm] h-full flex flex-col">
-            {/* Payment Terms */}
-            {(data.rate > 0 || data.totalAmount) && (
-              <div className="mb-6">
-                <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
-                  3. PAYMENT TERMS
-                </h2>
-                
-                <h3 className="font-semibold mb-1 text-xs">3.1 Compensation</h3>
-                <p className="text-xs mb-2">
-                  The Client agrees to pay the Service Provider as follows:
-                </p>
-                
-                <div className="bg-gray-50 p-2 rounded mb-3">
-                  <p className="text-xs">
-                    <span className="font-semibold">Payment Structure:</span> {data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}
-                  </p>
-                  {data.paymentType === 'fixed' && data.totalAmount ? (
-                    <p className="text-sm font-bold text-gray-800 mt-0.5">
-                      Total Amount: ₹{data.totalAmount.toLocaleString()}
-                    </p>
-                  ) : (
-                    <p className="text-sm font-bold text-gray-800 mt-0.5">
-                      Hourly Rate: ₹{data.rate}/hour
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Additional Terms */}
-            <div className="mb-6">
-              <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
-                4. ADDITIONAL TERMS
+            <div className="mb-3">
+              <h2 className="text-sm font-bold uppercase mb-2 border-b border-gray-400 pb-1">
+                3. ADDITIONAL TERMS
               </h2>
               
-              <div className="space-y-2 text-xs">
+              <div className="space-y-1 text-xs">
                 <div>
-                  <h3 className="font-semibold">4.1 Confidentiality</h3>
-                  <p>{data.includeNDA ? 'Both parties agree to maintain confidentiality of all proprietary information.' : 'No specific confidentiality terms apply.'}</p>
+                  <span className="font-semibold">Confidentiality:</span> {data.includeNDA ? 'Both parties agree to maintain confidentiality.' : 'No specific terms apply.'}
                 </div>
-                
                 <div>
-                  <h3 className="font-semibold">4.2 Intellectual Property</h3>
-                  <p>All intellectual property rights shall be owned by: <span className="font-medium capitalize">{data.ipOwnership}</span></p>
+                  <span className="font-semibold">IP Rights:</span> <span className="capitalize">{data.ipOwnership}</span>
                 </div>
-                
                 <div>
-                  <h3 className="font-semibold">4.3 Termination</h3>
-                  <p>{data.terminationConditions}</p>
-                  <p className="mt-0.5">Notice Period: {data.noticePeriod}</p>
+                  <span className="font-semibold">Termination:</span> {data.terminationConditions}
+                </div>
+                <div>
+                  <span className="font-semibold">Notice:</span> {data.noticePeriod}
                 </div>
               </div>
             </div>
 
             {/* Signature Section */}
-            <div className="mt-auto pt-6 border-t-2 border-gray-800">
-              <h2 className="text-sm font-bold uppercase mb-4 text-center">
-                SIGNATURES
-              </h2>
+            <div className="mt-auto pt-3 border-t border-gray-800">
+              <h2 className="text-sm font-bold uppercase mb-3 text-center">SIGNATURES</h2>
               
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <div className="h-12 border-b-2 border-gray-400 mb-1"></div>
+                  <div className="h-8 border-b border-gray-400 mb-1"></div>
                   <p className="font-semibold text-xs">{data.freelancerName || 'Service Provider'}</p>
                   <p className="text-xs text-gray-600">Service Provider</p>
-                  <p className="text-xs text-gray-600 mt-1">Date: ________________</p>
+                  <p className="text-xs text-gray-600 mt-0.5">Date: ________</p>
                 </div>
                 
                 <div className="text-center">
-                  <div className="h-12 border-b-2 border-gray-400 mb-1"></div>
+                  <div className="h-8 border-b border-gray-400 mb-1"></div>
                   <p className="font-semibold text-xs">{data.clientName || 'Client'}</p>
                   <p className="text-xs text-gray-600">Client</p>
-                  <p className="text-xs text-gray-600 mt-1">Date: ________________</p>
+                  <p className="text-xs text-gray-600 mt-0.5">Date: ________</p>
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="text-center text-xs text-gray-500 mt-3 pt-2 border-t border-gray-300">
-              <p>Page 2 of 2</p>
-              <p className="mt-0.5">This contract is governed by the Indian Contract Act, 1872</p>
+            <div className="text-center text-xs text-gray-500 mt-2 pt-1 border-t border-gray-300">
+              <p>Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
             </div>
           </div>
         </motion.div>
