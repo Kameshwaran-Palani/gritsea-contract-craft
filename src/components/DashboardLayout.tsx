@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
@@ -15,13 +15,10 @@ import {
   Settings, 
   LogOut, 
   Menu,
-  Home,
   User,
   Users,
   Bookmark,
   Zap,
-  ChevronLeft,
-  ChevronRight,
   PanelLeft
 } from 'lucide-react';
 
@@ -127,9 +124,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   );
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background w-full">
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 ${
+      <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
       }`}>
         <Sidebar />
@@ -150,14 +147,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <header className="flex h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
           <div className="flex items-center space-x-4">
             {/* Mobile menu trigger */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Open sidebar</span>
-                </Button>
-              </SheetTrigger>
-            </Sheet>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="lg:hidden rounded-2xl" 
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Open sidebar</span>
+            </Button>
 
             {/* Desktop sidebar toggle */}
             <div className="hidden lg:flex items-center space-x-4">
