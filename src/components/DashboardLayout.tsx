@@ -129,6 +129,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
       }`}>
+        {/* Desktop sidebar toggle */}
+            <div className="hidden lg:flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="rounded-2xl"
+              >
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Toggle sidebar</span>
+              </Button>
+            </div>
         <Sidebar />
       </div>
 
