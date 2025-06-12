@@ -1,66 +1,74 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { FileText, PenLine, Upload } from 'lucide-react';
 
-export default function HowItWorksSection() {
+export default function HowItWorks() {
+  const steps = [
+    {
+      title: 'Select Template',
+      icon: <FileText size={32} className="text-blue-700" />,
+      number: 1,
+      description: 'Choose from 10+ professional templates or start from scratch',
+      color: 'bg-blue-100',
+      circleColor: 'bg-blue-700',
+    },
+    {
+      title: 'Edit Easily',
+      icon: <PenLine size={32} className="text-emerald-700" />,
+      number: 2,
+      description: 'Customize your contract with our intuitive editor and AI assistance',
+      color: 'bg-emerald-100',
+      circleColor: 'bg-emerald-700',
+    },
+    {
+      title: 'Share & Sign',
+      icon: <Upload size={32} className="text-red-700" />,
+      number: 3,
+      description: 'Send to clients for digital signatures and track status in real-time',
+      color: 'bg-red-100',
+      circleColor: 'bg-red-700',
+    },
+  ];
+
   return (
-    <section className="bg-[#f9fbfe] py-16 px-4 text-center relative">
-      <h2 className="text-4xl font-bold text-[#346C9C]">How It Works</h2>
-      <p className="text-gray-600 text-lg mt-2 mb-16 max-w-xl mx-auto">
-        Create professional contracts in three simple steps. No legal expertise required.
-      </p>
+    <section className="w-full bg-[#f9fbfd] py-20 px-4">
+      <div className="max-w-7xl mx-auto text-center">
+        <h2 className="text-4xl font-bold text-slate-700 mb-4">How It Works</h2>
+        <p className="text-gray-500 text-lg mb-16">
+          Create professional contracts in three simple steps. No legal expertise required.
+        </p>
 
-      {/* Timeline Line */}
-      <div className="absolute left-0 right-0 top-[50%] h-[2px] bg-gradient-to-r from-blue-600 via-cyan-500 to-red-400 w-4/5 mx-auto z-0" />
+        {/* Horizontal Line */}
+        <div className="relative h-[100px] mb-4">
+          <div className="absolute top-1/2 left-0 w-full border-t-2 border-gradient-to-r from-blue-500 via-emerald-500 to-red-500"></div>
 
-      {/* Steps Container */}
-      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-12 max-w-6xl mx-auto items-start">
-        {/* Step 1 */}
-        <div className="flex flex-col items-center space-y-3">
-          <div className="relative">
-            <div className="rounded-xl bg-[#eef2ff] p-4 shadow-md">
-              <FileText size={32} className="text-blue-700" />
-            </div>
-            <span className="absolute bottom-[-20px] left-1/2 transform -translate-x-1/2 text-white font-bold bg-blue-700 border-4 border-white w-10 h-10 flex items-center justify-center rounded-full shadow-md">
-              1
-            </span>
+          {/* Steps */}
+          <div className="flex justify-between items-start max-w-5xl mx-auto px-4">
+            {steps.map((step, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center w-1/3"
+              >
+                <div className="relative z-10 -mt-16">
+                  <div className={`p-4 rounded-xl shadow-md ${step.color}`}>
+                    {step.icon}
+                  </div>
+                  <span
+                    className={`absolute -bottom-4 left-1/2 -translate-x-1/2 text-white font-bold ${step.circleColor} w-10 h-10 flex items-center justify-center rounded-full border-4 border-white shadow-md`}
+                  >
+                    {step.number}
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-800 mt-6">{step.title}</h3>
+                <p className="text-gray-600 text-sm mt-2 max-w-[240px]">{step.description}</p>
+              </motion.div>
+            ))}
           </div>
-          <h3 className="text-xl font-semibold mt-6">Select Template</h3>
-          <p className="text-gray-600 text-sm max-w-xs">
-            Choose from 10+ professional templates or start from scratch
-          </p>
-        </div>
-
-        {/* Step 2 */}
-        <div className="flex flex-col items-center space-y-3">
-          <div className="relative">
-            <div className="rounded-xl bg-[#e6f9f7] p-4 shadow-md">
-              <PenLine size={32} className="text-teal-700" />
-            </div>
-            <span className="absolute bottom-[-20px] left-1/2 transform -translate-x-1/2 text-white font-bold bg-teal-700 border-4 border-white w-10 h-10 flex items-center justify-center rounded-full shadow-md">
-              2
-            </span>
-          </div>
-          <h3 className="text-xl font-semibold mt-6">Edit Easily</h3>
-          <p className="text-gray-600 text-sm max-w-xs">
-            Customize your contract with our intuitive editor and AI assistance
-          </p>
-        </div>
-
-        {/* Step 3 */}
-        <div className="flex flex-col items-center space-y-3">
-          <div className="relative">
-            <div className="rounded-xl bg-[#ffecec] p-4 shadow-md">
-              <Upload size={32} className="text-red-600" />
-            </div>
-            <span className="absolute bottom-[-20px] left-1/2 transform -translate-x-1/2 text-white font-bold bg-red-600 border-4 border-white w-10 h-10 flex items-center justify-center rounded-full shadow-md">
-              3
-            </span>
-          </div>
-          <h3 className="text-xl font-semibold mt-6">Share & Sign</h3>
-          <p className="text-gray-600 text-sm max-w-xs">
-            Send to clients for digital signatures and track status in real-time
-          </p>
         </div>
       </div>
     </section>
