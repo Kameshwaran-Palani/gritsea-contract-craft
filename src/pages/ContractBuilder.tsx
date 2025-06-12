@@ -45,7 +45,22 @@ export interface ContractData {
   // Design
   primaryColor: string;
   fontFamily: string;
-  fontSize: 'small' | 'medium' | 'large';
+  fontSize: 'small' | 'medium' | 'large' | 'xlarge';
+  lineSpacing?: number;
+  headingStyle?: string;
+  listStyle?: string;
+  textAlignment?: string;
+  paragraphSpacing?: number;
+  
+  // Section-specific formatting
+  partiesBold?: boolean;
+  partiesBullets?: boolean;
+  scopeBold?: boolean;
+  scopeBullets?: boolean;
+  paymentBold?: boolean;
+  paymentBullets?: boolean;
+  termsBold?: boolean;
+  termsBullets?: boolean;
   
   // Parties
   freelancerName: string;
@@ -104,6 +119,10 @@ export interface ContractData {
   freelancerSignature?: string;
   clientSignature?: string;
   signedDate?: string;
+  
+  // Security
+  accessKey?: string;
+  clientPhone?: string;
 }
 
 const ContractBuilder = () => {
@@ -143,6 +162,19 @@ const ContractBuilder = () => {
     primaryColor: '#3B82F6',
     fontFamily: 'inter',
     fontSize: 'medium',
+    lineSpacing: 1.5,
+    headingStyle: 'h1',
+    listStyle: 'ul',
+    textAlignment: 'left',
+    paragraphSpacing: 1.5,
+    partiesBold: false,
+    partiesBullets: false,
+    scopeBold: false,
+    scopeBullets: false,
+    paymentBold: false,
+    paymentBullets: false,
+    termsBold: false,
+    termsBullets: false,
     freelancerName: '',
     freelancerAddress: '',
     freelancerEmail: '',
@@ -211,7 +243,20 @@ const ContractBuilder = () => {
           logoStyle: loadedData.logoStyle || 'round',
           primaryColor: loadedData.primaryColor || '#3B82F6',
           fontFamily: loadedData.fontFamily || 'inter',
-          fontSize: loadedData.fontSize || 'medium'
+          fontSize: loadedData.fontSize || 'medium',
+          lineSpacing: loadedData.lineSpacing || 1.5,
+          headingStyle: loadedData.headingStyle || 'h1',
+          listStyle: loadedData.listStyle || 'ul',
+          textAlignment: loadedData.textAlignment || 'left',
+          paragraphSpacing: loadedData.paragraphSpacing || 1.5,
+          partiesBold: loadedData.partiesBold || false,
+          partiesBullets: loadedData.partiesBullets || false,
+          scopeBold: loadedData.scopeBold || false,
+          scopeBullets: loadedData.scopeBullets || false,
+          paymentBold: loadedData.paymentBold || false,
+          paymentBullets: loadedData.paymentBullets || false,
+          termsBold: loadedData.termsBold || false,
+          termsBullets: loadedData.termsBullets || false
         });
         setContractId(data.id);
       }

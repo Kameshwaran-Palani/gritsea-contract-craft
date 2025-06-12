@@ -5,8 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { ContractData } from '@/pages/ContractBuilder';
-import { Palette, Upload, Image as ImageIcon } from 'lucide-react';
+import { Palette, Type, Spacing, Bold, List } from 'lucide-react';
 
 interface DesignCustomizationProps {
   data: ContractData;
@@ -21,20 +23,6 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
   data,
   updateData
 }) => {
-  const handleLogoUpload = (side: 'left' | 'right', event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        updateData({ 
-          [side === 'left' ? 'leftLogo' : 'rightLogo']: result 
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Extended color palette with more options
   const predefinedColors = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
@@ -44,7 +32,9 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
     '#BE185D', '#0D9488', '#7C2D12', '#991B1B',
     '#6B21A8', '#047857', '#0284C7', '#92400E',
     '#BE123C', '#065F46', '#1E40AF', '#78350F',
-    '#A21CAF', '#064E3B', '#1E3A8A', '#451A03'
+    '#A21CAF', '#064E3B', '#1E3A8A', '#451A03',
+    '#000000', '#374151', '#6B7280', '#9CA3AF',
+    '#D1D5DB', '#E5E7EB', '#F3F4F6', '#FFFFFF'
   ];
 
   const fontOptions = [
@@ -57,122 +47,27 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
   const sizeOptions = [
     { value: 'small', label: 'Small (10px)' },
     { value: 'medium', label: 'Medium (11px)' },
-    { value: 'large', label: 'Large (12px)' }
+    { value: 'large', label: 'Large (12px)' },
+    { value: 'xlarge', label: 'Extra Large (14px)' }
   ];
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <Palette className="h-12 w-12 text-primary mx-auto mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Design & Branding</h2>
+        <h2 className="text-2xl font-semibold mb-2">Design & Styling</h2>
         <p className="text-muted-foreground">
-          Customize the appearance and add your brand elements
+          Customize colors, typography, and formatting options
         </p>
       </div>
 
-      {/* Brand Logos */}
+      {/* Colors Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ImageIcon className="h-5 w-5" />
-            Brand Logos
+            <Palette className="h-5 w-5" />
+            Colors
           </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Logo Style</Label>
-            <RadioGroup
-              value={data.logoStyle}
-              onValueChange={(value: 'round' | 'rectangle') => updateData({ logoStyle: value })}
-              className="flex gap-4 mt-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="round" id="round" />
-                <Label htmlFor="round">Round</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="rectangle" id="rectangle" />
-                <Label htmlFor="rectangle">Rectangle</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="leftLogo">Service Provider Logo</Label>
-              <div className="mt-2 space-y-2">
-                {data.leftLogo && (
-                  <img 
-                    src={data.leftLogo} 
-                    alt="Service Provider logo" 
-                    className={`w-16 h-16 object-cover border ${
-                      data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
-                    }`}
-                  />
-                )}
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('leftLogo')?.click()}
-                    className="flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Upload
-                  </Button>
-                  <Input
-                    id="leftLogo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleLogoUpload('left', e)}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="rightLogo">Client Logo</Label>
-              <div className="mt-2 space-y-2">
-                {data.rightLogo && (
-                  <img 
-                    src={data.rightLogo} 
-                    alt="Client logo" 
-                    className={`w-16 h-16 object-cover border ${
-                      data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
-                    }`}
-                  />
-                )}
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('rightLogo')?.click()}
-                    className="flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Upload
-                  </Button>
-                  <Input
-                    id="rightLogo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleLogoUpload('right', e)}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Colors */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Colors</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -207,42 +102,241 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
         </CardContent>
       </Card>
 
-      {/* Typography */}
+      {/* Typography Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Typography</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Type className="h-5 w-5" />
+            Typography
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label>Font Family</Label>
-            <RadioGroup
-              value={data.fontFamily}
-              onValueChange={(value) => updateData({ fontFamily: value })}
-              className="mt-2"
-            >
-              {fontOptions.map((font) => (
-                <div key={font.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={font.value} id={font.value} />
-                  <Label htmlFor={font.value}>{font.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
+            <Select value={data.fontFamily} onValueChange={(value) => updateData({ fontFamily: value })}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select font family" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontOptions.map((font) => (
+                  <SelectItem key={font.value} value={font.value}>
+                    {font.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label>Font Size</Label>
+            <Select value={data.fontSize} onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateData({ fontSize: value })}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select font size" />
+              </SelectTrigger>
+              <SelectContent>
+                {sizeOptions.map((size) => (
+                  <SelectItem key={size.value} value={size.value}>
+                    {size.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Line Spacing</Label>
+            <div className="mt-2">
+              <Slider
+                value={[data.lineSpacing || 1.4]}
+                onValueChange={(value) => updateData({ lineSpacing: value[0] })}
+                min={1}
+                max={2.5}
+                step={0.1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Tight (1.0)</span>
+                <span>Current: {(data.lineSpacing || 1.4).toFixed(1)}</span>
+                <span>Loose (2.5)</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section Formatting */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bold className="h-5 w-5" />
+            Section Formatting
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Heading Style</Label>
+              <Select value={data.headingStyle || 'bold'} onValueChange={(value) => updateData({ headingStyle: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                  <SelectItem value="semibold">Semi Bold</SelectItem>
+                  <SelectItem value="extrabold">Extra Bold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>List Style</Label>
+              <Select value={data.listStyle || 'bullet'} onValueChange={(value) => updateData({ listStyle: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bullet">• Bullet Points</SelectItem>
+                  <SelectItem value="numbered">1. Numbered</SelectItem>
+                  <SelectItem value="dash">- Dash</SelectItem>
+                  <SelectItem value="none">No Style</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>Text Alignment</Label>
             <RadioGroup
-              value={data.fontSize}
-              onValueChange={(value: 'small' | 'medium' | 'large') => updateData({ fontSize: value })}
-              className="mt-2"
+              value={data.textAlignment || 'left'}
+              onValueChange={(value) => updateData({ textAlignment: value })}
+              className="flex gap-4 mt-2"
             >
-              {sizeOptions.map((size) => (
-                <div key={size.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={size.value} id={size.value} />
-                  <Label htmlFor={size.value}>{size.label}</Label>
-                </div>
-              ))}
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="left" id="left" />
+                <Label htmlFor="left">Left</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="center" id="center" />
+                <Label htmlFor="center">Center</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="justify" id="justify" />
+                <Label htmlFor="justify">Justify</Label>
+              </div>
             </RadioGroup>
+          </div>
+
+          <div>
+            <Label>Paragraph Spacing</Label>
+            <div className="mt-2">
+              <Slider
+                value={[data.paragraphSpacing || 1]}
+                onValueChange={(value) => updateData({ paragraphSpacing: value[0] })}
+                min={0.5}
+                max={3}
+                step={0.1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Tight (0.5)</span>
+                <span>Current: {(data.paragraphSpacing || 1).toFixed(1)}</span>
+                <span>Wide (3.0)</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section-Specific Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <List className="h-5 w-5" />
+            Section Controls
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Parties Section</Label>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  variant={data.partiesBold ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ partiesBold: !data.partiesBold })}
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={data.partiesBullets ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ partiesBullets: !data.partiesBullets })}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label>Scope Section</Label>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  variant={data.scopeBold ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ scopeBold: !data.scopeBold })}
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={data.scopeBullets ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ scopeBullets: !data.scopeBullets })}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label>Payment Section</Label>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  variant={data.paymentBold ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ paymentBold: !data.paymentBold })}
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={data.paymentBullets ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ paymentBullets: !data.paymentBullets })}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label>Terms Section</Label>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  variant={data.termsBold ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ termsBold: !data.termsBold })}
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={data.termsBullets ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => updateData({ termsBullets: !data.termsBullets })}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
