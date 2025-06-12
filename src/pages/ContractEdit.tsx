@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import DashboardLayout from '@/components/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, User } from 'lucide-react';
 import ContractBuilder from './ContractBuilder';
 
 const ContractEdit = () => {
@@ -21,15 +22,37 @@ const ContractEdit = () => {
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Edit Contract</h1>
-          <p className="text-sm text-muted-foreground">Contract ID: {id}</p>
+    <div className="min-h-screen bg-background">
+      {/* Clean Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex h-16 items-center justify-between px-6">
+          <div className="flex items-center space-x-4">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <ChevronLeft className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+            <div className="h-6 w-px bg-border" />
+            <h1 className="text-lg font-semibold">Contract Editor</h1>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-muted-foreground">
+              Contract ID: {id}
+            </div>
+            <Link to="/settings">
+              <Button variant="ghost" size="sm">
+                <User className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
-        <ContractBuilder />
-      </div>
-    </DashboardLayout>
+      </header>
+
+      {/* Contract Builder without sidebar wrapper */}
+      <ContractBuilder />
+    </div>
   );
 };
 

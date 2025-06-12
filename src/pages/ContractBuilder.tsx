@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send } from 'lucide-react';
-import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -335,99 +334,97 @@ const ContractBuilder = () => {
         title="Contract Builder - Agrezy"
         description="Create professional service contracts with our AI-powered step-by-step builder"
       />
-      <DashboardLayout>
-        <div className="min-h-screen bg-background">
-          <div className="flex h-screen">
-            {/* Left Panel - Accordion Inputs */}
-            <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Contract Builder</h1>
-                <p className="text-muted-foreground">Build your contract step by step</p>
-              </div>
+      <div className="min-h-screen bg-background">
+        <div className="flex h-[calc(100vh-64px)]">
+          {/* Left Panel - Accordion Inputs */}
+          <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Build Your Contract</h2>
+              <p className="text-sm text-muted-foreground">Complete each section to create your contract</p>
+            </div>
 
-              <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-4">
-                {STEPS.map((step, index) => {
-                  const Component = step.component;
-                  return (
-                    <AccordionItem key={step.id} value={step.id} className="border rounded-2xl px-4">
-                      <AccordionTrigger className="text-left hover:no-underline">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                            activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {index + 1}
-                          </div>
-                          <span className="font-medium">{step.title}</span>
+            <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
+              {STEPS.map((step, index) => {
+                const Component = step.component;
+                return (
+                  <AccordionItem key={step.id} value={step.id} className="border rounded-lg px-4">
+                    <AccordionTrigger className="text-left hover:no-underline py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
+                          activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {index + 1}
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-4">
-                        <Component
-                          data={contractData}
-                          updateData={updateContractData}
-                          onNext={() => {}}
-                          onPrev={() => {}}
-                          isFirst={index === 0}
-                          isLast={index === STEPS.length - 1}
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </div>
-
-            {/* Right Panel - Live Preview */}
-            <div className="w-1/2 bg-muted/20">
-              <ContractPreview data={contractData} />
-            </div>
+                        <span className="font-medium text-sm">{step.title}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <Component
+                        data={contractData}
+                        updateData={updateContractData}
+                        onNext={() => {}}
+                        onPrev={() => {}}
+                        isFirst={index === 0}
+                        isLast={index === STEPS.length - 1}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
 
-          {/* Bottom Sticky Bar */}
-          <div className="fixed bottom-0 left-0 right-0 bg-card border-t p-4 z-50">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Right Panel - Live Preview */}
+          <div className="w-1/2 bg-muted/20">
+            <ContractPreview data={contractData} />
+          </div>
+        </div>
+
+        {/* Bottom Action Bar */}
+        <div className="border-t bg-white/80 backdrop-blur-sm p-4">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/contracts')}
+              className="flex items-center gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back to Contracts
+            </Button>
+            
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                onClick={() => navigate('/dashboard')}
+                onClick={saveProgress}
+                disabled={saving}
                 className="flex items-center gap-2"
               >
-                <ChevronLeft className="h-4 w-4" />
-                Back to Dashboard
+                <Save className="h-4 w-4" />
+                {saving ? 'Saving...' : 'Save Draft'}
               </Button>
               
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={saveProgress}
-                  disabled={saving}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {saving ? 'Saving...' : 'Save Draft'}
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
-                </Button>
-                
-                <Button
-                  onClick={handleShareLink}
-                  disabled={isSharing || !contractData.clientName || !contractData.services}
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-                >
-                  <Send className="h-4 w-4" />
-                  {isSharing ? 'Sharing...' : 'Share Link'}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isGeneratingPDF ? 'Generating...' : 'Download'}
+              </Button>
+              
+              <Button
+                onClick={handleShareLink}
+                disabled={isSharing || !contractData.clientName || !contractData.services}
+                className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+              >
+                <Send className="h-4 w-4" />
+                {isSharing ? 'Sharing...' : 'Share Contract'}
+              </Button>
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </div>
     </>
   );
 };
