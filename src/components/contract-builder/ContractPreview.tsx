@@ -1,51 +1,20 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ContractData } from '@/pages/ContractBuilder';
-import { FileText, Download, Share2, Edit2, Check, X } from 'lucide-react';
+import { FileText, Download, Share2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 
 interface ContractPreviewProps {
   data: ContractData;
-  onUpdateData?: (updates: Partial<ContractData>) => void;
 }
 
-const ContractPreview: React.FC<ContractPreviewProps> = ({ data, onUpdateData }) => {
+const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   const contractRef = useRef<HTMLDivElement>(null);
-  const [editingHeader, setEditingHeader] = useState<'title' | 'subtitle' | null>(null);
-  const [tempTitle, setTempTitle] = useState(data.documentTitle);
-  const [tempSubtitle, setTempSubtitle] = useState(data.documentSubtitle);
-
-  const handleEditHeader = (type: 'title' | 'subtitle') => {
-    setEditingHeader(type);
-    if (type === 'title') {
-      setTempTitle(data.documentTitle);
-    } else {
-      setTempSubtitle(data.documentSubtitle);
-    }
-  };
-
-  const handleSaveHeader = () => {
-    if (onUpdateData) {
-      onUpdateData({
-        documentTitle: tempTitle,
-        documentSubtitle: tempSubtitle
-      });
-    }
-    setEditingHeader(null);
-  };
-
-  const handleCancelEdit = () => {
-    setTempTitle(data.documentTitle);
-    setTempSubtitle(data.documentSubtitle);
-    setEditingHeader(null);
-  };
 
   const downloadPDF = async () => {
     try {
@@ -118,6 +87,23 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data, onUpdateData })
     }
   };
 
+  const getFontFamily = () => {
+    switch (data.fontFamily) {
+      case 'serif': return 'Times, serif';
+      case 'sans': return 'Arial, sans-serif';
+      case 'mono': return 'Courier, monospace';
+      default: return 'Inter, sans-serif';
+    }
+  };
+
+  const getFontSize = () => {
+    switch (data.fontSize) {
+      case 'small': return '10px';
+      case 'large': return '12px';
+      default: return '11px';
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-gray-50 p-4">
       <div className="sticky top-0 bg-gray-50 pb-3 mb-3 border-b border-gray-200 z-10">
@@ -149,92 +135,64 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data, onUpdateData })
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-[210mm] h-auto min-h-[297mm] mx-auto bg-white shadow-lg"
+          className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg flex flex-col"
           style={{ 
-            fontFamily: 'serif',
+            fontFamily: getFontFamily(),
             lineHeight: '1.4',
-            fontSize: '11px'
+            fontSize: getFontSize(),
+            color: data.primaryColor || '#000000'
           }}
         >
-          <div className="p-[15mm] h-full flex flex-col">
-            {/* Editable Document Header */}
-            <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
-              {editingHeader === 'title' ? (
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Input
-                    value={tempTitle}
-                    onChange={(e) => setTempTitle(e.target.value)}
-                    className="text-center text-lg font-bold uppercase tracking-wider"
-                    autoFocus
+          <div className="p-[15mm] flex-1 flex flex-col">
+            {/* Header with Logos */}
+            <div className="flex items-center justify-between mb-6">
+              {/* Left Logo */}
+              <div className="w-16 h-16 flex items-center justify-start">
+                {data.leftLogo && (
+                  <img 
+                    src={data.leftLogo} 
+                    alt="Left logo" 
+                    className={`w-16 h-16 object-cover ${
+                      data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
+                    }`}
                   />
-                  <Button size="sm" onClick={handleSaveHeader}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="group relative">
-                  <h1 className="text-lg font-bold uppercase tracking-wider mb-1">
-                    {data.documentTitle}
-                  </h1>
-                  {onUpdateData && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleEditHeader('title')}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              )}
-              
-              {editingHeader === 'subtitle' ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Input
-                    value={tempSubtitle}
-                    onChange={(e) => setTempSubtitle(e.target.value)}
-                    className="text-center text-xs text-gray-600 uppercase tracking-wide"
-                    autoFocus
-                  />
-                  <Button size="sm" onClick={handleSaveHeader}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="group relative">
-                  <p className="text-xs text-gray-600 uppercase tracking-wide">
-                    {data.documentSubtitle}
-                  </p>
-                  {onUpdateData && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleEditHeader('subtitle')}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              )}
-              
-              {data.startDate && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Effective Date: {new Date(data.startDate).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+                )}
+              </div>
+
+              {/* Center - Document Header */}
+              <div className="text-center flex-1">
+                <h1 className="text-lg font-bold uppercase tracking-wider mb-1">
+                  {data.documentTitle}
+                </h1>
+                <p className="text-xs text-gray-600 uppercase tracking-wide">
+                  {data.documentSubtitle}
                 </p>
-              )}
+                {data.startDate && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Effective Date: {new Date(data.startDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                )}
+              </div>
+
+              {/* Right Logo */}
+              <div className="w-16 h-16 flex items-center justify-end">
+                {data.rightLogo && (
+                  <img 
+                    src={data.rightLogo} 
+                    alt="Right logo" 
+                    className={`w-16 h-16 object-cover ${
+                      data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
+                    }`}
+                  />
+                )}
+              </div>
             </div>
+
+            <div className="border-b-2 border-gray-800 mb-4"></div>
 
             {/* Agreement Introduction */}
             <div className="mb-4">
@@ -366,29 +324,39 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data, onUpdateData })
             </div>
 
             {/* Signature Section */}
-            <div className="mt-auto pt-4 border-t border-gray-800">
-              <h2 className="text-sm font-bold uppercase mb-4 text-center">SIGNATURES</h2>
-              
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center">
-                  <div className="h-10 border-b border-gray-400 mb-2"></div>
-                  <p className="font-semibold text-xs">{data.freelancerName || 'Service Provider'}</p>
-                  <p className="text-xs text-gray-600">Service Provider</p>
-                  <p className="text-xs text-gray-600 mt-1">Date: ________</p>
-                </div>
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="pt-4 border-t border-gray-800">
+                <h2 className="text-sm font-bold uppercase mb-4 text-center">SIGNATURES</h2>
                 
-                <div className="text-center">
-                  <div className="h-10 border-b border-gray-400 mb-2"></div>
-                  <p className="font-semibold text-xs">{data.clientName || 'Client'}</p>
-                  <p className="text-xs text-gray-600">Client</p>
-                  <p className="text-xs text-gray-600 mt-1">Date: ________</p>
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div className="text-center">
+                    {data.freelancerSignature ? (
+                      <div className="h-10 border-b border-gray-400 mb-2 flex items-end justify-center">
+                        <img src={data.freelancerSignature} alt="Freelancer signature" className="max-h-8 max-w-full" />
+                      </div>
+                    ) : (
+                      <div className="h-10 border-b border-gray-400 mb-2"></div>
+                    )}
+                    <p className="font-semibold text-xs">{data.freelancerName || 'Service Provider'}</p>
+                    <p className="text-xs text-gray-600">Service Provider</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '________'}
+                    </p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="h-10 border-b border-gray-400 mb-2"></div>
+                    <p className="font-semibold text-xs">{data.clientName || 'Client'}</p>
+                    <p className="text-xs text-gray-600">Client</p>
+                    <p className="text-xs text-gray-600 mt-1">Date: ________</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="text-center text-xs text-gray-500 mt-3 pt-2 border-t border-gray-300">
-              <p>Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
+              {/* Footer - Stick to bottom */}
+              <div className="text-center text-xs text-gray-500 pt-2 border-t border-gray-300 mt-auto">
+                <p>Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
+              </div>
             </div>
           </div>
         </motion.div>

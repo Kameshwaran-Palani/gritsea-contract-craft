@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 // Step Components
 import TemplateSelection from '@/components/contract-builder/TemplateSelection';
+import DocumentHeaders from '@/components/contract-builder/DocumentHeaders';
 import PartiesInformation from '@/components/contract-builder/PartiesInformation';
 import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
 import PaymentTerms from '@/components/contract-builder/PaymentTerms';
@@ -22,6 +23,7 @@ import Confidentiality from '@/components/contract-builder/Confidentiality';
 import IntellectualProperty from '@/components/contract-builder/IntellectualProperty';
 import TerminationDispute from '@/components/contract-builder/TerminationDispute';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
+import DesignCustomization from '@/components/contract-builder/DesignCustomization';
 import ReviewExport from '@/components/contract-builder/ReviewExport';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 
@@ -33,6 +35,16 @@ export interface ContractData {
   // Document Headers
   documentTitle: string;
   documentSubtitle: string;
+  
+  // Brand Logos
+  leftLogo?: string;
+  rightLogo?: string;
+  logoStyle: 'round' | 'rectangle';
+  
+  // Design
+  primaryColor: string;
+  fontFamily: string;
+  fontSize: 'small' | 'medium' | 'large';
   
   // Parties
   freelancerName: string;
@@ -105,6 +117,7 @@ const ContractBuilder = () => {
   // Filter steps based on edit mode
   const STEPS = [
     ...(isEditMode ? [] : [{ id: 'template', title: 'Choose Template', component: TemplateSelection }]),
+    { id: 'headers', title: 'Document Headers', component: DocumentHeaders },
     { id: 'parties', title: 'Parties Information', component: PartiesInformation },
     { id: 'scope', title: 'Scope of Work', component: ScopeOfWork },
     { id: 'payment', title: 'Payment Terms', component: PaymentTerms },
@@ -114,12 +127,17 @@ const ContractBuilder = () => {
     { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
     { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
     { id: 'signature', title: 'Signature', component: SignatureStep },
+    { id: 'design', title: 'Design & Branding', component: DesignCustomization },
   ];
   
-  const [activeSection, setActiveSection] = useState(isEditMode ? 'parties' : 'template');
+  const [activeSection, setActiveSection] = useState(isEditMode ? 'headers' : 'template');
   const [contractData, setContractData] = useState<ContractData>({
     documentTitle: 'SERVICE AGREEMENT',
     documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
+    logoStyle: 'round',
+    primaryColor: '#3B82F6',
+    fontFamily: 'inter',
+    fontSize: 'medium',
     freelancerName: '',
     freelancerAddress: '',
     freelancerEmail: '',
@@ -184,7 +202,11 @@ const ContractBuilder = () => {
         setContractData({
           ...loadedData,
           documentTitle: loadedData.documentTitle || 'SERVICE AGREEMENT',
-          documentSubtitle: loadedData.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'
+          documentSubtitle: loadedData.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT',
+          logoStyle: loadedData.logoStyle || 'round',
+          primaryColor: loadedData.primaryColor || '#3B82F6',
+          fontFamily: loadedData.fontFamily || 'inter',
+          fontSize: loadedData.fontSize || 'medium'
         });
         setContractId(data.id);
       }
@@ -396,7 +418,7 @@ const ContractBuilder = () => {
 
           {/* Right Panel - Live Preview */}
           <div className="w-1/2 bg-muted/20">
-            <ContractPreview data={contractData} onUpdateData={updateContractData} />
+            <ContractPreview data={contractData} />
           </div>
         </div>
 

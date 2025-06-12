@@ -1,12 +1,9 @@
-
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ContractData } from '@/pages/ContractBuilder';
-import { PenTool, RotateCcw, Check, Download } from 'lucide-react';
+import { PenTool, RotateCcw, Check } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 
 interface SignatureStepProps {
@@ -29,12 +26,12 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (sigRef.current) {
       sigRef.current.clear();
       setSignatureImage('');
-      updateData({ freelancerSignature: undefined });
+      updateData({ freelancerSignature: undefined, signedDate: undefined });
     }
   };
 
   const saveSignature = () => {
-    if (sigRef.current) {
+    if (sigRef.current && !sigRef.current.isEmpty()) {
       const signatureData = sigRef.current.toDataURL();
       setSignatureImage(signatureData);
       updateData({ 
@@ -46,6 +43,14 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
 
   return (
     <div className="space-y-6">
+      <div className="text-center mb-6">
+        <PenTool className="h-12 w-12 text-primary mx-auto mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">Your Digital Signature</h2>
+        <p className="text-muted-foreground">
+          Sign below to create your digital signature for this contract
+        </p>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -55,20 +60,20 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PenTool className="h-5 w-5" />
-              Your Digital Signature
+              Digital Signature
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center">
               <p className="text-muted-foreground mb-4">
-                Sign below to create your digital signature for this contract
+                Draw your signature in the box below
               </p>
               
-              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 mb-4">
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 mb-4 bg-white">
                 <SignatureCanvas
                   ref={sigRef}
                   canvasProps={{
-                    className: 'signature-canvas w-full h-40 bg-white rounded',
+                    className: 'signature-canvas w-full h-40 rounded',
                     width: 600,
                     height: 160
                   }}
@@ -78,7 +83,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                 />
               </div>
               
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-3">
                 <Button
                   variant="outline"
                   onClick={clearSignature}
@@ -108,11 +113,13 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   <Check className="h-4 w-4 text-green-600" />
                   <span className="font-medium text-green-800">Signature Saved</span>
                 </div>
-                <img 
-                  src={signatureImage} 
-                  alt="Your signature" 
-                  className="max-w-xs mx-auto border rounded"
-                />
+                <div className="flex justify-center">
+                  <img 
+                    src={signatureImage} 
+                    alt="Your signature" 
+                    className="max-w-xs border rounded bg-white p-2"
+                  />
+                </div>
                 <p className="text-sm text-green-700 mt-2 text-center">
                   Signed on: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : 'Today'}
                 </p>
