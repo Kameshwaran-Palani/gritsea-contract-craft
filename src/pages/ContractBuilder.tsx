@@ -30,6 +30,10 @@ export interface ContractData {
   templateId?: string;
   templateName?: string;
   
+  // Document Headers
+  documentTitle: string;
+  documentSubtitle: string;
+  
   // Parties
   freelancerName: string;
   freelancerBusinessName?: string;
@@ -89,27 +93,33 @@ export interface ContractData {
   signedDate?: string;
 }
 
-const STEPS = [
-  { id: 'template', title: 'Choose Template', component: TemplateSelection },
-  { id: 'parties', title: 'Parties Information', component: PartiesInformation },
-  { id: 'scope', title: 'Scope of Work', component: ScopeOfWork },
-  { id: 'payment', title: 'Payment Terms', component: PaymentTerms },
-  { id: 'ongoing', title: 'Ongoing Work', component: OngoingWork },
-  { id: 'sla', title: 'Service Level Agreement', component: ServiceLevelAgreement },
-  { id: 'nda', title: 'Confidentiality', component: Confidentiality },
-  { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
-  { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
-  { id: 'signature', title: 'Signature', component: SignatureStep },
-];
-
 const ContractBuilder = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { id } = useParams();
   
-  const [activeSection, setActiveSection] = useState('template');
+  // Determine if this is editing mode
+  const isEditMode = Boolean(id);
+  
+  // Filter steps based on edit mode
+  const STEPS = [
+    ...(isEditMode ? [] : [{ id: 'template', title: 'Choose Template', component: TemplateSelection }]),
+    { id: 'parties', title: 'Parties Information', component: PartiesInformation },
+    { id: 'scope', title: 'Scope of Work', component: ScopeOfWork },
+    { id: 'payment', title: 'Payment Terms', component: PaymentTerms },
+    { id: 'ongoing', title: 'Ongoing Work', component: OngoingWork },
+    { id: 'sla', title: 'Service Level Agreement', component: ServiceLevelAgreement },
+    { id: 'nda', title: 'Confidentiality', component: Confidentiality },
+    { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
+    { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
+    { id: 'signature', title: 'Signature', component: SignatureStep },
+  ];
+  
+  const [activeSection, setActiveSection] = useState(isEditMode ? 'parties' : 'template');
   const [contractData, setContractData] = useState<ContractData>({
+    documentTitle: 'SERVICE AGREEMENT',
+    documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
     freelancerName: '',
     freelancerAddress: '',
     freelancerEmail: '',
@@ -169,7 +179,13 @@ const ContractBuilder = () => {
       if (error) throw error;
       
       if (data && data.clauses_json) {
-        setContractData(data.clauses_json as unknown as ContractData);
+        const loadedData = data.clauses_json as unknown as ContractData;
+        // Ensure document headers exist
+        setContractData({
+          ...loadedData,
+          documentTitle: loadedData.documentTitle || 'SERVICE AGREEMENT',
+          documentSubtitle: loadedData.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'
+        });
         setContractId(data.id);
       }
     } catch (error) {
@@ -339,8 +355,12 @@ const ContractBuilder = () => {
           {/* Left Panel - Accordion Inputs */}
           <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-foreground mb-2">Build Your Contract</h2>
-              <p className="text-sm text-muted-foreground">Complete each section to create your contract</p>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                {isEditMode ? 'Edit Your Contract' : 'Build Your Contract'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isEditMode ? 'Update your contract details' : 'Complete each section to create your contract'}
+              </p>
             </div>
 
             <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
@@ -376,7 +396,7 @@ const ContractBuilder = () => {
 
           {/* Right Panel - Live Preview */}
           <div className="w-1/2 bg-muted/20">
-            <ContractPreview data={contractData} />
+            <ContractPreview data={contractData} onUpdateData={updateContractData} />
           </div>
         </div>
 
