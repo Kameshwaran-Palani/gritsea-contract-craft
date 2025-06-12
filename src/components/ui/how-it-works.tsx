@@ -1,135 +1,101 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { FileText, Edit, Share } from 'lucide-react';
+"use client";
+
+import { motion } from "framer-motion";
+import { FileText, Edit3, Upload } from "lucide-react";
 
 const steps = [
   {
-    icon: FileText,
     title: "Select Template",
     description: "Choose from 10+ professional templates or start from scratch",
-    color: "text-primary",
-    bgColor: "bg-primary/10"
+    icon: FileText,
+    color: "text-blue-600",
+    bgColor: "bg-blue-100",
   },
   {
-    icon: Edit,
     title: "Edit Easily",
     description: "Customize your contract with our intuitive editor and AI assistance",
-    color: "text-secondary",
-    bgColor: "bg-secondary/10"
+    icon: Edit3,
+    color: "text-green-600",
+    bgColor: "bg-green-100",
   },
   {
-    icon: Share,
     title: "Share & Sign",
     description: "Send to clients for digital signatures and track status in real-time",
-    color: "text-accent",
-    bgColor: "bg-accent/10"
-  }
+    icon: Upload,
+    color: "text-red-600",
+    bgColor: "bg-red-100",
+  },
 ];
 
-const HowItWorksSection = () => {
+export const HowItWorksSection = () => {
   return (
-    <section className="py-24 bg-gradient-to-b from-background to-muted/20">
-      <div className="container mx-auto px-4">
-        {/* Title */}
-        <motion.div 
-          className="text-center mb-16"
+    <section className="bg-muted py-24">
+      <div className="container mx-auto px-4 text-center">
+        {/* Heading */}
+        <motion.h2
+          className="text-4xl md:text-5xl font-bold text-primary mb-4"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text font-heading">
-            How It Works
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Create professional contracts in three simple steps. No legal expertise required.
-          </p>
-        </motion.div>
+          How It Works
+        </motion.h2>
 
-        <div className="max-w-6xl mx-auto">
-          {/* Progress Timeline */}
-          <div className="relative mb-16">
-            {/* Timeline bar */}
-            <div className="absolute top-16 left-0 w-full h-1 bg-muted rounded-full transform -translate-y-1/2 hidden md:block">
-              <motion.div 
-                className="h-full bg-gradient-to-r from-primary via-secondary to-accent rounded-full"
-                initial={{ width: 0 }}
-                whileInView={{ width: "100%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 2, delay: 0.5 }}
-              />
-            </div>
+        {/* Subtext */}
+        <motion.p
+          className="text-muted-foreground text-lg md:text-xl mb-16 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Create professional contracts in three simple steps. No legal expertise required.
+        </motion.p>
 
-            {/* Step Items */}
-            <div className="grid md:grid-cols-3 gap-8 relative">
-              {steps.map((step, index) => (
+        {/* Steps */}
+        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-20 md:gap-10">
+          {/* Horizontal line */}
+          <div className="absolute top-[60px] left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-green-600 to-red-600 z-0 hidden md:block" />
+
+          {steps.map((step, index) => (
+            <motion.div
+              key={index}
+              className="relative text-center z-10"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.2 }}
+            >
+              {/* Icon and Step Number */}
+              <div className="relative flex flex-col items-center justify-center min-h-[120px] mb-6">
+                {/* Icon Container */}
                 <motion.div
-                  key={step.title}
-                  className="text-center relative"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.2 }}
+                  className={`w-20 h-20 ${step.bgColor} rounded-2xl flex items-center justify-center shadow-xl transition-transform transform hover:scale-105`}
+                  whileHover={{ rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  {/* Step Icon and Number */}
-                  <div className="relative flex flex-col items-center mb-6">
-                    <motion.div
-                      className={`w-20 h-20 ${step.bgColor} rounded-2xl flex items-center justify-center z-20`}
-                      whileHover={{ scale: 1.05, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <step.icon className={`w-10 h-10 ${step.color}`} />
-                    </motion.div>
-                    <div className="absolute -bottom-4 w-10 h-10 bg-background border-4 border-primary rounded-full flex items-center justify-center text-primary font-bold text-lg z-10 shadow-md">
-                      {index + 1}
-                    </div>
-                  </div>
-
-                  {/* Step Content */}
-                  <h3 className="text-2xl font-semibold mb-4 font-heading">{step.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                  <step.icon className={`w-10 h-10 ${step.color}`} />
                 </motion.div>
-              ))}
-            </div>
-          </div>
 
-          {/* Interactive Demo Section */}
-          <motion.div 
-            className="bg-card rounded-2xl p-8 shadow-lg"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-semibold mb-2 font-heading">See It In Action</h3>
-              <p className="text-muted-foreground">Watch how easy it is to create a contract</p>
-            </div>
-            
-            <div className="relative bg-muted/30 rounded-xl p-6 min-h-[200px] flex items-center justify-center">
-              <motion.div 
-                className="text-center"
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                  opacity: [0.7, 1, 0.7]
-                }}
-                transition={{ 
-                  duration: 3, 
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-8 h-8 text-primary" />
-                </div>
-                <p className="text-muted-foreground">Interactive demo coming soon...</p>
-              </motion.div>
-            </div>
-          </motion.div>
+                {/* Step Number */}
+                <motion.div
+                  className="absolute bottom-[-22px] w-10 h-10 bg-background border-4 border-primary rounded-full flex items-center justify-center text-primary font-bold text-lg z-10 shadow-md"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {index + 1}
+                </motion.div>
+              </div>
+
+              {/* Title & Description */}
+              <h3 className="text-2xl font-semibold mb-3 font-heading">{step.title}</h3>
+              <p className="text-muted-foreground text-base leading-relaxed">
+                {step.description}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
   );
 };
-
-export default HowItWorksSection;
