@@ -80,7 +80,7 @@ const HowItWorksSection = () => {
                     >
                       <step.icon className={`w-10 h-10 ${step.color}`} />
                     </motion.div>
-                    <div className="absolute -bottom-4 w-10 h-10 bg-background border-4 border-primary rounded-full flex items-center justify-center text-primary font-bold text-lg z-10 shadow-md">
+                    <div className="absolute -bottom-4 w-10 h-10 bg-background border-4 border-primary rounded-full flex items-center justify-center text-primary font-bold text-lg z-30 shadow-md">
                       {index + 1}
                     </div>
                   </div>
