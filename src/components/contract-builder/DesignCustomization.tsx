@@ -35,9 +35,16 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
     }
   };
 
+  // Extended color palette with more options
   const predefinedColors = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
-    '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
+    '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
+    '#F97316', '#14B8A6', '#8B5A2B', '#DC2626',
+    '#7C3AED', '#059669', '#0EA5E9', '#D97706',
+    '#BE185D', '#0D9488', '#7C2D12', '#991B1B',
+    '#6B21A8', '#047857', '#0284C7', '#92400E',
+    '#BE123C', '#065F46', '#1E40AF', '#78350F',
+    '#A21CAF', '#064E3B', '#1E3A8A', '#451A03'
   ];
 
   const fontOptions = [
@@ -66,7 +73,10 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
       {/* Brand Logos */}
       <Card>
         <CardHeader>
-          <CardTitle>Brand Logos</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            Brand Logos
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -89,12 +99,12 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="leftLogo">Left Logo</Label>
+              <Label htmlFor="leftLogo">Service Provider Logo</Label>
               <div className="mt-2 space-y-2">
                 {data.leftLogo && (
                   <img 
                     src={data.leftLogo} 
-                    alt="Left logo" 
+                    alt="Service Provider logo" 
                     className={`w-16 h-16 object-cover border ${
                       data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
                     }`}
@@ -123,12 +133,12 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="rightLogo">Right Logo</Label>
+              <Label htmlFor="rightLogo">Client Logo</Label>
               <div className="mt-2 space-y-2">
                 {data.rightLogo && (
                   <img 
                     src={data.rightLogo} 
-                    alt="Right logo" 
+                    alt="Client logo" 
                     className={`w-16 h-16 object-cover border ${
                       data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
                     }`}
@@ -168,24 +178,30 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
           <div>
             <Label>Primary Color</Label>
             <div className="mt-2 space-y-3">
-              <div className="flex gap-2 flex-wrap">
+              <div className="grid grid-cols-8 gap-2">
                 {predefinedColors.map((color) => (
                   <button
                     key={color}
                     onClick={() => updateData({ primaryColor: color })}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      data.primaryColor === color ? 'border-gray-900' : 'border-gray-300'
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                      data.primaryColor === color ? 'border-gray-900 ring-2 ring-gray-300' : 'border-gray-300'
                     }`}
                     style={{ backgroundColor: color }}
+                    title={color}
                   />
                 ))}
               </div>
-              <Input
-                type="color"
-                value={data.primaryColor}
-                onChange={(e) => updateData({ primaryColor: e.target.value })}
-                className="w-20 h-10"
-              />
+              <div className="flex items-center gap-2">
+                <Label htmlFor="customColor">Custom Color:</Label>
+                <Input
+                  id="customColor"
+                  type="color"
+                  value={data.primaryColor}
+                  onChange={(e) => updateData({ primaryColor: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <span className="text-sm text-muted-foreground">{data.primaryColor}</span>
+              </div>
             </div>
           </div>
         </CardContent>

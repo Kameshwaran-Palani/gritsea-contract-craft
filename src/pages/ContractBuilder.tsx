@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Step Components
 import TemplateSelection from '@/components/contract-builder/TemplateSelection';
@@ -114,8 +115,8 @@ const ContractBuilder = () => {
   // Determine if this is editing mode
   const isEditMode = Boolean(id);
   
-  // Filter steps based on edit mode
-  const STEPS = [
+  // Filter steps based on edit mode - split into Edit and Design tabs
+  const EDIT_STEPS = [
     ...(isEditMode ? [] : [{ id: 'template', title: 'Choose Template', component: TemplateSelection }]),
     { id: 'headers', title: 'Document Headers', component: DocumentHeaders },
     { id: 'parties', title: 'Parties Information', component: PartiesInformation },
@@ -127,9 +128,13 @@ const ContractBuilder = () => {
     { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
     { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
     { id: 'signature', title: 'Signature', component: SignatureStep },
+  ];
+
+  const DESIGN_STEPS = [
     { id: 'design', title: 'Design & Branding', component: DesignCustomization },
   ];
   
+  const [activeTab, setActiveTab] = useState('edit');
   const [activeSection, setActiveSection] = useState(isEditMode ? 'headers' : 'template');
   const [contractData, setContractData] = useState<ContractData>({
     documentTitle: 'SERVICE AGREEMENT',
@@ -374,46 +379,87 @@ const ContractBuilder = () => {
       />
       <div className="min-h-screen bg-background">
         <div className="flex h-[calc(100vh-64px)]">
-          {/* Left Panel - Accordion Inputs */}
+          {/* Left Panel - Tabbed Interface */}
           <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-foreground mb-2">
                 {isEditMode ? 'Edit Your Contract' : 'Build Your Contract'}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {isEditMode ? 'Update your contract details' : 'Complete each section to create your contract'}
+                {isEditMode ? 'Update your contract details and design' : 'Complete each section to create your contract'}
               </p>
             </div>
 
-            <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
-              {STEPS.map((step, index) => {
-                const Component = step.component;
-                return (
-                  <AccordionItem key={step.id} value={step.id} className="border rounded-lg px-4">
-                    <AccordionTrigger className="text-left hover:no-underline py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
-                          activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <span className="font-medium text-sm">{step.title}</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-2 pb-4">
-                      <Component
-                        data={contractData}
-                        updateData={updateContractData}
-                        onNext={() => {}}
-                        onPrev={() => {}}
-                        isFirst={index === 0}
-                        isLast={index === STEPS.length - 1}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="edit">Edit Contract</TabsTrigger>
+                <TabsTrigger value="design">Design</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="edit" className="space-y-3">
+                <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
+                  {EDIT_STEPS.map((step, index) => {
+                    const Component = step.component;
+                    return (
+                      <AccordionItem key={step.id} value={step.id} className="border rounded-lg px-4">
+                        <AccordionTrigger className="text-left hover:no-underline py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
+                              activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <span className="font-medium text-sm">{step.title}</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 pb-4">
+                          <Component
+                            data={contractData}
+                            updateData={updateContractData}
+                            onNext={() => {}}
+                            onPrev={() => {}}
+                            isFirst={index === 0}
+                            isLast={index === EDIT_STEPS.length - 1}
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </TabsContent>
+
+              <TabsContent value="design" className="space-y-3">
+                <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
+                  {DESIGN_STEPS.map((step, index) => {
+                    const Component = step.component;
+                    return (
+                      <AccordionItem key={step.id} value={step.id} className="border rounded-lg px-4">
+                        <AccordionTrigger className="text-left hover:no-underline py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
+                              activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <span className="font-medium text-sm">{step.title}</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 pb-4">
+                          <Component
+                            data={contractData}
+                            updateData={updateContractData}
+                            onNext={() => {}}
+                            onPrev={() => {}}
+                            isFirst={index === 0}
+                            isLast={index === DESIGN_STEPS.length - 1}
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Right Panel - Live Preview */}
