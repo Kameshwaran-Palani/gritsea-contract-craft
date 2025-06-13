@@ -1,5 +1,4 @@
 "use client";
-
 import { motion } from "framer-motion";
 import { FileText, Edit3, Upload } from "lucide-react";
 
@@ -29,22 +28,22 @@ const steps = [
 
 export const HowItWorksSection = () => {
   return (
-    <section className="bg-muted py-24">
+    <section className="bg-gray-50 py-24">
       <div className="container mx-auto px-4 text-center">
         {/* Heading */}
         <motion.h2
-          className="text-4xl md:text-5xl font-bold text-primary mb-4"
+          className="text-4xl md:text-5xl font-bold text-blue-900 mb-4"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          How It Works
+          HOW IT WORKS
         </motion.h2>
-
+        
         {/* Subtext */}
         <motion.p
-          className="text-muted-foreground text-lg md:text-xl mb-16 max-w-2xl mx-auto"
+          className="text-gray-600 text-lg md:text-xl mb-16 max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -52,46 +51,49 @@ export const HowItWorksSection = () => {
         >
           Create professional contracts in three simple steps. No legal expertise required.
         </motion.p>
-
+        
         {/* Steps */}
-        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-20 md:gap-10">
-          {/* Horizontal line */}
-          <div className="absolute top-[60px] left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-green-600 to-red-600 z-0 hidden md:block" />
-
+        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8">
+          {/* Horizontal connecting line for desktop */}
+          <div className="absolute top-[50px] left-1/6 right-1/6 h-1 bg-gradient-to-r from-blue-600 via-green-600 to-red-600 z-0 hidden md:block" />
+          
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              className="relative text-center z-10"
+              className="relative text-center z-10 pb-8"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
             >
-              {/* Icon and Step Number */}
-              <div className="relative flex flex-col items-center justify-center min-h-[120px] mb-6">
-                {/* Icon Container */}
+              {/* Step Number Circle */}
+              <motion.div
+                className="absolute top-[40px] left-1/2 transform -translate-x-1/2 w-12 h-12 bg-white border-4 border-blue-800 rounded-full flex items-center justify-center text-blue-800 font-bold text-xl z-20 shadow-lg"
+                whileHover={{ scale: 1.05 }}
+              >
+                {index + 1}
+              </motion.div>
+              
+              {/* Icon Container */}
+              <div className="flex flex-col items-center justify-center mb-8">
                 <motion.div
-                  className={`w-20 h-20 ${step.bgColor} rounded-2xl flex items-center justify-center shadow-xl transition-transform transform hover:scale-105`}
+                  className={`w-24 h-24 ${step.bgColor} rounded-2xl flex items-center justify-center shadow-lg transition-transform transform hover:scale-105 mb-6`}
                   whileHover={{ rotate: 5 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <step.icon className={`w-10 h-10 ${step.color}`} />
-                </motion.div>
-
-                {/* Step Number */}
-                <motion.div
-                  className="absolute bottom-[-22px] w-10 h-10 bg-background border-4 border-primary rounded-full flex items-center justify-center text-primary font-bold text-lg z-10 shadow-md"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  {index + 1}
+                  <step.icon className={`w-12 h-12 ${step.color}`} />
                 </motion.div>
               </div>
-
+              
               {/* Title & Description */}
-              <h3 className="text-2xl font-semibold mb-3 font-heading">{step.title}</h3>
-              <p className="text-muted-foreground text-base leading-relaxed">
-                {step.description}
-              </p>
+              <div className="mt-4">
+                <h3 className="text-2xl font-semibold mb-4 text-gray-800">
+                  {step.title}
+                </h3>
+                <p className="text-gray-600 text-base leading-relaxed max-w-xs mx-auto">
+                  {step.description}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>
