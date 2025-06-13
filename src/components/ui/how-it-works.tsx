@@ -26,7 +26,7 @@ const steps = [
   },
 ];
 
-export const HowItWorksSection = () => {
+const HowItWorksSection = () => {
   return (
     <section className="bg-gray-50 py-24">
       <div className="container mx-auto px-4 text-center">
@@ -101,3 +101,5 @@ export const HowItWorksSection = () => {
     </section>
   );
 };
+
+export default HowItWorksSection;
