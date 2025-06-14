@@ -89,18 +89,19 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
   const getFontFamily = () => {
     switch (data.fontFamily) {
-      case 'serif': return 'Times, serif';
+      case 'serif': return 'Georgia, serif';
       case 'sans': return 'Arial, sans-serif';
-      case 'mono': return 'Courier, monospace';
-      default: return 'Inter, sans-serif';
+      case 'mono': return 'Courier New, monospace';
+      default: return 'Inter, system-ui, sans-serif';
     }
   };
 
   const getFontSize = () => {
     switch (data.fontSize) {
-      case 'small': return '10px';
-      case 'large': return '12px';
-      default: return '11px';
+      case 'small': return '11px';
+      case 'large': return '14px';
+      case 'xlarge': return '16px';
+      default: return '12px';
     }
   };
 
@@ -130,234 +131,301 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* A4 Document Container */}
+      {/* A4 Document Container - Exact match for PDF */}
       <div ref={contractRef} className="space-y-4 contract-preview">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg flex flex-col"
+          className="w-[794px] min-h-[1123px] mx-auto bg-white shadow-lg p-16"
           style={{ 
             fontFamily: getFontFamily(),
-            lineHeight: '1.4',
             fontSize: getFontSize(),
-            color: data.primaryColor || '#000000'
+            lineHeight: data.lineSpacing || 1.6,
+            color: '#1a1a1a'
           }}
         >
-          <div className="p-[15mm] flex-1 flex flex-col">
-            {/* Header with Logos */}
-            <div className="flex items-center justify-between mb-6">
-              {/* Left Logo */}
-              <div className="w-16 h-16 flex items-center justify-start">
-                {data.leftLogo && (
-                  <img 
-                    src={data.leftLogo} 
-                    alt="Left logo" 
-                    className={`w-16 h-16 object-cover ${
-                      data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
-                    }`}
-                  />
-                )}
-              </div>
-
-              {/* Center - Document Header */}
-              <div className="text-center flex-1">
-                <h1 className="text-lg font-bold uppercase tracking-wider mb-1">
-                  {data.documentTitle}
-                </h1>
-                <p className="text-xs text-gray-600 uppercase tracking-wide">
-                  {data.documentSubtitle}
-                </p>
-                {data.startDate && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Effective Date: {new Date(data.startDate).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                )}
-              </div>
-
-              {/* Right Logo */}
-              <div className="w-16 h-16 flex items-center justify-end">
-                {data.rightLogo && (
-                  <img 
-                    src={data.rightLogo} 
-                    alt="Right logo" 
-                    className={`w-16 h-16 object-cover ${
-                      data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
-                    }`}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="border-b-2 border-gray-800 mb-4"></div>
-
-            {/* Agreement Introduction */}
-            <div className="mb-4">
-              <p className="text-justify text-xs leading-relaxed">
-                This Service Agreement ("Agreement") is entered into on{' '}
-                <span className="font-semibold underline">
-                  {data.startDate ? new Date(data.startDate).toLocaleDateString() : '____________'}
-                </span>{' '}
-                between the parties identified below.
-              </p>
-            </div>
-
-            {/* Parties Section */}
-            <div className="mb-5">
-              <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
-                1. PARTIES
-              </h2>
-              
-              <div className="grid grid-cols-2 gap-4 mb-3">
-                <div>
-                  <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Service Provider:</h3>
-                  <div className="space-y-0.5 text-xs">
-                    {data.freelancerName && <p className="font-semibold">{data.freelancerName}</p>}
-                    {data.freelancerBusinessName && <p className="italic">{data.freelancerBusinessName}</p>}
-                    {data.freelancerAddress && <p>{data.freelancerAddress}</p>}
-                    {data.freelancerEmail && <p>Email: {data.freelancerEmail}</p>}
-                    {data.freelancerPhone && <p>Phone: {data.freelancerPhone}</p>}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Client:</h3>
-                  <div className="space-y-0.5 text-xs">
-                    {data.clientName && <p className="font-semibold">{data.clientName}</p>}
-                    {data.clientCompany && <p className="italic">{data.clientCompany}</p>}
-                    {data.clientEmail && <p>Email: {data.clientEmail}</p>}
-                    {data.clientPhone && <p>Phone: {data.clientPhone}</p>}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Scope of Work */}
-            <div className="mb-5">
-              <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
-                2. SCOPE OF WORK
-              </h2>
-              
-              <h3 className="font-semibold mb-2 text-xs">2.1 Services Description</h3>
-              <p className="text-justify mb-3 text-xs leading-relaxed">
-                {data.services ? data.services.substring(0, 600) + (data.services.length > 600 ? '...' : '') : 'Services to be defined...'}
-              </p>
-
-              {data.deliverables && (
-                <div className="mb-3">
-                  <h3 className="font-semibold mb-2 text-xs">2.2 Deliverables</h3>
-                  <p className="text-justify text-xs leading-relaxed">
-                    {data.deliverables.substring(0, 400) + (data.deliverables.length > 400 ? '...' : '')}
-                  </p>
-                </div>
+          {/* Header with Logos */}
+          <div className="flex items-start justify-between mb-12">
+            {/* Left Logo */}
+            <div className="w-20 h-20 flex items-center justify-start">
+              {data.leftLogo && (
+                <img 
+                  src={data.leftLogo} 
+                  alt="Company logo" 
+                  className={`w-20 h-20 object-contain ${
+                    data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
+                  }`}
+                />
               )}
             </div>
 
-            {/* Payment Terms */}
-            {(data.rate > 0 || data.totalAmount) && (
-              <div className="mb-5">
-                <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
-                  3. PAYMENT TERMS
-                </h2>
-                <div className="bg-gray-50 p-3 rounded text-xs space-y-1">
-                  <p>
-                    <span className="font-semibold">Structure:</span> {data.paymentType === 'fixed' ? 'Fixed Price' : 'Hourly Rate'}
-                  </p>
-                  {data.paymentType === 'fixed' && data.totalAmount ? (
-                    <p className="font-bold text-gray-800">
-                      Total: ₹{data.totalAmount.toLocaleString()}
-                    </p>
-                  ) : (
-                    <p className="font-bold text-gray-800">
-                      Rate: ₹{data.rate}/hour
-                    </p>
-                  )}
-                  
-                  {data.paymentSchedule.length > 0 && (
-                    <div className="mt-2">
-                      <p className="font-semibold">Payment Schedule:</p>
-                      <ul className="list-disc list-inside ml-2 space-y-0.5">
-                        {data.paymentSchedule.map((payment, index) => (
-                          <li key={index} className="text-xs">
-                            {payment.description}: {payment.percentage}%
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+            {/* Center - Document Header */}
+            <div className="text-center flex-1 px-8">
+              <h1 className="text-3xl font-bold uppercase tracking-wider mb-3" style={{ color: data.primaryColor || '#1a1a1a' }}>
+                {data.documentTitle || 'SERVICE AGREEMENT'}
+              </h1>
+              <p className="text-base text-gray-600 uppercase tracking-wide mb-4">
+                {data.documentSubtitle || 'Professional Service Contract'}
+              </p>
+              {data.startDate && (
+                <p className="text-sm text-gray-500">
+                  Effective Date: {new Date(data.startDate).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              )}
+            </div>
+
+            {/* Right Logo */}
+            <div className="w-20 h-20 flex items-center justify-end">
+              {data.rightLogo && (
+                <img 
+                  src={data.rightLogo} 
+                  alt="Client logo" 
+                  className={`w-20 h-20 object-contain ${
+                    data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'
+                  }`}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Horizontal Rule */}
+          <div className="border-b-3 border-gray-800 mb-8"></div>
+
+          {/* Agreement Introduction */}
+          <div className="mb-8">
+            <p className="text-justify leading-relaxed">
+              This Service Agreement ("Agreement") is entered into on{' '}
+              <span className="font-semibold border-b border-gray-400 px-2">
+                {data.startDate ? new Date(data.startDate).toLocaleDateString() : '____________'}
+              </span>{' '}
+              between the parties identified below for the provision of professional services as outlined in this document.
+            </p>
+          </div>
+
+          {/* 1. PARTIES */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+              1. PARTIES
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-bold text-base uppercase mb-3 text-gray-700">Service Provider:</h3>
+                <div className="space-y-2">
+                  {data.freelancerName && <p className="font-semibold text-base">{data.freelancerName}</p>}
+                  {data.freelancerBusinessName && <p className="italic">{data.freelancerBusinessName}</p>}
+                  {data.freelancerAddress && <p className="leading-relaxed">{data.freelancerAddress}</p>}
+                  {data.freelancerEmail && <p>Email: {data.freelancerEmail}</p>}
+                  {data.freelancerPhone && <p>Phone: {data.freelancerPhone}</p>}
                 </div>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-base uppercase mb-3 text-gray-700">Client:</h3>
+                <div className="space-y-2">
+                  {data.clientName && <p className="font-semibold text-base">{data.clientName}</p>}
+                  {data.clientCompany && <p className="italic">{data.clientCompany}</p>}
+                  {data.clientEmail && <p>Email: {data.clientEmail}</p>}
+                  {data.clientPhone && <p>Phone: {data.clientPhone}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. SCOPE OF WORK */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+              2. SCOPE OF WORK
+            </h2>
+            
+            <div className="mb-6">
+              <h3 className="font-semibold mb-3 text-base">2.1 Services Description</h3>
+              <p className="text-justify leading-relaxed whitespace-pre-wrap">
+                {data.services || 'Services to be defined...'}
+              </p>
+            </div>
+
+            {data.deliverables && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3 text-base">2.2 Deliverables</h3>
+                <p className="text-justify leading-relaxed whitespace-pre-wrap">
+                  {data.deliverables}
+                </p>
               </div>
             )}
 
-            {/* Additional Terms */}
-            <div className="mb-5">
-              <h2 className="text-sm font-bold uppercase mb-3 border-b border-gray-400 pb-1">
-                4. ADDITIONAL TERMS
+            {data.milestones && data.milestones.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3 text-base">2.3 Project Milestones</h3>
+                <div className="space-y-3">
+                  {data.milestones.map((milestone, index) => (
+                    <div key={index} className="border-l-4 border-blue-200 pl-4">
+                      <p className="font-medium">{milestone.title}</p>
+                      <p className="text-gray-600">{milestone.description}</p>
+                      <p className="text-sm text-gray-500">Due: {milestone.dueDate}</p>
+                      {milestone.amount && <p className="text-sm font-medium">Amount: ₹{milestone.amount.toLocaleString()}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. PAYMENT TERMS */}
+          {(data.rate > 0 || data.totalAmount) && (
+            <div className="mb-8">
+              <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+                3. PAYMENT TERMS
               </h2>
               
-              <div className="space-y-2 text-xs">
-                <div>
-                  <span className="font-semibold">Confidentiality:</span> {data.includeNDA ? 'Both parties agree to maintain confidentiality of all project information.' : 'No specific confidentiality terms apply.'}
-                </div>
-                <div>
-                  <span className="font-semibold">IP Rights:</span> <span className="capitalize">{data.ipOwnership}</span> retains intellectual property rights.
-                </div>
-                <div>
-                  <span className="font-semibold">Response Time:</span> {data.responseTime}
-                </div>
-                <div>
-                  <span className="font-semibold">Revisions:</span> {data.revisionLimit} revisions included
-                </div>
-                <div>
-                  <span className="font-semibold">Termination:</span> {data.terminationConditions}
-                </div>
-                <div>
-                  <span className="font-semibold">Notice Period:</span> {data.noticePeriod}
-                </div>
-                <div>
-                  <span className="font-semibold">Jurisdiction:</span> {data.jurisdiction}
-                </div>
-              </div>
-            </div>
-
-            {/* Signature Section */}
-            <div className="flex-1 flex flex-col justify-end">
-              <div className="pt-4 border-t border-gray-800">
-                <h2 className="text-sm font-bold uppercase mb-4 text-center">SIGNATURES</h2>
-                
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                  <div className="text-center">
-                    {data.freelancerSignature ? (
-                      <div className="h-10 border-b border-gray-400 mb-2 flex items-end justify-center">
-                        <img src={data.freelancerSignature} alt="Freelancer signature" className="max-h-8 max-w-full" />
-                      </div>
+              <div className="bg-gray-50 p-6 rounded-lg space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="font-semibold">Payment Structure:</p>
+                    <p>{data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Total Amount:</p>
+                    {data.paymentType === 'fixed' && data.totalAmount ? (
+                      <p className="text-xl font-bold" style={{ color: data.primaryColor || '#1a1a1a' }}>
+                        ₹{data.totalAmount.toLocaleString()}
+                      </p>
                     ) : (
-                      <div className="h-10 border-b border-gray-400 mb-2"></div>
+                      <p className="text-xl font-bold" style={{ color: data.primaryColor || '#1a1a1a' }}>
+                        ₹{data.rate}/hour
+                      </p>
                     )}
-                    <p className="font-semibold text-xs">{data.freelancerName || 'Service Provider'}</p>
-                    <p className="text-xs text-gray-600">Service Provider</p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '________'}
-                    </p>
                   </div>
-                  
-                  <div className="text-center">
-                    <div className="h-10 border-b border-gray-400 mb-2"></div>
-                    <p className="font-semibold text-xs">{data.clientName || 'Client'}</p>
-                    <p className="text-xs text-gray-600">Client</p>
-                    <p className="text-xs text-gray-600 mt-1">Date: ________</p>
+                </div>
+                
+                {data.paymentSchedule && data.paymentSchedule.length > 0 && (
+                  <div>
+                    <p className="font-semibold mb-3">Payment Schedule:</p>
+                    <div className="space-y-2">
+                      {data.paymentSchedule.map((payment, index) => (
+                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200">
+                          <span>{payment.description}</span>
+                          <span className="font-medium">{payment.percentage}%</span>
+                          {payment.dueDate && <span className="text-sm text-gray-600">{payment.dueDate}</span>}
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
+
+                {data.lateFeeEnabled && data.lateFeeAmount && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <p className="font-semibold">Late Payment Fee:</p>
+                    <p>₹{data.lateFeeAmount} will be charged for payments made after the due date.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 4. TERMS AND CONDITIONS */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+              4. TERMS AND CONDITIONS
+            </h2>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-2">4.1 Service Level Agreement</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Response Time:</span> {data.responseTime}</p>
+                  <p><span className="font-medium">Revisions Included:</span> {data.revisionLimit}</p>
+                  {data.uptimeRequirement && <p><span className="font-medium">Uptime Requirement:</span> {data.uptimeRequirement}</p>}
                 </div>
               </div>
 
-              {/* Footer - Stick to bottom */}
-              <div className="text-center text-xs text-gray-500 pt-2 border-t border-gray-300 mt-auto">
-                <p>Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
+              {data.includeNDA && (
+                <div>
+                  <h3 className="font-semibold mb-2">4.2 Confidentiality</h3>
+                  <p>Both parties acknowledge that they may have access to confidential information and agree to maintain strict confidentiality.</p>
+                  {data.confidentialityScope && <p className="mt-2">{data.confidentialityScope}</p>}
+                  {data.confidentialityDuration && <p>Duration: {data.confidentialityDuration}</p>}
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold mb-2">4.3 Intellectual Property</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Ownership:</span> <span className="capitalize">{data.ipOwnership}</span> retains intellectual property rights</p>
+                  <p><span className="font-medium">Usage Rights:</span> <span className="capitalize">{data.usageRights}</span> usage rights granted</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">4.4 Termination</h3>
+                <p className="mb-2">{data.terminationConditions}</p>
+                <p><span className="font-medium">Notice Period:</span> {data.noticePeriod}</p>
+              </div>
+
+              {data.isRetainer && (
+                <div>
+                  <h3 className="font-semibold mb-2">4.5 Retainer Agreement</h3>
+                  <div className="space-y-2">
+                    {data.retainerAmount && <p><span className="font-medium">Monthly Retainer:</span> ₹{data.retainerAmount.toLocaleString()}</p>}
+                    {data.renewalCycle && <p><span className="font-medium">Renewal Cycle:</span> {data.renewalCycle}</p>}
+                    <p><span className="font-medium">Auto-renewal:</span> {data.autoRenew ? 'Yes' : 'No'}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 5. GOVERNING LAW */}
+          <div className="mb-12">
+            <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+              5. GOVERNING LAW
+            </h2>
+            <p className="leading-relaxed">
+              This Agreement shall be governed by and construed in accordance with the laws of {data.jurisdiction}.{' '}
+              {data.arbitrationClause && 'Any disputes arising under this agreement shall be resolved through arbitration.'}
+            </p>
+          </div>
+
+          {/* Signature Section */}
+          <div className="border-t-3 border-gray-800 pt-8">
+            <h2 className="text-xl font-bold uppercase mb-8 text-center" style={{ color: data.primaryColor || '#1a1a1a' }}>
+              SIGNATURES
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-12">
+              <div className="text-center">
+                <div className="h-16 border-b-2 border-gray-400 mb-4 flex items-end justify-center">
+                  {data.freelancerSignature && (
+                    <img src={data.freelancerSignature} alt="Service Provider signature" className="max-h-12 max-w-full" />
+                  )}
+                </div>
+                <p className="font-bold text-base">{data.freelancerName || 'Service Provider Name'}</p>
+                <p className="text-gray-600">Service Provider</p>
+                <p className="text-gray-600 mt-2">
+                  Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '______________'}
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="h-16 border-b-2 border-gray-400 mb-4 flex items-end justify-center">
+                  {data.clientSignature && (
+                    <img src={data.clientSignature} alt="Client signature" className="max-h-12 max-w-full" />
+                  )}
+                </div>
+                <p className="font-bold text-base">{data.clientName || 'Client Name'}</p>
+                <p className="text-gray-600">Client</p>
+                <p className="text-gray-600 mt-2">Date: ______________</p>
               </div>
             </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center text-sm text-gray-500 mt-12 pt-6 border-t border-gray-300">
+            <p>This agreement is governed by the Indian Contract Act, 1872 | Generated with Agrezy Platform</p>
           </div>
         </motion.div>
       </div>
