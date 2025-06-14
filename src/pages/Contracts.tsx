@@ -63,42 +63,50 @@ const Contracts = () => {
   // Generate images for contracts when they're loaded
   useEffect(() => {
     if (contracts.length > 0) {
-      console.log('Contracts loaded, generating images for', contracts.length, 'contracts');
+      console.log('📋 Contracts loaded, generating images for', contracts.length, 'contracts');
       generateImagesForContracts();
     }
   }, [contracts]);
 
   const generateImagesForContracts = async () => {
-    console.log('Starting image generation for all contracts');
+    console.log('🎨 Starting batch image generation for all contracts');
     
+    // Generate images one by one to avoid overwhelming the browser
     for (const contract of contracts) {
       if (contractImages[contract.id]) {
-        console.log('Image already exists for contract:', contract.id);
-        continue; // Skip if already generated
+        console.log('⏭️ Image already exists for contract:', contract.id);
+        continue;
       }
       
-      console.log('Generating image for contract:', contract.id);
+      console.log('🔄 Generating image for contract:', contract.id, '- Title:', contract.title);
       setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
       
       try {
+        // Add a small delay between generations to prevent browser lock-up
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         const imageDataUrl = await generateContractCoverImage(contract);
-        if (imageDataUrl) {
-          console.log('Image generated successfully for contract:', contract.id);
+        if (imageDataUrl && imageDataUrl.length > 100) {
+          console.log('✅ Image generated successfully for contract:', contract.id, 'Size:', imageDataUrl.length);
           setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
         } else {
-          console.error('Empty image data URL for contract:', contract.id);
+          console.error('❌ Empty or invalid image data URL for contract:', contract.id);
         }
       } catch (error) {
-        console.error(`Error generating image for contract ${contract.id}:`, error);
+        console.error(`❌ Error generating image for contract ${contract.id}:`, error);
       } finally {
         setImagesLoading(prev => ({ ...prev, [contract.id]: false }));
       }
     }
+    
+    console.log('🏁 Batch image generation completed');
   };
 
   const loadContracts = async () => {
     try {
       setContractsLoading(true);
+      console.log('📡 Loading contracts for user:', user?.id);
+      
       const { data, error } = await supabase
         .from('contracts')
         .select('*')
@@ -108,6 +116,7 @@ const Contracts = () => {
       if (error) throw error;
       
       if (data) {
+        console.log('📋 Loaded', data.length, 'contracts from database');
         // Map the database status to our Contract interface status
         const mappedContracts = data.map(contract => ({
           ...contract,
@@ -116,7 +125,7 @@ const Contracts = () => {
         setContracts(mappedContracts);
       }
     } catch (error) {
-      console.error('Error loading contracts:', error);
+      console.error('❌ Error loading contracts:', error);
       toast({
         title: "Error",
         description: "Failed to load contracts",
@@ -254,8 +263,11 @@ const Contracts = () => {
                       >
                         {imagesLoading[contract.id] ? (
                           <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            <span className="ml-2 text-sm text-muted-foreground">Generating preview...</span>
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                              <span className="text-sm text-muted-foreground">Generating preview...</span>
+                              <p className="text-xs text-muted-foreground mt-1">Contract: {contract.title}</p>
+                            </div>
                           </div>
                         ) : contractImages[contract.id] ? (
                           <img 
@@ -263,14 +275,23 @@ const Contracts = () => {
                             alt={`${contract.title} preview`}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
-                              console.error('Error loading contract image:', contract.id);
+                              console.error('❌ Error loading contract image:', contract.id);
+                              // Show fallback content
                               e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.fallback-content');
+                              if (fallback) {
+                                (fallback as HTMLElement).style.display = 'flex';
+                              }
                             }}
                           />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                        ) : null}
+                        
+                        {/* Fallback content when image fails to load */}
+                        {!imagesLoading[contract.id] && !contractImages[contract.id] && (
+                          <div className="fallback-content w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
                             <FileText className="h-12 w-12 mb-2" />
-                            <span className="text-sm">Preview not available</span>
+                            <span className="text-sm font-medium">{contract.title}</span>
+                            <span className="text-xs">Click to view contract</span>
                           </div>
                         )}
                       </div>

@@ -34,7 +34,14 @@ interface Contract {
 }
 
 export const generateContractCoverImage = async (contract: Contract): Promise<string> => {
-  console.log('Starting contract image generation for:', contract.id);
+  console.log('🎨 Starting contract image generation for:', contract.id);
+  console.log('📝 Contract data:', {
+    title: contract.title,
+    client_name: contract.client_name,
+    freelancer_name: contract.freelancer_name,
+    services: contract.services?.substring(0, 100),
+    contract_amount: contract.contract_amount
+  });
   
   const getFontFamily = () => {
     switch (contract.font_family) {
@@ -61,29 +68,47 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
   tempDiv.style.boxSizing = 'border-box';
   tempDiv.style.overflow = 'hidden';
 
+  // Use actual contract data or fallback values
+  const documentTitle = contract.document_title || 'SERVICE AGREEMENT';
+  const documentSubtitle = contract.document_subtitle || contract.title || 'CONTRACT WITH CLIENT';
+  const effectiveDate = contract.start_date ? new Date(contract.start_date).toLocaleDateString() : new Date().toLocaleDateString();
+  const freelancerName = contract.freelancer_name || 'Service Provider';
+  const clientName = contract.client_name || 'Client';
+  const servicesText = contract.services || 'Services to be defined as per agreement between both parties.';
+  const contractAmount = contract.total_amount || contract.contract_amount || 0;
+
+  console.log('📋 Using data:', {
+    documentTitle,
+    documentSubtitle,
+    freelancerName,
+    clientName,
+    contractAmount,
+    servicesLength: servicesText.length
+  });
+
   tempDiv.innerHTML = `
     <div style="display: flex; flex-direction: column; height: 100%; font-family: ${getFontFamily()};">
       <!-- Header with Logos -->
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px;">
         <!-- Left Logo -->
         <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: flex-start;">
-          ${contract.left_logo ? `<img src="${contract.left_logo}" alt="Left logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" crossorigin="anonymous" />` : ''}
+          ${contract.left_logo ? `<img src="${contract.left_logo}" alt="Left logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" onerror="this.style.display='none'" />` : ''}
         </div>
 
         <!-- Center - Document Header -->
         <div style="text-align: center; flex: 1;">
           <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 10px 0; color: ${contract.primary_color || '#000000'};">
-            ${contract.document_title || 'SERVICE AGREEMENT'}
+            ${documentTitle}
           </h1>
           <p style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0;">
-            ${contract.document_subtitle || contract.title}
+            ${documentSubtitle}
           </p>
-          ${contract.start_date ? `<p style="font-size: 14px; color: #888; margin: 0;">Effective: ${new Date(contract.start_date).toLocaleDateString()}</p>` : ''}
+          <p style="font-size: 14px; color: #888; margin: 0;">Effective: ${effectiveDate}</p>
         </div>
 
         <!-- Right Logo -->
         <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: flex-end;">
-          ${contract.right_logo ? `<img src="${contract.right_logo}" alt="Right logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" crossorigin="anonymous" />` : ''}
+          ${contract.right_logo ? `<img src="${contract.right_logo}" alt="Right logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" onerror="this.style.display='none'" />` : ''}
         </div>
       </div>
 
@@ -94,7 +119,7 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
         <p style="text-align: justify; font-size: 14px; line-height: 1.6; margin: 0;">
           This Service Agreement ("Agreement") is entered into on
           <span style="font-weight: bold; text-decoration: underline;">
-            ${contract.start_date ? new Date(contract.start_date).toLocaleDateString() : '____________'}
+            ${effectiveDate}
           </span>
           between the parties identified below.
         </p>
@@ -110,21 +135,21 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
           <div>
             <h3 style="font-weight: bold; font-size: 14px; text-transform: uppercase; margin: 0 0 15px 0; color: #555;">Service Provider:</h3>
             <div style="line-height: 1.8;">
-              ${contract.freelancer_name ? `<p style="font-weight: bold; margin: 0 0 5px 0;">${contract.freelancer_name}</p>` : ''}
+              <p style="font-weight: bold; margin: 0 0 5px 0;">${freelancerName}</p>
               ${contract.freelancer_business_name ? `<p style="font-style: italic; margin: 0 0 5px 0;">${contract.freelancer_business_name}</p>` : ''}
-              ${contract.freelancer_address ? `<p style="margin: 0 0 5px 0;">${contract.freelancer_address}</p>` : ''}
-              ${contract.freelancer_email ? `<p style="margin: 0 0 5px 0;">Email: ${contract.freelancer_email}</p>` : ''}
-              ${contract.freelancer_phone ? `<p style="margin: 0 0 5px 0;">Phone: ${contract.freelancer_phone}</p>` : ''}
+              ${contract.freelancer_address ? `<p style="margin: 0 0 5px 0;">${contract.freelancer_address}</p>` : '<p style="margin: 0 0 5px 0;">Address: To be provided</p>'}
+              ${contract.freelancer_email ? `<p style="margin: 0 0 5px 0;">Email: ${contract.freelancer_email}</p>` : '<p style="margin: 0 0 5px 0;">Email: contact@provider.com</p>'}
+              ${contract.freelancer_phone ? `<p style="margin: 0 0 5px 0;">Phone: ${contract.freelancer_phone}</p>` : '<p style="margin: 0 0 5px 0;">Phone: +91 XXXXXXXXXX</p>'}
             </div>
           </div>
           
           <div>
             <h3 style="font-weight: bold; font-size: 14px; text-transform: uppercase; margin: 0 0 15px 0; color: #555;">Client:</h3>
             <div style="line-height: 1.8;">
-              ${contract.client_name ? `<p style="font-weight: bold; margin: 0 0 5px 0;">${contract.client_name}</p>` : ''}
+              <p style="font-weight: bold; margin: 0 0 5px 0;">${clientName}</p>
               ${contract.client_company ? `<p style="font-style: italic; margin: 0 0 5px 0;">${contract.client_company}</p>` : ''}
-              ${contract.client_email ? `<p style="margin: 0 0 5px 0;">Email: ${contract.client_email}</p>` : ''}
-              ${contract.client_phone ? `<p style="margin: 0 0 5px 0;">Phone: ${contract.client_phone}</p>` : ''}
+              <p style="margin: 0 0 5px 0;">Email: ${contract.client_email || 'client@company.com'}</p>
+              ${contract.client_phone ? `<p style="margin: 0 0 5px 0;">Phone: ${contract.client_phone}</p>` : '<p style="margin: 0 0 5px 0;">Phone: +91 XXXXXXXXXX</p>'}
             </div>
           </div>
         </div>
@@ -138,33 +163,42 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
         
         <h3 style="font-weight: bold; margin: 0 0 10px 0; font-size: 14px;">2.1 Services Description</h3>
         <p style="text-align: justify; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-          ${contract.services ? contract.services.substring(0, 600) + (contract.services.length > 600 ? '...' : '') : 'Services to be defined...'}
+          ${servicesText.length > 500 ? servicesText.substring(0, 500) + '...' : servicesText}
         </p>
 
         ${contract.deliverables ? `
           <h3 style="font-weight: bold; margin: 0 0 10px 0; font-size: 14px;">2.2 Deliverables</h3>
           <p style="text-align: justify; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-            ${contract.deliverables.substring(0, 400) + (contract.deliverables.length > 400 ? '...' : '')}
+            ${contract.deliverables.length > 300 ? contract.deliverables.substring(0, 300) + '...' : contract.deliverables}
           </p>
         ` : ''}
       </div>
 
       <!-- Payment Terms Preview -->
-      ${(contract.rate > 0 || contract.total_amount || contract.contract_amount) ? `
+      ${contractAmount > 0 ? `
         <div style="margin-top: auto;">
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; font-size: 14px;">
             <h3 style="font-weight: bold; margin: 0 0 10px 0;">3. PAYMENT TERMS</h3>
             <p style="font-weight: bold; color: #333; margin: 0 0 5px 0;">
-              Total Amount: ₹${(contract.total_amount || contract.contract_amount || 0).toLocaleString()}
+              Total Amount: ₹${contractAmount.toLocaleString()}
             </p>
-            ${contract.rate ? `
+            ${contract.rate && contract.rate > 0 ? `
               <p style="color: #666; margin: 0;">
                 Rate: ₹${contract.rate.toLocaleString()} ${contract.payment_type === 'hourly' ? '/hour' : '/project'}
               </p>
             ` : ''}
           </div>
         </div>
-      ` : ''}
+      ` : `
+        <div style="margin-top: auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; font-size: 14px;">
+            <h3 style="font-weight: bold; margin: 0 0 10px 0;">3. PAYMENT TERMS</h3>
+            <p style="color: #666; margin: 0;">
+              Payment terms to be defined as per mutual agreement.
+            </p>
+          </div>
+        </div>
+      `}
 
       <!-- Footer -->
       <div style="text-align: center; font-size: 12px; color: #888; padding-top: 20px; border-top: 1px solid #ddd; margin-top: 20px;">
@@ -174,13 +208,13 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
   `;
 
   document.body.appendChild(tempDiv);
-  console.log('Temporary div created and appended to body');
+  console.log('📄 Temporary div created and appended to body');
 
   try {
     // Wait a bit for fonts and images to load
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log('Starting html2canvas conversion...');
+    console.log('🔄 Starting html2canvas conversion...');
     const canvas = await html2canvas(tempDiv, {
       backgroundColor: '#ffffff',
       scale: 1,
@@ -188,17 +222,20 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
       allowTaint: false,
       width: 794,
       height: 1123,
-      logging: true,
-      foreignObjectRendering: false
+      logging: false,
+      foreignObjectRendering: false,
+      onclone: (clonedDoc) => {
+        console.log('📋 Document cloned for canvas generation');
+      }
     });
 
     document.body.removeChild(tempDiv);
     const dataUrl = canvas.toDataURL('image/png', 0.9);
-    console.log('Contract image generated successfully for:', contract.id, 'Data URL length:', dataUrl.length);
+    console.log('✅ Contract image generated successfully for:', contract.id, 'Data URL length:', dataUrl.length);
     return dataUrl;
   } catch (error) {
     document.body.removeChild(tempDiv);
-    console.error('Error generating contract image for:', contract.id, error);
+    console.error('❌ Error generating contract image for:', contract.id, error);
     return '';
   }
 };
