@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, FileText, Edit, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
+import { generateContractCoverImage } from '@/utils/contractImageGenerator';
 
 interface Contract {
   id: string;
@@ -51,12 +51,40 @@ const Contracts = () => {
   const { toast } = useToast();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [contractsLoading, setContractsLoading] = useState(true);
+  const [contractImages, setContractImages] = useState<{[key: string]: string}>({});
+  const [imagesLoading, setImagesLoading] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     if (user) {
       loadContracts();
     }
   }, [user]);
+
+  // Generate images for contracts when they're loaded
+  useEffect(() => {
+    if (contracts.length > 0) {
+      generateImagesForContracts();
+    }
+  }, [contracts]);
+
+  const generateImagesForContracts = async () => {
+    const imagePromises = contracts.map(async (contract) => {
+      if (contractImages[contract.id]) return; // Skip if already generated
+      
+      setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
+      
+      try {
+        const imageDataUrl = await generateContractCoverImage(contract);
+        setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
+      } catch (error) {
+        console.error(`Error generating image for contract ${contract.id}:`, error);
+      } finally {
+        setImagesLoading(prev => ({ ...prev, [contract.id]: false }));
+      }
+    });
+
+    await Promise.all(imagePromises);
+  };
 
   const loadContracts = async () => {
     try {
@@ -129,162 +157,6 @@ const Contracts = () => {
     }
   };
 
-  // Generate full contract first page preview
-  const generateContractCover = (contract: Contract) => {
-    const getFontFamily = () => {
-      switch (contract.font_family) {
-        case 'serif': return 'Times, serif';
-        case 'sans': return 'Arial, sans-serif';
-        case 'mono': return 'Courier, monospace';
-        default: return 'Inter, sans-serif';
-      }
-    };
-
-    return (
-      <div 
-        className="w-full h-80 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm relative"
-        style={{ 
-          fontFamily: getFontFamily(),
-          fontSize: '8px',
-          lineHeight: '1.3',
-          color: contract.primary_color || '#000000'
-        }}
-      >
-        <div className="p-4 h-full flex flex-col">
-          {/* Header with Logos */}
-          <div className="flex items-center justify-between mb-3">
-            {/* Left Logo */}
-            <div className="w-6 h-6 flex items-center justify-start">
-              {contract.left_logo && (
-                <img 
-                  src={contract.left_logo} 
-                  alt="Left logo" 
-                  className={`w-6 h-6 object-cover ${
-                    contract.logo_style === 'round' ? 'rounded-full' : 'rounded-sm'
-                  }`}
-                />
-              )}
-            </div>
-
-            {/* Center - Document Header */}
-            <div className="text-center flex-1">
-              <h1 className="text-sm font-bold uppercase tracking-wider mb-1">
-                {contract.document_title || 'SERVICE AGREEMENT'}
-              </h1>
-              <p className="text-sm text-gray-600 uppercase tracking-wide">
-                {contract.document_subtitle || contract.title}
-              </p>
-              {contract.start_date && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Effective: {new Date(contract.start_date).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-
-            {/* Right Logo */}
-            <div className="w-6 h-6 flex items-center justify-end">
-              {contract.right_logo && (
-                <img 
-                  src={contract.right_logo} 
-                  alt="Right logo" 
-                  className={`w-6 h-6 object-cover ${
-                    contract.logo_style === 'round' ? 'rounded-full' : 'rounded-sm'
-                  }`}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="border-b border-gray-800 mb-3"></div>
-
-          {/* Agreement Introduction */}
-          <div className="mb-3">
-            <p className="text-justify text-xs leading-tight">
-              This Service Agreement ("Agreement") is entered into on{' '}
-              <span className="font-semibold underline">
-                {contract.start_date ? new Date(contract.start_date).toLocaleDateString() : '____________'}
-              </span>{' '}
-              between the parties identified below.
-            </p>
-          </div>
-
-          {/* Parties Section */}
-          <div className="mb-4">
-            <h2 className="text-xs font-bold uppercase mb-2 border-b border-gray-400 pb-1">
-              1. PARTIES
-            </h2>
-            
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Service Provider:</h3>
-                <div className="space-y-1 text-xs">
-                  {contract.freelancer_name && <p className="font-semibold">{contract.freelancer_name}</p>}
-                  {contract.freelancer_business_name && <p className="italic">{contract.freelancer_business_name}</p>}
-                  {contract.freelancer_address && <p className="truncate">{contract.freelancer_address}</p>}
-                  {contract.freelancer_email && <p className="truncate">Email: {contract.freelancer_email}</p>}
-                  {contract.freelancer_phone && <p>Phone: {contract.freelancer_phone}</p>}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Client:</h3>
-                <div className="space-y-1 text-xs">
-                  {contract.client_name && <p className="font-semibold">{contract.client_name}</p>}
-                  {contract.client_company && <p className="italic">{contract.client_company}</p>}
-                  {contract.client_email && <p className="truncate">Email: {contract.client_email}</p>}
-                  {contract.client_phone && <p>Phone: {contract.client_phone}</p>}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Scope of Work Preview */}
-          <div className="mb-3 flex-1">
-            <h2 className="text-xs font-bold uppercase mb-2 border-b border-gray-400 pb-1">
-              2. SCOPE OF WORK
-            </h2>
-            
-            <h3 className="font-semibold mb-1 text-xs">2.1 Services Description</h3>
-            <p className="text-justify text-xs leading-tight mb-2">
-              {contract.services ? contract.services.substring(0, 300) + (contract.services.length > 300 ? '...' : '') : 'Services to be defined...'}
-            </p>
-
-            {contract.deliverables && (
-              <>
-                <h3 className="font-semibold mb-1 text-xs">2.2 Deliverables</h3>
-                <p className="text-justify text-xs leading-tight">
-                  {contract.deliverables.substring(0, 200) + (contract.deliverables.length > 200 ? '...' : '')}
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Payment Terms Preview */}
-          {(contract.rate > 0 || contract.total_amount || contract.contract_amount) && (
-            <div className="mt-auto">
-              <div className="bg-gray-50 p-2 rounded text-xs">
-                <h3 className="font-bold mb-1">3. PAYMENT TERMS</h3>
-                <p className="font-bold text-gray-800">
-                  Total Amount: ₹{(contract.total_amount || contract.contract_amount || 0).toLocaleString()}
-                </p>
-                {contract.rate && (
-                  <p className="text-gray-600">
-                    Rate: ₹{contract.rate.toLocaleString()} {contract.payment_type === 'hourly' ? '/hour' : '/project'}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="text-center text-xs text-gray-500 pt-2 border-t border-gray-300 mt-2">
-            <p>Generated by Agrezy</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -324,7 +196,7 @@ const Contracts = () => {
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-4">
-                    <div className="h-80 bg-muted rounded mb-4"></div>
+                    <div className="aspect-[794/1123] bg-muted rounded mb-4"></div>
                     <div className="space-y-2">
                       <div className="h-4 bg-muted rounded w-3/4"></div>
                       <div className="h-3 bg-muted rounded w-1/2"></div>
@@ -365,12 +237,26 @@ const Contracts = () => {
                 >
                   <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer">
                     <CardContent className="p-4">
-                      {/* Full Contract Cover Preview - Clickable */}
+                      {/* Contract Cover Image - Clickable */}
                       <div 
-                        className="mb-4 cursor-pointer" 
+                        className="mb-4 cursor-pointer aspect-[794/1123] bg-gray-50 rounded-lg overflow-hidden border" 
                         onClick={() => navigate(`/contract/${contract.id}`)}
                       >
-                        {generateContractCover(contract)}
+                        {imagesLoading[contract.id] ? (
+                          <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                          </div>
+                        ) : contractImages[contract.id] ? (
+                          <img 
+                            src={contractImages[contract.id]} 
+                            alt={`${contract.title} preview`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+                            <FileText className="h-12 w-12" />
+                          </div>
+                        )}
                       </div>
                       
                       {/* Contract Info */}
@@ -400,7 +286,7 @@ const Contracts = () => {
                           </div>
                         </div>
                         
-                        {/* Action Buttons - Improved Design */}
+                        {/* Action Buttons */}
                         <div className="flex gap-2 pt-2">
                           <Button
                             size="sm"
