@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContractData } from '@/pages/ContractBuilder';
 import { FileText, Download, Share2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 
@@ -17,11 +16,6 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
   const downloadPDF = async () => {
     try {
-      if (!contractRef.current) {
-        toast.error('Contract preview not found');
-        return;
-      }
-
       toast.info('Generating PDF...');
       
       // Create PDF document
