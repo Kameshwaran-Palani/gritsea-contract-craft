@@ -10,7 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, FileText, Edit, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
-import { generateContractCoverImage, generateContractCardImage } from '@/utils/contractImageGenerator';
+import { generateContractCoverImage } from '@/utils/contractImageGenerator';
+import { generateContractCardImage } from '@/utils/contractCardImageGenerator';
 
 interface Contract {
   id: string;
