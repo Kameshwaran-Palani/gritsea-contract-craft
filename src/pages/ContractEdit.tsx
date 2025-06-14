@@ -3,7 +3,7 @@ import React from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, User } from 'lucide-react';
+import { ChevronLeft, User, Download, Send } from 'lucide-react';
 import ContractBuilder from './ContractBuilder';
 
 const ContractEdit = () => {
@@ -20,6 +20,18 @@ const ContractEdit = () => {
   if (!id) {
     return <Navigate to="/contracts" replace />;
   }
+
+  const handleDownloadPDF = async () => {
+    // Trigger download from ContractBuilder
+    const event = new CustomEvent('downloadPDF');
+    window.dispatchEvent(event);
+  };
+
+  const handleShareContract = async () => {
+    // Trigger share from ContractBuilder
+    const event = new CustomEvent('shareContract');
+    window.dispatchEvent(event);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,9 +58,23 @@ const ContractEdit = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              Contract ID: {id}
-            </div>
+            <Button
+              variant="outline"
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+            
+            <Button
+              onClick={handleShareContract}
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Send className="h-4 w-4" />
+              Get E-Sign
+            </Button>
+            
             <Link to="/settings">
               <Button variant="ghost" size="sm">
                 <User className="h-4 w-4" />

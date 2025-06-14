@@ -453,6 +453,25 @@ const ContractBuilder = () => {
     }
   };
 
+  // Add event listeners for navbar actions
+  useEffect(() => {
+    const handleDownloadEvent = () => {
+      handleDownloadPDF();
+    };
+
+    const handleShareEvent = () => {
+      handleShareLink();
+    };
+
+    window.addEventListener('downloadPDF', handleDownloadEvent);
+    window.addEventListener('shareContract', handleShareEvent);
+
+    return () => {
+      window.removeEventListener('downloadPDF', handleDownloadEvent);
+      window.removeEventListener('shareContract', handleShareEvent);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -479,7 +498,7 @@ const ContractBuilder = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-foreground mb-2">
-                    {isEditMode ? 'Edit Your Contract' : 'Build Your Contract'}
+                    {isEditMode ? 'Contract Builder' : 'Build Your Contract'}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {isEditMode ? 'Update your contract details and design' : 'Complete each section to create your contract'}
@@ -569,51 +588,6 @@ const ContractBuilder = () => {
           {/* Right Panel - Increased width from w-1/2 to w-3/5 */}
           <div className="w-3/5 bg-muted/20">
             <ContractPreview data={contractData} />
-          </div>
-        </div>
-
-        {/* Bottom Action Bar */}
-        <div className="border-t bg-white/80 backdrop-blur-sm p-4">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/contracts')}
-              className="flex items-center gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Back to Contracts
-            </Button>
-            
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={saveProgress}
-                disabled={saving}
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {saving ? 'Saving...' : 'Save Draft'}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleDownloadPDF}
-                disabled={isGeneratingPDF}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {isGeneratingPDF ? 'Generating...' : 'Download'}
-              </Button>
-              
-              <Button
-                onClick={handleShareLink}
-                disabled={isSharing || !contractData.clientName || !contractData.services}
-                className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-              >
-                <Send className="h-4 w-4" />
-                {isSharing ? 'Sharing...' : 'Share Contract'}
-              </Button>
-            </div>
           </div>
         </div>
       </div>
