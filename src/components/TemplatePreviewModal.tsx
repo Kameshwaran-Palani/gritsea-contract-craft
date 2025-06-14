@@ -3,7 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface TemplatePreviewModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ interface TemplatePreviewModalProps {
     description: string;
     price: string;
     icon: React.ComponentType<any>;
+    popular?: boolean;
   } | null;
 }
 
@@ -104,6 +105,31 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
             </div>
           </div>
         );
+      case 'digital-marketer':
+        return (
+          <div className="space-y-4 text-sm">
+            <div className="border-b pb-2">
+              <h3 className="font-bold">DIGITAL MARKETING SERVICE AGREEMENT</h3>
+              <p className="text-muted-foreground">Marketing Service Contract</p>
+            </div>
+            <div className="space-y-2">
+              <p><strong>Marketer:</strong> [Your Name]</p>
+              <p><strong>Client:</strong> [Client Name]</p>
+              <p><strong>Services:</strong> SEO, social media marketing, PPC campaigns, analytics</p>
+              <p><strong>Payment:</strong> Monthly retainer + ad spend</p>
+              <p><strong>Reporting:</strong> Weekly performance reports</p>
+            </div>
+            <div className="bg-muted p-3 rounded">
+              <p className="font-medium">Marketing Deliverables:</p>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>SEO optimization and keyword research</li>
+                <li>Social media content calendar</li>
+                <li>PPC campaign management</li>
+                <li>Monthly analytics reports</li>
+              </ul>
+            </div>
+          </div>
+        );
       default:
         return (
           <div className="space-y-4 text-sm">
@@ -133,7 +159,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader className="border-b pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -143,7 +169,12 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                 <DialogDescription className="mt-1">{template.description}</DialogDescription>
               </div>
             </div>
-            <Badge variant="secondary" className="text-sm">{template.price}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-sm">{template.price}</Badge>
+              {template.popular && (
+                <Badge variant="default" className="text-sm">Popular</Badge>
+              )}
+            </div>
           </div>
         </DialogHeader>
         
