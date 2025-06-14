@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Share, Edit, Calendar, User, DollarSign, Clock } from 'lucide-react';
+import { FileText, Download, Share, Edit, Calendar, User, DollarSign, Clock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import DashboardLayout from '@/components/DashboardLayout';
 
 interface Contract {
   id: string;
@@ -227,127 +227,162 @@ const ContractView = () => {
       signed: "default",
       cancelled: "destructive"
     };
-    const colors: Record<string, string> = {
-      draft: "text-muted-foreground",
-      sent: "text-secondary",
-      signed: "text-success",
-      cancelled: "text-destructive"
-    };
     return (
-      <Badge variant={variants[status] || "outline"} className={`capitalize ${colors[status]}`}>
+      <Badge variant={variants[status] || "outline"} className="capitalize">
         {status}
       </Badge>
     );
   };
 
+  const formatPaymentTerms = (paymentTerms: string) => {
+    try {
+      const parsed = JSON.parse(paymentTerms);
+      if (Array.isArray(parsed)) {
+        return parsed.map(term => `${term.description}: ${term.percentage}%`).join(', ');
+      }
+      return paymentTerms;
+    } catch {
+      return paymentTerms || 'No payment terms specified';
+    }
+  };
+
   if (loading || loadingContract) {
     return (
-      <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </DashboardLayout>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   if (!contract) {
     return (
-      <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Contract Not Found</h2>
-            <p className="text-muted-foreground mb-6">The contract you're looking for doesn't exist or you don't have permission to view it.</p>
-            <Button onClick={() => navigate('/contracts')}>Back to Contracts</Button>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Contract Not Found</h2>
+          <p className="text-muted-foreground mb-6">The contract you're looking for doesn't exist or you don't have permission to view it.</p>
+          <Button onClick={() => navigate('/contracts')}>Back to Contracts</Button>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Left side */}
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/contracts')}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </Button>
+              
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">A</span>
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Agrezy
+                </span>
+              </div>
+            </div>
+
+            {/* Right side */}
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <span>3 free contracts left</span>
+              <Button variant="ghost" size="sm">
+                <User className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto space-y-6"
+          className="space-y-6"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/contracts')}
-                className="rounded-2xl"
-              >
-                ← Back
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold font-heading">{contract.title}</h1>
-                <p className="text-muted-foreground">Contract ID: {contract.id.slice(0, 8)}...</p>
-              </div>
+          {/* Contract Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{contract.title}</h1>
+              <p className="text-gray-500 mt-2">Contract ID: {contract.id.slice(0, 8)}...</p>
             </div>
-            <div className="flex items-center space-x-3">
+            
+            <div className="flex items-center space-x-4">
               {getStatusBadge(contract.status)}
-              <Button variant="outline" size="sm" onClick={handleEditContract}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
+              <Button variant="outline" onClick={handleEditContract} className="flex items-center space-x-2">
+                <Edit className="w-4 h-4" />
+                <span>Edit</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleShareContract} disabled={isSharing}>
-                <Share className="w-4 h-4 mr-2" />
-                {isSharing ? 'Sharing...' : 'Share'}
+              <Button variant="outline" onClick={handleShareContract} disabled={isSharing} className="flex items-center space-x-2">
+                <Share className="w-4 h-4" />
+                <span>{isSharing ? 'Sharing...' : 'Share'}</span>
               </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
-                <Download className="w-4 h-4 mr-2" />
-                {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+              <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="flex items-center space-x-2">
+                <Download className="w-4 h-4" />
+                <span>{isGeneratingPDF ? 'Generating...' : 'Download PDF'}</span>
               </Button>
             </div>
           </div>
 
-          {/* Contract Overview */}
-          <div className="grid md:grid-cols-3 gap-4">
+          {/* Contract Overview Cards */}
+          <div className="grid md:grid-cols-3 gap-6">
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Client</p>
-                    <p className="font-semibold">{contract.client_name || 'Not specified'}</p>
-                    <p className="text-xs text-muted-foreground">{contract.client_email}</p>
+                    <p className="text-sm text-gray-500">Client</p>
+                    <p className="font-semibold text-lg">
+                      {contract.client_name || 'Not specified'}
+                    </p>
+                    <p className="text-sm text-gray-500">{contract.client_email}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-success/10 rounded-2xl flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-success" />
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Amount</p>
-                    <p className="font-semibold">
+                    <p className="text-sm text-gray-500">Amount</p>
+                    <p className="font-semibold text-lg">
                       {contract.contract_amount ? `₹${contract.contract_amount.toLocaleString()}` : 'Not specified'}
                     </p>
-                    <p className="text-xs text-muted-foreground">{contract.payment_type}</p>
+                    <p className="text-sm text-gray-500">{contract.payment_type}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-secondary/10 rounded-2xl flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-secondary" />
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Timeline</p>
-                    <p className="font-semibold">{contract.project_timeline || 'Not specified'}</p>
-                    <p className="text-xs text-muted-foreground">Project duration</p>
+                    <p className="text-sm text-gray-500">Timeline</p>
+                    <p className="font-semibold text-lg">
+                      {contract.project_timeline || 'Not specified'}
+                    </p>
+                    <p className="text-sm text-gray-500">Project duration</p>
                   </div>
                 </div>
               </CardContent>
@@ -362,12 +397,14 @@ const ContractView = () => {
                 Contract Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {/* Scope of Work */}
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-primary">Scope of Work</h3>
-                <div className="bg-muted/20 rounded-xl p-3">
-                  <p className="whitespace-pre-wrap text-sm">{contract.scope_of_work || 'No scope of work specified'}</p>
+                <h3 className="text-lg font-semibold mb-3 text-primary">Scope of Work</h3>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {contract.scope_of_work || 'No scope of work specified'}
+                  </p>
                 </div>
               </div>
 
@@ -375,26 +412,28 @@ const ContractView = () => {
 
               {/* Payment Terms */}
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-secondary">Payment Terms</h3>
-                <div className="bg-muted/20 rounded-xl p-3">
-                  <p className="whitespace-pre-wrap text-sm">{contract.payment_terms || 'No payment terms specified'}</p>
+                <h3 className="text-lg font-semibold mb-3 text-secondary">Payment Terms</h3>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm leading-relaxed">
+                    {formatPaymentTerms(contract.payment_terms)}
+                  </p>
                 </div>
               </div>
 
               <Separator />
 
               {/* Contract Metadata */}
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold mb-2">Created</h4>
-                  <div className="flex items-center text-sm text-muted-foreground">
+                  <h4 className="font-semibold mb-3">Created</h4>
+                  <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="w-4 h-4 mr-2" />
                     {new Date(contract.created_at).toLocaleDateString()} at {new Date(contract.created_at).toLocaleTimeString()}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2">Last Updated</h4>
-                  <div className="flex items-center text-sm text-muted-foreground">
+                  <h4 className="font-semibold mb-3">Last Updated</h4>
+                  <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="w-4 h-4 mr-2" />
                     {new Date(contract.updated_at).toLocaleDateString()} at {new Date(contract.updated_at).toLocaleTimeString()}
                   </div>
@@ -404,7 +443,7 @@ const ContractView = () => {
           </Card>
         </motion.div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 
