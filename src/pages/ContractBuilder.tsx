@@ -12,23 +12,7 @@ import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
-
-// Step Components
-import TemplateSelection from '@/components/contract-builder/TemplateSelection';
-import DocumentHeaders from '@/components/contract-builder/DocumentHeaders';
-import PartiesInformation from '@/components/contract-builder/PartiesInformation';
-import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
-import PaymentTerms from '@/components/contract-builder/PaymentTerms';
-import OngoingWork from '@/components/contract-builder/OngoingWork';
-import ServiceLevelAgreement from '@/components/contract-builder/ServiceLevelAgreement';
-import Confidentiality from '@/components/contract-builder/Confidentiality';
-import IntellectualProperty from '@/components/contract-builder/IntellectualProperty';
-import TerminationDispute from '@/components/contract-builder/TerminationDispute';
-import SignatureStep from '@/components/contract-builder/SignatureStep';
-import DesignCustomization from '@/components/contract-builder/DesignCustomization';
-import ReviewExport from '@/components/contract-builder/ReviewExport';
-import ContractPreview from '@/components/contract-builder/ContractPreview';
-import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
+import ESignDialog from '@/components/contract-builder/ESignDialog';
 
 export interface ContractData {
   // Template
@@ -222,6 +206,7 @@ const ContractBuilder = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [revisionRequests, setRevisionRequests] = useState<any[]>([]);
+  const [showESignDialog, setShowESignDialog] = useState(false);
 
   // Auto-save functionality with debounce
   const debouncedSave = useCallback(
@@ -477,46 +462,7 @@ const ContractBuilder = () => {
   };
 
   const handleShareLink = async () => {
-    if (!contractId) {
-      await saveProgress();
-    }
-
-    setIsSharing(true);
-    try {
-      // Update contract status to sent_for_signature
-      const { error: statusError } = await supabase
-        .from('contracts')
-        .update({ status: 'sent_for_signature' })
-        .eq('id', contractId);
-
-      if (statusError) throw statusError;
-      setContractStatus('sent_for_signature');
-
-      const shareableLink = `${window.location.origin}/contract/view/${contractId}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Contract Signing',
-          text: 'Please review and sign this contract',
-          url: shareableLink
-        });
-      } else {
-        await navigator.clipboard.writeText(shareableLink);
-        toast({
-          title: "Link Copied & Contract Sent",
-          description: "Contract sharing link copied to clipboard and status updated to 'Awaiting Signature'."
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing contract:', error);
-      toast({
-        title: "Error",
-        description: "Failed to share contract",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSharing(false);
-    }
+    setShowESignDialog(true);
   };
 
   // Add event listeners for navbar actions
@@ -676,6 +622,7 @@ const ContractBuilder = () => {
           </div>
         </div>
       </div>
+      <ESignDialog open={showESignDialog} onClose={() => setShowESignDialog(false)} />
     </>
   );
 };
