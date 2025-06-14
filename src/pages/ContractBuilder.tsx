@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -122,7 +122,6 @@ export interface ContractData {
   
   // Security
   accessKey?: string;
-  clientPhone?: string;
 }
 
 const ContractBuilder = () => {
@@ -206,6 +205,29 @@ const ContractBuilder = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
 
+  // Auto-save functionality with debounce
+  const debouncedSave = useCallback(
+    debounce(() => {
+      if (contractData && user) {
+        saveProgress();
+      }
+    }, 2000), // Save after 2 seconds of no changes
+    [contractData, user]
+  );
+
+  // Debounce utility function
+  function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
   useEffect(() => {
     if (user) {
       setContractData(prev => ({
@@ -221,6 +243,13 @@ const ContractBuilder = () => {
       loadContract(id);
     }
   }, [id, user]);
+
+  // Auto-save when contract data changes
+  useEffect(() => {
+    if (contractId && user) {
+      debouncedSave();
+    }
+  }, [contractData, contractId, user, debouncedSave]);
 
   const loadContract = async (contractId: string) => {
     try {
@@ -307,8 +336,9 @@ const ContractBuilder = () => {
       }
       
       toast({
-        title: "Contract Saved",
-        description: "Your progress has been saved successfully."
+        title: "Auto-saved",
+        description: "Your changes have been saved automatically.",
+        duration: 2000
       });
     } catch (error) {
       console.error('Error saving contract:', error);
@@ -427,12 +457,22 @@ const ContractBuilder = () => {
           {/* Left Panel - Tabbed Interface */}
           <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                {isEditMode ? 'Edit Your Contract' : 'Build Your Contract'}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {isEditMode ? 'Update your contract details and design' : 'Complete each section to create your contract'}
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">
+                    {isEditMode ? 'Edit Your Contract' : 'Build Your Contract'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {isEditMode ? 'Update your contract details and design' : 'Complete each section to create your contract'}
+                  </p>
+                </div>
+                {saving && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    Saving...
+                  </div>
+                )}
+              </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

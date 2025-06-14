@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { ContractData } from '@/pages/ContractBuilder';
-import { Palette, Type, Spacing, Bold, List } from 'lucide-react';
+import { Palette, Type, Bold, List } from 'lucide-react';
 
 interface DesignCustomizationProps {
   data: ContractData;
