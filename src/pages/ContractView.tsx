@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Share, Edit, Calendar, User, DollarSign, Clock, ArrowLeft } from 'lucide-react';
+import { FileText, Download, Share, Edit, Calendar, User, DollarSign, Clock, ArrowLeft, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Contract {
@@ -36,6 +35,7 @@ const ContractView = () => {
   const [loadingContract, setLoadingContract] = useState(true);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
 
   useEffect(() => {
     if (user && id) {
@@ -320,6 +320,14 @@ const ContractView = () => {
             
             <div className="flex items-center space-x-4">
               {getStatusBadge(contract.status)}
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPDFPreview(!showPDFPreview)} 
+                className="flex items-center space-x-2"
+              >
+                <Eye className="w-4 h-4" />
+                <span>{showPDFPreview ? 'Hide' : 'Show'} PDF Preview</span>
+              </Button>
               <Button variant="outline" onClick={handleEditContract} className="flex items-center space-x-2">
                 <Edit className="w-4 h-4" />
                 <span>Edit</span>
@@ -334,6 +342,96 @@ const ContractView = () => {
               </Button>
             </div>
           </div>
+
+          {/* PDF Preview Section */}
+          {showPDFPreview && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-lg shadow-lg overflow-hidden"
+            >
+              <div className="bg-gray-100 px-6 py-4 border-b">
+                <h2 className="text-lg font-semibold flex items-center">
+                  <FileText className="w-5 h-5 mr-2" />
+                  PDF Preview
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">This is how your contract will appear when downloaded as PDF</p>
+              </div>
+              
+              <div className="p-8 bg-gray-50">
+                <div className="max-w-4xl mx-auto bg-white shadow-lg" style={{ fontFamily: 'serif', minHeight: '842px', padding: '60px' }}>
+                  {/* PDF Header */}
+                  <div className="text-center border-b-2 border-black pb-6 mb-8">
+                    <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">SERVICE AGREEMENT</h1>
+                    <p className="text-gray-600 uppercase tracking-wide">{contract.title}</p>
+                  </div>
+
+                  {/* Parties Section */}
+                  <div className="mb-8">
+                    <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-2">1. PARTIES</h2>
+                    <div className="grid grid-cols-2 gap-8">
+                      <div>
+                        <h3 className="font-bold mb-2">Service Provider:</h3>
+                        <p className="font-semibold">{contract.clauses_json?.freelancerName || 'Service Provider'}</p>
+                        <p className="text-sm text-gray-600">{contract.clauses_json?.freelancerEmail || ''}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-bold mb-2">Client:</h3>
+                        <p className="font-semibold">{contract.client_name || 'Client'}</p>
+                        <p className="text-sm text-gray-600">{contract.client_email || ''}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scope of Work */}
+                  <div className="mb-8">
+                    <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-2">2. SCOPE OF WORK</h2>
+                    <p className="text-justify leading-relaxed">{contract.scope_of_work || 'No scope of work specified'}</p>
+                  </div>
+
+                  {/* Payment Terms */}
+                  <div className="mb-8">
+                    <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-2">3. PAYMENT TERMS</h2>
+                    <div className="bg-gray-50 p-4 rounded">
+                      <p className="font-semibold text-lg mb-2">Total Amount: ₹{contract.contract_amount?.toLocaleString() || '0'}</p>
+                      <p className="leading-relaxed">{formatPaymentTerms(contract.payment_terms)}</p>
+                    </div>
+                  </div>
+
+                  {/* Timeline */}
+                  <div className="mb-8">
+                    <h2 className="text-lg font-bold uppercase mb-4 border-b border-gray-400 pb-2">4. PROJECT TIMELINE</h2>
+                    <p className="leading-relaxed">{contract.project_timeline || 'No timeline specified'}</p>
+                  </div>
+
+                  {/* Signature Section */}
+                  <div className="mt-16 pt-8 border-t-2 border-black">
+                    <h2 className="text-lg font-bold uppercase mb-8 text-center">SIGNATURES</h2>
+                    <div className="grid grid-cols-2 gap-16">
+                      <div className="text-center">
+                        <div className="h-16 border-b-2 border-gray-400 mb-4"></div>
+                        <p className="font-bold">{contract.clauses_json?.freelancerName || 'Service Provider'}</p>
+                        <p className="text-sm text-gray-600">Service Provider</p>
+                        <p className="text-sm text-gray-600 mt-2">Date: ________________</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="h-16 border-b-2 border-gray-400 mb-4"></div>
+                        <p className="font-bold">{contract.client_name || 'Client'}</p>
+                        <p className="text-sm text-gray-600">Client</p>
+                        <p className="text-sm text-gray-600 mt-2">Date: ________________</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="text-center text-xs text-gray-500 mt-12 pt-4 border-t border-gray-300">
+                    <p>Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Contract Overview Cards */}
           <div className="grid md:grid-cols-3 gap-6">
