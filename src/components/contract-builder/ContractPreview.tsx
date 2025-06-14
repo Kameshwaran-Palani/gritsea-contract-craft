@@ -26,7 +26,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
       
       // Create canvas with better settings for PDF generation
       const canvas = await html2canvas(contractRef.current, {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -35,25 +35,27 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
         logging: false
       });
 
-      // PDF settings - A4 size
+      // Create PDF with A4 dimensions
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      const margin = 10; // Reduced margin
+      const margin = 10;
       const contentWidth = pageWidth - (margin * 2);
       const contentHeight = pageHeight - (margin * 2);
       
-      // Calculate dimensions
+      // Calculate dimensions to fit content
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
+      // Convert canvas to image data
+      const imgData = canvas.toDataURL('image/png');
+      
       // If content fits on one page
       if (imgHeight <= contentHeight) {
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       } else {
         // Multi-page handling
         let yPosition = 0;
-        let pageNumber = 1;
         
         while (yPosition < imgHeight) {
           const remainingHeight = imgHeight - yPosition;
@@ -94,13 +96,14 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           // Add new page if more content exists
           if (yPosition < imgHeight) {
             pdf.addPage();
-            pageNumber++;
           }
         }
       }
 
-      // Download
+      // Generate filename with current date
       const fileName = `${data.templateName || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Download the PDF
       pdf.save(fileName);
       
       toast.success('PDF downloaded successfully!');
