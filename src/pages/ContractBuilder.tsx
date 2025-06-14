@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send, Lock, Clock } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -221,15 +221,17 @@ const ContractBuilder = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [revisionRequests, setRevisionRequests] = useState<any[]>([]);
   const [showESignDialog, setShowESignDialog] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockedAt, setLockedAt] = useState<string | null>(null);
 
   // Auto-save functionality with debounce
   const debouncedSave = useCallback(
     debounce(() => {
-      if (contractData && user) {
+      if (contractData && user && !isLocked) {
         saveProgress();
       }
     }, 2000), // Save after 2 seconds of no changes
-    [contractData, user]
+    [contractData, user, isLocked]
   );
 
   // Debounce utility function
@@ -263,10 +265,49 @@ const ContractBuilder = () => {
 
   // Auto-save when contract data changes
   useEffect(() => {
-    if (contractId && user) {
+    if (contractId && user && !isLocked) {
       debouncedSave();
     }
-  }, [contractData, contractId, user, debouncedSave]);
+  }, [contractData, contractId, user, isLocked, debouncedSave]);
+
+  // Check if contract can be unlocked (24 hours passed)
+  useEffect(() => {
+    if (isLocked && lockedAt) {
+      const lockTime = new Date(lockedAt).getTime();
+      const now = new Date().getTime();
+      const hoursPassed = (now - lockTime) / (1000 * 60 * 60);
+      
+      if (hoursPassed >= 24) {
+        unlockContract();
+      }
+    }
+  }, [isLocked, lockedAt]);
+
+  const unlockContract = async () => {
+    if (!contractId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .update({ 
+          is_locked: false,
+          locked_at: null
+        })
+        .eq('id', contractId);
+      
+      if (error) throw error;
+      
+      setIsLocked(false);
+      setLockedAt(null);
+      
+      toast({
+        title: "Contract Unlocked",
+        description: "24 hours have passed. You can now edit the contract again."
+      });
+    } catch (error) {
+      console.error('Error unlocking contract:', error);
+    }
+  };
 
   const loadContract = async (contractId: string) => {
     try {
@@ -305,6 +346,8 @@ const ContractBuilder = () => {
         });
         setContractId(data.id);
         setContractStatus(data.status || 'draft');
+        setIsLocked(data.is_locked || false);
+        setLockedAt(data.locked_at);
         
         // Load revision requests if status is revision_requested
         if (data.status === 'revision_requested') {
@@ -346,15 +389,21 @@ const ContractBuilder = () => {
       
       if (error) throw error;
       
-      // Update contract status back to draft for editing
+      // Update contract status back to draft and unlock for editing
       if (contractId) {
         const { error: statusError } = await supabase
           .from('contracts')
-          .update({ status: 'draft' })
+          .update({ 
+            status: 'draft',
+            is_locked: false,
+            locked_at: null
+          })
           .eq('id', contractId);
         
         if (statusError) throw statusError;
         setContractStatus('draft');
+        setIsLocked(false);
+        setLockedAt(null);
       }
       
       // Reload revision requests
@@ -364,7 +413,7 @@ const ContractBuilder = () => {
       
       toast({
         title: "Revision Resolved",
-        description: "You can now continue editing the contract."
+        description: "Contract has been unlocked. You can now continue editing."
       });
     } catch (error) {
       console.error('Error resolving revision:', error);
@@ -377,7 +426,7 @@ const ContractBuilder = () => {
   };
 
   const saveProgress = async () => {
-    if (!user) return;
+    if (!user || isLocked) return;
     
     setSaving(true);
     try {
@@ -412,11 +461,13 @@ const ContractBuilder = () => {
         navigate(`/contract/edit/${data.id}`, { replace: true });
       }
       
-      toast({
-        title: "Auto-saved",
-        description: "Your changes have been saved automatically.",
-        duration: 2000
-      });
+      if (!isLocked) {
+        toast({
+          title: "Auto-saved",
+          description: "Your changes have been saved automatically.",
+          duration: 2000
+        });
+      }
     } catch (error) {
       console.error('Error saving contract:', error);
       toast({
@@ -430,7 +481,9 @@ const ContractBuilder = () => {
   };
 
   const updateContractData = (updates: Partial<ContractData>) => {
-    setContractData(prev => ({ ...prev, ...updates }));
+    if (!isLocked) {
+      setContractData(prev => ({ ...prev, ...updates }));
+    }
   };
 
   const handleSectionChange = (value: string | undefined) => {
@@ -476,6 +529,14 @@ const ContractBuilder = () => {
   };
 
   const handleShareLink = async () => {
+    if (isLocked) {
+      toast({
+        title: "Contract Locked",
+        description: "This contract is already locked and cannot generate new eSign links.",
+        variant: "destructive"
+      });
+      return;
+    }
     setShowESignDialog(true);
   };
 
@@ -496,7 +557,7 @@ const ContractBuilder = () => {
       window.removeEventListener('downloadPDF', handleDownloadEvent);
       window.removeEventListener('shareContract', handleShareEvent);
     };
-  }, []);
+  }, [isLocked]);
 
   if (loading) {
     return (
@@ -531,6 +592,35 @@ const ContractBuilder = () => {
                 )}
               </div>
 
+              {isLocked && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-red-800 mb-2">
+                    <Lock className="h-5 w-5" />
+                    <h3 className="font-medium">Contract Locked</h3>
+                  </div>
+                  <p className="text-sm text-red-700 mb-2">
+                    This contract is locked for editing because an eSign link has been generated.
+                  </p>
+                  <div className="flex items-center gap-2 text-sm text-red-600">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      {lockedAt && (() => {
+                        const lockTime = new Date(lockedAt).getTime();
+                        const now = new Date().getTime();
+                        const hoursPassed = (now - lockTime) / (1000 * 60 * 60);
+                        const hoursRemaining = Math.max(0, 24 - hoursPassed);
+                        
+                        if (hoursRemaining > 0) {
+                          return `Unlocks in ${Math.ceil(hoursRemaining)} hours`;
+                        } else {
+                          return "Contract can be unlocked now";
+                        }
+                      })()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {contractStatus === 'revision_requested' && revisionRequests.length > 0 && (
                 <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <h3 className="font-medium text-orange-900 mb-3">Revision Requests</h3>
@@ -560,8 +650,12 @@ const ContractBuilder = () => {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="edit">Edit Contract</TabsTrigger>
-                <TabsTrigger value="design">Design</TabsTrigger>
+                <TabsTrigger value="edit" disabled={isLocked}>
+                  Edit Contract {isLocked && <Lock className="h-3 w-3 ml-1" />}
+                </TabsTrigger>
+                <TabsTrigger value="design" disabled={isLocked}>
+                  Design {isLocked && <Lock className="h-3 w-3 ml-1" />}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="edit" className="space-y-3">
@@ -569,8 +663,8 @@ const ContractBuilder = () => {
                   {EDIT_STEPS.map((step, index) => {
                     const Component = step.component;
                     return (
-                      <AccordionItem key={step.id} value={step.id} className="border rounded-lg px-4">
-                        <AccordionTrigger className="text-left hover:no-underline py-4">
+                      <AccordionItem key={step.id} value={step.id} className={`border rounded-lg px-4 ${isLocked ? 'opacity-50' : ''}`}>
+                        <AccordionTrigger className="text-left hover:no-underline py-4" disabled={isLocked}>
                           <div className="flex items-center gap-3">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
                               activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
@@ -578,6 +672,7 @@ const ContractBuilder = () => {
                               {index + 1}
                             </div>
                             <span className="font-medium text-sm">{step.title}</span>
+                            {isLocked && <Lock className="h-3 w-3 ml-auto" />}
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-2 pb-4">
@@ -601,8 +696,8 @@ const ContractBuilder = () => {
                   {DESIGN_STEPS.map((step, index) => {
                     const Component = step.component;
                     return (
-                      <AccordionItem key={step.id} value={step.id} className="border rounded-lg px-4">
-                        <AccordionTrigger className="text-left hover:no-underline py-4">
+                      <AccordionItem key={step.id} value={step.id} className={`border rounded-lg px-4 ${isLocked ? 'opacity-50' : ''}`}>
+                        <AccordionTrigger className="text-left hover:no-underline py-4" disabled={isLocked}>
                           <div className="flex items-center gap-3">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
                               activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
@@ -610,6 +705,7 @@ const ContractBuilder = () => {
                               {index + 1}
                             </div>
                             <span className="font-medium text-sm">{step.title}</span>
+                            {isLocked && <Lock className="h-3 w-3 ml-auto" />}
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-2 pb-4">

@@ -47,12 +47,6 @@ const ContractView = () => {
         return;
       }
       
-      // If contract requires authentication, show access form
-      if (data.accesskey && !hasAccess) {
-        setLoading(false);
-        return;
-      }
-      
       setContract(data);
       if (data.clauses_json) {
         setContractData(data.clauses_json as unknown as ContractData);
@@ -83,10 +77,7 @@ const ContractView = () => {
   };
 
   const handleReject = () => {
-    toast({
-      title: "Changes Requested",
-      description: "Your revision request has been sent to the contract owner."
-    });
+    setShowRevisionModal(true);
   };
 
   const handleSignContract = async (signatureData: string) => {
@@ -115,7 +106,8 @@ const ContractView = () => {
           status: 'signed',
           client_signature_url: signatureData,
           signed_at: new Date().toISOString(),
-          signed_by_name: contractData.clientName
+          signed_by_name: contractData.clientName,
+          is_locked: false // Unlock contract after signing
         })
         .eq('id', contract.id);
 
@@ -155,11 +147,6 @@ const ContractView = () => {
 
   if (!contract || !contractData) {
     return <Navigate to="/404" replace />;
-  }
-
-  // Show access form if contract requires authentication
-  if (contract.accesskey && !hasAccess) {
-    return <ContractAccessForm contractId={contract.id} onAccessGranted={handleAccessGranted} />;
   }
 
   return (

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -57,14 +56,16 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
     try {
       const generatedKey = secretKey || generateSecretKey();
       
-      // Update contract with access key and client info
+      // Update contract with client info and lock it
       const { error } = await supabase
         .from('contracts')
         .update({
           status: 'sent_for_signature',
           [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
           verification_email_required: authMethod === 'email',
-          verification_phone_required: authMethod === 'phone'
+          verification_phone_required: authMethod === 'phone',
+          is_locked: true, // Lock the contract when eSign link is generated
+          locked_at: new Date().toISOString()
         })
         .eq('id', contractId);
 
@@ -76,7 +77,7 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
 
       toast({
         title: "eSign Link Generated",
-        description: "Share this link and secret key with your client for secure access."
+        description: "Contract is now locked for editing. Share this link and secret key with your client for secure access."
       });
     } catch (error) {
       console.error('Error generating eSign link:', error);
@@ -118,6 +119,13 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
 
         {step === 'setup' && (
           <div className="space-y-6">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Important:</strong> Once the eSign link is generated, this contract will be locked for editing. 
+                You can only unlock it after 24 hours or if the client rejects the contract.
+              </p>
+            </div>
+
             <div>
               <Label className="text-sm font-medium mb-3 block">Authentication Method</Label>
               <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'phone')}>
@@ -198,7 +206,7 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
               className="w-full"
               size="lg"
             >
-              {loading ? 'Generating...' : 'Generate eSign Link'}
+              {loading ? 'Generating...' : 'Generate eSign Link & Lock Contract'}
             </Button>
           </div>
         )}
@@ -209,7 +217,7 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
               <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
               <h3 className="font-medium text-green-900">eSign Link Generated Successfully</h3>
               <p className="text-sm text-green-700 mt-1">
-                Share both the link and secret key with your client
+                Contract is now locked for editing. Share both the link and secret key with your client.
               </p>
             </div>
 
@@ -273,8 +281,16 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
                 <li>Click on the contract link</li>
                 <li>Enter the secret key: <code className="bg-blue-100 px-1 rounded">{secretKey}</code></li>
                 <li>Enter their {authMethod}: <code className="bg-blue-100 px-1 rounded">{authMethod === 'email' ? clientInfo.email : clientInfo.phone}</code></li>
-                <li>Review and sign the contract</li>
+                <li>Review and sign the contract or request revisions</li>
               </ol>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h4 className="font-medium text-orange-900 mb-2">Contract Lock Policy:</h4>
+              <p className="text-sm text-orange-800">
+                This contract is now locked for editing. It will automatically unlock after 24 hours 
+                or immediately if the client rejects it and requests revisions.
+              </p>
             </div>
 
             <Button onClick={handleClose} className="w-full">
