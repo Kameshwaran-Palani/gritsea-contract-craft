@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { ContractData } from '@/pages/ContractBuilder';
-import { Palette, Type, Bold, List } from 'lucide-react';
+import { Palette, Type, Bold, List, Settings } from 'lucide-react';
 
 interface DesignCustomizationProps {
   data: ContractData;
@@ -44,11 +44,11 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
     { value: 'mono', label: 'Courier (Typewriter)' }
   ];
 
-  const sizeOptions = [
-    { value: 'small', label: 'Small (10px)' },
-    { value: 'medium', label: 'Medium (11px)' },
-    { value: 'large', label: 'Large (12px)' },
-    { value: 'xlarge', label: 'Extra Large (14px)' }
+  const fontSizeOptions = [
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'large', label: 'Large' },
+    { value: 'xlarge', label: 'Extra Large' }
   ];
 
   return (
@@ -128,22 +128,6 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
           </div>
 
           <div>
-            <Label>Font Size</Label>
-            <Select value={data.fontSize} onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateData({ fontSize: value })}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select font size" />
-              </SelectTrigger>
-              <SelectContent>
-                {sizeOptions.map((size) => (
-                  <SelectItem key={size.value} value={size.value}>
-                    {size.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label>Line Spacing</Label>
             <div className="mt-2">
               <Slider
@@ -159,6 +143,107 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
                 <span>Current: {(data.lineSpacing || 1.4).toFixed(1)}</span>
                 <span>Loose (2.5)</span>
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Individual Font Size Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Font Size Controls
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Document Header Size</Label>
+              <Select 
+                value={data.headerFontSize || 'large'} 
+                onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateData({ headerFontSize: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontSizeOptions.map((size) => (
+                    <SelectItem key={size.value} value={size.value}>
+                      {size.label} {size.value === 'small' && '(24px)'}
+                      {size.value === 'medium' && '(28px)'}
+                      {size.value === 'large' && '(32px)'}
+                      {size.value === 'xlarge' && '(36px)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Section Headers Size</Label>
+              <Select 
+                value={data.sectionHeaderFontSize || 'large'} 
+                onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateData({ sectionHeaderFontSize: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontSizeOptions.map((size) => (
+                    <SelectItem key={size.value} value={size.value}>
+                      {size.label} {size.value === 'small' && '(16px)'}
+                      {size.value === 'medium' && '(18px)'}
+                      {size.value === 'large' && '(20px)'}
+                      {size.value === 'xlarge' && '(22px)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Sub Headers Size</Label>
+              <Select 
+                value={data.subHeaderFontSize || 'medium'} 
+                onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateData({ subHeaderFontSize: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontSizeOptions.map((size) => (
+                    <SelectItem key={size.value} value={size.value}>
+                      {size.label} {size.value === 'small' && '(13px)'}
+                      {size.value === 'medium' && '(14px)'}
+                      {size.value === 'large' && '(16px)'}
+                      {size.value === 'xlarge' && '(18px)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Body Text Size</Label>
+              <Select 
+                value={data.bodyFontSize || 'medium'} 
+                onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateData({ bodyFontSize: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontSizeOptions.map((size) => (
+                    <SelectItem key={size.value} value={size.value}>
+                      {size.label} {size.value === 'small' && '(11px)'}
+                      {size.value === 'medium' && '(12px)'}
+                      {size.value === 'large' && '(14px)'}
+                      {size.value === 'xlarge' && '(16px)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>

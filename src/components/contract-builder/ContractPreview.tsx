@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -24,21 +25,36 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
       toast.info('Generating PDF...');
       
-      // Create canvas from the contract content
+      // Create canvas from the contract content with better settings for page breaks
       const canvas = await html2canvas(contractRef.current, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         height: contractRef.current.scrollHeight,
-        width: contractRef.current.scrollWidth
+        width: contractRef.current.scrollWidth,
+        logging: false,
+        onclone: (clonedDoc) => {
+          // Add page break styles to the cloned document
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            .page-break-before { page-break-before: always; }
+            .page-break-after { page-break-after: always; }
+            .page-break-inside { page-break-inside: avoid; }
+            .section-container { break-inside: avoid; }
+            .milestone-item { break-inside: avoid; }
+            .payment-schedule-item { break-inside: avoid; }
+          `;
+          clonedDoc.head.appendChild(style);
+        }
       });
 
-      // Create PDF
+      // Create PDF with better page handling
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
+      const pageHeight = 297; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
+      const margin = 10; // Add margins
 
       let position = 0;
 
@@ -46,7 +62,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      // Add additional pages if needed
+      // Add additional pages if needed with proper spacing
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -95,12 +111,43 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
     }
   };
 
-  const getFontSize = () => {
-    switch (data.fontSize) {
+  const getHeaderFontSize = () => {
+    switch (data.headerFontSize || 'large') {
+      case 'small': return '24px';
+      case 'medium': return '28px';
+      case 'large': return '32px';
+      case 'xlarge': return '36px';
+      default: return '32px';
+    }
+  };
+
+  const getBodyFontSize = () => {
+    switch (data.bodyFontSize || 'medium') {
       case 'small': return '11px';
+      case 'medium': return '12px';
       case 'large': return '14px';
       case 'xlarge': return '16px';
       default: return '12px';
+    }
+  };
+
+  const getSectionHeaderFontSize = () => {
+    switch (data.sectionHeaderFontSize || 'large') {
+      case 'small': return '16px';
+      case 'medium': return '18px';
+      case 'large': return '20px';
+      case 'xlarge': return '22px';
+      default: return '20px';
+    }
+  };
+
+  const getSubHeaderFontSize = () => {
+    switch (data.subHeaderFontSize || 'medium') {
+      case 'small': return '13px';
+      case 'medium': return '14px';
+      case 'large': return '16px';
+      case 'xlarge': return '18px';
+      default: return '14px';
     }
   };
 
@@ -130,7 +177,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* A4 Document Container - Exact match for PDF */}
+      {/* A4 Document Container */}
       <div ref={contractRef} className="space-y-4 contract-preview">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -138,13 +185,13 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           className="w-[794px] min-h-[1123px] mx-auto bg-white shadow-lg p-16"
           style={{ 
             fontFamily: getFontFamily(),
-            fontSize: getFontSize(),
+            fontSize: getBodyFontSize(),
             lineHeight: data.lineSpacing || 1.6,
             color: '#1a1a1a'
           }}
         >
           {/* Header with Logos */}
-          <div className="flex items-start justify-between mb-12">
+          <div className="flex items-start justify-between mb-12 section-container">
             {/* Left Logo */}
             <div className="w-20 h-20 flex items-center justify-start">
               {data.leftLogo && (
@@ -160,14 +207,19 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
             {/* Center - Document Header */}
             <div className="text-center flex-1 px-8">
-              <h1 className="text-3xl font-bold uppercase tracking-wider mb-3" style={{ color: data.primaryColor || '#1a1a1a' }}>
+              <h1 className="font-bold uppercase tracking-wider mb-3" 
+                  style={{ 
+                    color: data.primaryColor || '#1a1a1a',
+                    fontSize: getHeaderFontSize()
+                  }}>
                 {data.documentTitle || 'SERVICE AGREEMENT'}
               </h1>
-              <p className="text-base text-gray-600 uppercase tracking-wide mb-4">
+              <p className="text-gray-600 uppercase tracking-wide mb-4"
+                 style={{ fontSize: getSubHeaderFontSize() }}>
                 {data.documentSubtitle || 'Professional Service Contract'}
               </p>
               {data.startDate && (
-                <p className="text-sm text-gray-500">
+                <p className="text-gray-500" style={{ fontSize: getBodyFontSize() }}>
                   Effective Date: {new Date(data.startDate).toLocaleDateString('en-US', { 
                     year: 'numeric', 
                     month: 'long', 
@@ -195,8 +247,8 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           <div className="border-b-3 border-gray-800 mb-8"></div>
 
           {/* Agreement Introduction */}
-          <div className="mb-8">
-            <p className="text-justify leading-relaxed">
+          <div className="mb-8 section-container">
+            <p className="text-justify leading-relaxed" style={{ fontSize: getBodyFontSize() }}>
               {data.agreementIntroText || 'This Service Agreement ("Agreement") is entered into between the parties identified below for the provision of professional services as outlined in this document.'} 
               {data.effectiveDate && (
                 <>
@@ -215,7 +267,8 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             {data.introductionClauses && data.introductionClauses.length > 0 && (
               <div className="mt-4 space-y-2">
                 {data.introductionClauses.map((clause, index) => (
-                  <p key={index} className="text-justify leading-relaxed pl-4 border-l-2 border-gray-300">
+                  <p key={index} className="text-justify leading-relaxed pl-4 border-l-2 border-gray-300"
+                     style={{ fontSize: getBodyFontSize() }}>
                     {clause}
                   </p>
                 ))}
@@ -224,67 +277,77 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </div>
 
           {/* 1. PARTIES */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+          <div className="mb-8 section-container">
+            <h2 className="font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" 
+                style={{ 
+                  color: data.primaryColor || '#1a1a1a',
+                  fontSize: getSectionHeaderFontSize()
+                }}>
               1. PARTIES
             </h2>
             
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <h3 className="font-bold text-base uppercase mb-3 text-gray-700">Service Provider:</h3>
+                <h3 className="font-bold uppercase mb-3 text-gray-700"
+                    style={{ fontSize: getSubHeaderFontSize() }}>Service Provider:</h3>
                 <div className="space-y-2">
-                  {data.freelancerName && <p className="font-semibold text-base">{data.freelancerName}</p>}
-                  {data.freelancerBusinessName && <p className="italic">{data.freelancerBusinessName}</p>}
-                  {data.freelancerAddress && <p className="leading-relaxed">{data.freelancerAddress}</p>}
-                  {data.freelancerEmail && <p>Email: {data.freelancerEmail}</p>}
-                  {data.freelancerPhone && <p>Phone: {data.freelancerPhone}</p>}
+                  {data.freelancerName && <p className="font-semibold" style={{ fontSize: getBodyFontSize() }}>{data.freelancerName}</p>}
+                  {data.freelancerBusinessName && <p className="italic" style={{ fontSize: getBodyFontSize() }}>{data.freelancerBusinessName}</p>}
+                  {data.freelancerAddress && <p className="leading-relaxed" style={{ fontSize: getBodyFontSize() }}>{data.freelancerAddress}</p>}
+                  {data.freelancerEmail && <p style={{ fontSize: getBodyFontSize() }}>Email: {data.freelancerEmail}</p>}
+                  {data.freelancerPhone && <p style={{ fontSize: getBodyFontSize() }}>Phone: {data.freelancerPhone}</p>}
                 </div>
               </div>
               
               <div>
-                <h3 className="font-bold text-base uppercase mb-3 text-gray-700">Client:</h3>
+                <h3 className="font-bold uppercase mb-3 text-gray-700"
+                    style={{ fontSize: getSubHeaderFontSize() }}>Client:</h3>
                 <div className="space-y-2">
-                  {data.clientName && <p className="font-semibold text-base">{data.clientName}</p>}
-                  {data.clientCompany && <p className="italic">{data.clientCompany}</p>}
-                  {data.clientEmail && <p>Email: {data.clientEmail}</p>}
-                  {data.clientPhone && <p>Phone: {data.clientPhone}</p>}
+                  {data.clientName && <p className="font-semibold" style={{ fontSize: getBodyFontSize() }}>{data.clientName}</p>}
+                  {data.clientCompany && <p className="italic" style={{ fontSize: getBodyFontSize() }}>{data.clientCompany}</p>}
+                  {data.clientEmail && <p style={{ fontSize: getBodyFontSize() }}>Email: {data.clientEmail}</p>}
+                  {data.clientPhone && <p style={{ fontSize: getBodyFontSize() }}>Phone: {data.clientPhone}</p>}
                 </div>
               </div>
             </div>
           </div>
 
           {/* 2. SCOPE OF WORK */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+          <div className="mb-8 section-container">
+            <h2 className="font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" 
+                style={{ 
+                  color: data.primaryColor || '#1a1a1a',
+                  fontSize: getSectionHeaderFontSize()
+                }}>
               2. SCOPE OF WORK
             </h2>
             
             <div className="mb-6">
-              <h3 className="font-semibold mb-3 text-base">2.1 Services Description</h3>
-              <p className="text-justify leading-relaxed whitespace-pre-wrap">
+              <h3 className="font-semibold mb-3" style={{ fontSize: getSubHeaderFontSize() }}>2.1 Services Description</h3>
+              <p className="text-justify leading-relaxed whitespace-pre-wrap" style={{ fontSize: getBodyFontSize() }}>
                 {data.services || 'Services to be defined...'}
               </p>
             </div>
 
             {data.deliverables && (
-              <div className="mb-6">
-                <h3 className="font-semibold mb-3 text-base">2.2 Deliverables</h3>
-                <p className="text-justify leading-relaxed whitespace-pre-wrap">
+              <div className="mb-6 section-container">
+                <h3 className="font-semibold mb-3" style={{ fontSize: getSubHeaderFontSize() }}>2.2 Deliverables</h3>
+                <p className="text-justify leading-relaxed whitespace-pre-wrap" style={{ fontSize: getBodyFontSize() }}>
                   {data.deliverables}
                 </p>
               </div>
             )}
 
             {data.milestones && data.milestones.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-semibold mb-3 text-base">2.3 Project Milestones</h3>
+              <div className="mb-6 section-container">
+                <h3 className="font-semibold mb-3" style={{ fontSize: getSubHeaderFontSize() }}>2.3 Project Milestones</h3>
                 <div className="space-y-3">
                   {data.milestones.map((milestone, index) => (
-                    <div key={index} className="border-l-4 border-blue-200 pl-4">
-                      <p className="font-medium">{milestone.title}</p>
-                      <p className="text-gray-600">{milestone.description}</p>
-                      <p className="text-sm text-gray-500">Due: {milestone.dueDate}</p>
-                      {milestone.amount && <p className="text-sm font-medium">Amount: ₹{milestone.amount.toLocaleString()}</p>}
+                    <div key={index} className="border-l-4 border-blue-200 pl-4 milestone-item">
+                      <p className="font-medium" style={{ fontSize: getBodyFontSize() }}>{milestone.title}</p>
+                      <p className="text-gray-600" style={{ fontSize: getBodyFontSize() }}>{milestone.description}</p>
+                      <p className="text-gray-500" style={{ fontSize: getBodyFontSize() }}>Due: {milestone.dueDate}</p>
+                      {milestone.amount && <p className="font-medium" style={{ fontSize: getBodyFontSize() }}>Amount: ₹{milestone.amount.toLocaleString()}</p>}
                     </div>
                   ))}
                 </div>
@@ -294,25 +357,37 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* 3. PAYMENT TERMS */}
           {(data.rate > 0 || data.totalAmount) && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" style={{ color: data.primaryColor || '#1a1a1a' }}>
+            <div className="mb-8 section-container">
+              <h2 className="font-bold uppercase mb-6 border-b-2 border-gray-400 pb-2" 
+                  style={{ 
+                    color: data.primaryColor || '#1a1a1a',
+                    fontSize: getSectionHeaderFontSize()
+                  }}>
                 3. PAYMENT TERMS
               </h2>
               
               <div className="bg-gray-50 p-6 rounded-lg space-y-4">
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <p className="font-semibold">Payment Structure:</p>
-                    <p>{data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}</p>
+                    <p className="font-semibold" style={{ fontSize: getSubHeaderFontSize() }}>Payment Structure:</p>
+                    <p style={{ fontSize: getBodyFontSize() }}>{data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Total Amount:</p>
+                    <p className="font-semibold" style={{ fontSize: getSubHeaderFontSize() }}>Total Amount:</p>
                     {data.paymentType === 'fixed' && data.totalAmount ? (
-                      <p className="text-xl font-bold" style={{ color: data.primaryColor || '#1a1a1a' }}>
+                      <p className="font-bold" 
+                         style={{ 
+                           color: data.primaryColor || '#1a1a1a',
+                           fontSize: getSectionHeaderFontSize()
+                         }}>
                         ₹{data.totalAmount.toLocaleString()}
                       </p>
                     ) : (
-                      <p className="text-xl font-bold" style={{ color: data.primaryColor || '#1a1a1a' }}>
+                      <p className="font-bold" 
+                         style={{ 
+                           color: data.primaryColor || '#1a1a1a',
+                           fontSize: getSectionHeaderFontSize()
+                         }}>
                         ₹{data.rate}/hour
                       </p>
                     )}
@@ -321,13 +396,13 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 
                 {data.paymentSchedule && data.paymentSchedule.length > 0 && (
                   <div>
-                    <p className="font-semibold mb-3">Payment Schedule:</p>
+                    <p className="font-semibold mb-3" style={{ fontSize: getSubHeaderFontSize() }}>Payment Schedule:</p>
                     <div className="space-y-2">
                       {data.paymentSchedule.map((payment, index) => (
-                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span>{payment.description}</span>
-                          <span className="font-medium">{payment.percentage}%</span>
-                          {payment.dueDate && <span className="text-sm text-gray-600">{payment.dueDate}</span>}
+                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 payment-schedule-item">
+                          <span style={{ fontSize: getBodyFontSize() }}>{payment.description}</span>
+                          <span className="font-medium" style={{ fontSize: getBodyFontSize() }}>{payment.percentage}%</span>
+                          {payment.dueDate && <span className="text-gray-600" style={{ fontSize: getBodyFontSize() }}>{payment.dueDate}</span>}
                         </div>
                       ))}
                     </div>
@@ -336,8 +411,8 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
                 {data.lateFeeEnabled && data.lateFeeAmount && (
                   <div className="border-t border-gray-200 pt-4">
-                    <p className="font-semibold">Late Payment Fee:</p>
-                    <p>₹{data.lateFeeAmount} will be charged for payments made after the due date.</p>
+                    <p className="font-semibold" style={{ fontSize: getSubHeaderFontSize() }}>Late Payment Fee:</p>
+                    <p style={{ fontSize: getBodyFontSize() }}>₹{data.lateFeeAmount} will be charged for payments made after the due date.</p>
                   </div>
                 )}
               </div>
@@ -408,8 +483,12 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </div>
 
           {/* Signature Section */}
-          <div className="border-t-3 border-gray-800 pt-8">
-            <h2 className="text-xl font-bold uppercase mb-8 text-center" style={{ color: data.primaryColor || '#1a1a1a' }}>
+          <div className="border-t-3 border-gray-800 pt-8 section-container">
+            <h2 className="font-bold uppercase mb-8 text-center" 
+                style={{ 
+                  color: data.primaryColor || '#1a1a1a',
+                  fontSize: getSectionHeaderFontSize()
+                }}>
               SIGNATURES
             </h2>
             
@@ -420,9 +499,9 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                     <img src={data.freelancerSignature} alt="Service Provider signature" className="max-h-12 max-w-full" />
                   )}
                 </div>
-                <p className="font-bold text-base">{data.freelancerName || 'Service Provider Name'}</p>
-                <p className="text-gray-600">Service Provider</p>
-                <p className="text-gray-600 mt-2">
+                <p className="font-bold" style={{ fontSize: getBodyFontSize() }}>{data.freelancerName || 'Service Provider Name'}</p>
+                <p className="text-gray-600" style={{ fontSize: getBodyFontSize() }}>Service Provider</p>
+                <p className="text-gray-600 mt-2" style={{ fontSize: getBodyFontSize() }}>
                   Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '______________'}
                 </p>
               </div>
@@ -433,15 +512,15 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                     <img src={data.clientSignature} alt="Client signature" className="max-h-12 max-w-full" />
                   )}
                 </div>
-                <p className="font-bold text-base">{data.clientName || 'Client Name'}</p>
-                <p className="text-gray-600">Client</p>
-                <p className="text-gray-600 mt-2">Date: ______________</p>
+                <p className="font-bold" style={{ fontSize: getBodyFontSize() }}>{data.clientName || 'Client Name'}</p>
+                <p className="text-gray-600" style={{ fontSize: getBodyFontSize() }}>Client</p>
+                <p className="text-gray-600 mt-2" style={{ fontSize: getBodyFontSize() }}>Date: ______________</p>
               </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="text-center text-sm text-gray-500 mt-12 pt-6 border-t border-gray-300">
+          <div className="text-center text-gray-500 mt-12 pt-6 border-t border-gray-300" style={{ fontSize: getBodyFontSize() }}>
             <p>This agreement is governed by the Indian Contract Act, 1872 | Generated with Agrezy Platform</p>
           </div>
         </motion.div>

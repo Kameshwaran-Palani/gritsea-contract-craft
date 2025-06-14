@@ -128,6 +128,12 @@ export interface ContractData {
   agreementIntroText: string;
   effectiveDate: string;
   introductionClauses?: string[];
+  
+  // Font size controls
+  headerFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  sectionHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  subHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  bodyFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
 }
 
 const ContractBuilder = () => {
