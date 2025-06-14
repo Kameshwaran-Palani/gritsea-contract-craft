@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, FileText, Edit, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
-import { generateContractCoverImage } from '@/utils/contractImageGenerator';
+import { generateContractCoverImage, generateContractCardImage } from '@/utils/contractImageGenerator';
 
 interface Contract {
   id: string;
@@ -100,6 +100,47 @@ const Contracts = () => {
     }
     
     console.log('🏁 Batch image generation completed');
+  };
+
+  // Generate optimized card images when contracts are loaded
+  useEffect(() => {
+    if (contracts.length > 0) {
+      console.log('📋 Contracts loaded, generating FAST card images for', contracts.length, 'contracts');
+      generateCardImagesForContracts();
+    }
+  }, [contracts]);
+
+  const generateCardImagesForContracts = async () => {
+    console.log('🎨 Starting FAST batch card image generation');
+    
+    // Generate card images in parallel for speed (they're smaller now)
+    const imagePromises = contracts.map(async (contract) => {
+      if (contractImages[contract.id]) {
+        console.log('⏭️ Card image already exists for contract:', contract.id);
+        return;
+      }
+      
+      console.log('🔄 Generating FAST card image for:', contract.id, '- Title:', contract.title);
+      setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
+      
+      try {
+        const imageDataUrl = await generateContractCardImage(contract);
+        if (imageDataUrl && imageDataUrl.length > 100) {
+          console.log('✅ FAST card image generated for:', contract.id, 'Size:', imageDataUrl.length);
+          setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
+        } else {
+          console.error('❌ Empty card image data for contract:', contract.id);
+        }
+      } catch (error) {
+        console.error(`❌ Error generating card image for ${contract.id}:`, error);
+      } finally {
+        setImagesLoading(prev => ({ ...prev, [contract.id]: false }));
+      }
+    });
+
+    // Wait for all card images to complete
+    await Promise.all(imagePromises);
+    console.log('🏁 FAST batch card image generation completed');
   };
 
   const loadContracts = async () => {
@@ -256,17 +297,16 @@ const Contracts = () => {
                 >
                   <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
                     <CardContent className="p-0">
-                      {/* Contract Cover Image - Clickable */}
+                      {/* Optimized Contract Card Image */}
                       <div 
-                        className="cursor-pointer aspect-[794/1123] bg-gray-50 overflow-hidden border-b" 
+                        className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b" 
                         onClick={() => navigate(`/contract/${contract.id}`)}
                       >
                         {imagesLoading[contract.id] ? (
                           <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
                             <div className="text-center">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                              <span className="text-sm text-muted-foreground">Generating preview...</span>
-                              <p className="text-xs text-muted-foreground mt-1">Contract: {contract.title}</p>
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                              <span className="text-xs text-muted-foreground">Loading preview...</span>
                             </div>
                           </div>
                         ) : contractImages[contract.id] ? (
@@ -275,8 +315,7 @@ const Contracts = () => {
                             alt={`${contract.title} preview`}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
-                              console.error('❌ Error loading contract image:', contract.id);
-                              // Show fallback content
+                              console.error('❌ Error loading contract card image:', contract.id);
                               e.currentTarget.style.display = 'none';
                               const fallback = e.currentTarget.parentElement?.querySelector('.fallback-content');
                               if (fallback) {
@@ -286,7 +325,7 @@ const Contracts = () => {
                           />
                         ) : null}
                         
-                        {/* Fallback content when image fails to load */}
+                        {/* Fallback content */}
                         {!imagesLoading[contract.id] && !contractImages[contract.id] && (
                           <div className="fallback-content w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
                             <FileText className="h-12 w-12 mb-2" />
