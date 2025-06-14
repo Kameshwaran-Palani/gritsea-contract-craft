@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, Edit, Trash2, Share, Download, Eye } from 'lucide-react';
+import { Plus, FileText, Edit, Trash2, Eye } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 
@@ -21,6 +20,28 @@ interface Contract {
   contract_amount: number;
   created_at: string;
   updated_at: string;
+  // Contract data fields for preview
+  freelancer_name?: string;
+  freelancer_business_name?: string;
+  freelancer_address?: string;
+  freelancer_email?: string;
+  freelancer_phone?: string;
+  client_company?: string;
+  client_phone?: string;
+  services?: string;
+  deliverables?: string;
+  rate?: number;
+  total_amount?: number;
+  payment_type?: string;
+  start_date?: string;
+  document_title?: string;
+  document_subtitle?: string;
+  primary_color?: string;
+  font_family?: string;
+  font_size?: string;
+  left_logo?: string;
+  right_logo?: string;
+  logo_style?: string;
 }
 
 const Contracts = () => {
@@ -101,41 +122,142 @@ const Contracts = () => {
     }
   };
 
-  // Generate contract preview image (simplified representation)
-  const generateContractPreview = (contract: Contract) => {
+  // Generate actual contract first page preview
+  const generateContractCover = (contract: Contract) => {
+    const getFontFamily = () => {
+      switch (contract.font_family) {
+        case 'serif': return 'Times, serif';
+        case 'sans': return 'Arial, sans-serif';
+        case 'mono': return 'Courier, monospace';
+        default: return 'Inter, sans-serif';
+      }
+    };
+
     return (
-      <div className="w-full h-32 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-        <div className="p-3 h-full flex flex-col text-xs">
-          {/* Header */}
-          <div className="text-center border-b border-gray-300 pb-2 mb-2">
-            <div className="font-bold text-gray-800 text-sm">SERVICE AGREEMENT</div>
-            <div className="text-gray-600 text-xs">{contract.title}</div>
-          </div>
-          
-          {/* Content preview */}
-          <div className="flex-1 space-y-1">
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <div className="font-semibold text-gray-700">Service Provider:</div>
-                <div className="text-gray-600 truncate">Provider Name</div>
-              </div>
-              <div>
-                <div className="font-semibold text-gray-700">Client:</div>
-                <div className="text-gray-600 truncate">{contract.client_name || 'Client'}</div>
-              </div>
+      <div 
+        className="w-full h-48 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm relative"
+        style={{ 
+          fontFamily: getFontFamily(),
+          fontSize: '6px',
+          lineHeight: '1.2',
+          color: contract.primary_color || '#000000'
+        }}
+      >
+        <div className="p-2 h-full flex flex-col">
+          {/* Header with Logos */}
+          <div className="flex items-center justify-between mb-2">
+            {/* Left Logo */}
+            <div className="w-4 h-4 flex items-center justify-start">
+              {contract.left_logo && (
+                <img 
+                  src={contract.left_logo} 
+                  alt="Left logo" 
+                  className={`w-4 h-4 object-cover ${
+                    contract.logo_style === 'round' ? 'rounded-full' : 'rounded-sm'
+                  }`}
+                />
+              )}
             </div>
+
+            {/* Center - Document Header */}
+            <div className="text-center flex-1">
+              <h1 className="text-xs font-bold uppercase tracking-wider mb-0.5">
+                {contract.document_title || 'SERVICE AGREEMENT'}
+              </h1>
+              <p className="text-xs text-gray-600 uppercase tracking-wide">
+                {contract.document_subtitle || contract.title}
+              </p>
+              {contract.start_date && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Effective: {new Date(contract.start_date).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+
+            {/* Right Logo */}
+            <div className="w-4 h-4 flex items-center justify-end">
+              {contract.right_logo && (
+                <img 
+                  src={contract.right_logo} 
+                  alt="Right logo" 
+                  className={`w-4 h-4 object-cover ${
+                    contract.logo_style === 'round' ? 'rounded-full' : 'rounded-sm'
+                  }`}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="border-b border-gray-800 mb-2"></div>
+
+          {/* Agreement Introduction */}
+          <div className="mb-2">
+            <p className="text-justify text-xs leading-tight">
+              This Service Agreement ("Agreement") is entered into on{' '}
+              <span className="font-semibold underline">
+                {contract.start_date ? new Date(contract.start_date).toLocaleDateString() : '____________'}
+              </span>{' '}
+              between the parties identified below.
+            </p>
+          </div>
+
+          {/* Parties Section */}
+          <div className="mb-3">
+            <h2 className="text-xs font-bold uppercase mb-1 border-b border-gray-400 pb-0.5">
+              1. PARTIES
+            </h2>
             
-            <div className="border-t border-gray-200 pt-1 mt-2">
-              <div className="text-xs text-gray-500">Amount: ₹{contract.contract_amount?.toLocaleString() || '0'}</div>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <h3 className="font-bold text-xs uppercase mb-0.5 text-gray-700">Service Provider:</h3>
+                <div className="space-y-0.5 text-xs">
+                  {contract.freelancer_name && <p className="font-semibold">{contract.freelancer_name}</p>}
+                  {contract.freelancer_business_name && <p className="italic">{contract.freelancer_business_name}</p>}
+                  {contract.freelancer_address && <p className="truncate">{contract.freelancer_address}</p>}
+                  {contract.freelancer_email && <p className="truncate">Email: {contract.freelancer_email}</p>}
+                  {contract.freelancer_phone && <p>Phone: {contract.freelancer_phone}</p>}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-xs uppercase mb-0.5 text-gray-700">Client:</h3>
+                <div className="space-y-0.5 text-xs">
+                  {contract.client_name && <p className="font-semibold">{contract.client_name}</p>}
+                  {contract.client_company && <p className="italic">{contract.client_company}</p>}
+                  {contract.client_email && <p className="truncate">Email: {contract.client_email}</p>}
+                  {contract.client_phone && <p>Phone: {contract.client_phone}</p>}
+                </div>
+              </div>
             </div>
           </div>
-          
-          {/* Footer lines to simulate signature area */}
-          <div className="border-t border-gray-200 pt-1 mt-1">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="border-b border-gray-300 h-1"></div>
-              <div className="border-b border-gray-300 h-1"></div>
+
+          {/* Scope of Work Preview */}
+          <div className="mb-2 flex-1">
+            <h2 className="text-xs font-bold uppercase mb-1 border-b border-gray-400 pb-0.5">
+              2. SCOPE OF WORK
+            </h2>
+            
+            <h3 className="font-semibold mb-1 text-xs">2.1 Services Description</h3>
+            <p className="text-justify text-xs leading-tight">
+              {contract.services ? contract.services.substring(0, 200) + (contract.services.length > 200 ? '...' : '') : 'Services to be defined...'}
+            </p>
+          </div>
+
+          {/* Payment Terms Preview */}
+          {(contract.rate > 0 || contract.total_amount || contract.contract_amount) && (
+            <div className="mt-auto">
+              <div className="bg-gray-50 p-1 rounded text-xs">
+                <p className="font-semibold">Payment:</p>
+                <p className="font-bold text-gray-800">
+                  ₹{(contract.total_amount || contract.contract_amount || 0).toLocaleString()}
+                </p>
+              </div>
             </div>
+          )}
+
+          {/* Footer */}
+          <div className="text-center text-xs text-gray-500 pt-1 border-t border-gray-300 mt-1">
+            <p>Generated by Agrezy</p>
           </div>
         </div>
       </div>
@@ -181,7 +303,7 @@ const Contracts = () => {
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-4">
-                    <div className="h-32 bg-muted rounded mb-4"></div>
+                    <div className="h-48 bg-muted rounded mb-4"></div>
                     <div className="space-y-2">
                       <div className="h-4 bg-muted rounded w-3/4"></div>
                       <div className="h-3 bg-muted rounded w-1/2"></div>
@@ -223,9 +345,9 @@ const Contracts = () => {
                 >
                   <Card className="hover:shadow-lg transition-all duration-200 group">
                     <CardContent className="p-4">
-                      {/* Contract Preview Image */}
+                      {/* Actual Contract Cover Preview */}
                       <div className="mb-4 cursor-pointer" onClick={() => navigate(`/contract/${contract.id}`)}>
-                        {generateContractPreview(contract)}
+                        {generateContractCover(contract)}
                       </div>
                       
                       {/* Contract Info */}
