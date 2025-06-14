@@ -473,8 +473,8 @@ const ContractBuilder = () => {
       />
       <div className="min-h-screen bg-background">
         <div className="flex h-[calc(100vh-64px)]">
-          {/* Left Panel - Tabbed Interface */}
-          <div className="w-1/2 border-r bg-card p-6 overflow-y-auto">
+          {/* Left Panel - Reduced width from w-1/2 to w-2/5 */}
+          <div className="w-2/5 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -566,8 +566,8 @@ const ContractBuilder = () => {
             </Tabs>
           </div>
 
-          {/* Right Panel - Live Preview */}
-          <div className="w-1/2 bg-muted/20">
+          {/* Right Panel - Increased width from w-1/2 to w-3/5 */}
+          <div className="w-3/5 bg-muted/20">
             <ContractPreview data={contractData} />
           </div>
         </div>
