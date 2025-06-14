@@ -55,6 +55,21 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex h-full flex-col bg-card border-r">
+      {/* Collapse button - only show on desktop */}
+      {!mobile && (
+        <div className="px-4 py-4 border-b">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`rounded-2xl ${sidebarCollapsed ? 'w-full justify-center' : 'w-full justify-start'}`}
+          >
+            <PanelLeft className="h-5 w-5" />
+            {!sidebarCollapsed && <span className="ml-2">Collapse</span>}
+          </Button>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-4 py-6">
         {navigation.map((item) => {
@@ -156,19 +171,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open sidebar</span>
             </Button>
-
-            {/* Desktop sidebar toggle */}
-            <div className="hidden lg:flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="rounded-2xl"
-              >
-                <PanelLeft className="h-5 w-5" />
-                <span className="sr-only">Toggle sidebar</span>
-              </Button>
-            </div>
             
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
