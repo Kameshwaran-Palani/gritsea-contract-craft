@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -198,11 +197,19 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           {/* Agreement Introduction */}
           <div className="mb-8">
             <p className="text-justify leading-relaxed">
-              This Service Agreement ("Agreement") is entered into on{' '}
-              <span className="font-semibold border-b border-gray-400 px-2">
-                {data.startDate ? new Date(data.startDate).toLocaleDateString() : '____________'}
-              </span>{' '}
-              between the parties identified below for the provision of professional services as outlined in this document.
+              {data.agreementIntroText || 'This Service Agreement ("Agreement") is entered into between the parties identified below for the provision of professional services as outlined in this document.'} 
+              {data.effectiveDate && (
+                <>
+                  {' '}This agreement is effective as of{' '}
+                  <span className="font-semibold border-b border-gray-400 px-2">
+                    {new Date(data.effectiveDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>.
+                </>
+              )}
             </p>
           </div>
 

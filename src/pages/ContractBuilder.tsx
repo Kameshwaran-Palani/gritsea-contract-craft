@@ -27,6 +27,7 @@ import SignatureStep from '@/components/contract-builder/SignatureStep';
 import DesignCustomization from '@/components/contract-builder/DesignCustomization';
 import ReviewExport from '@/components/contract-builder/ReviewExport';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
+import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
 
 export interface ContractData {
   // Template
@@ -122,6 +123,10 @@ export interface ContractData {
   
   // Security
   accessKey?: string;
+  
+  // Agreement Introduction
+  agreementIntroText: string;
+  effectiveDate: string;
 }
 
 const ContractBuilder = () => {
@@ -137,6 +142,7 @@ const ContractBuilder = () => {
   const EDIT_STEPS = [
     ...(isEditMode ? [] : [{ id: 'template', title: 'Choose Template', component: TemplateSelection }]),
     { id: 'headers', title: 'Document Headers', component: DocumentHeaders },
+    { id: 'introduction', title: 'Agreement Introduction', component: AgreementIntroduction },
     { id: 'parties', title: 'Parties Information', component: PartiesInformation },
     { id: 'scope', title: 'Scope of Work', component: ScopeOfWork },
     { id: 'payment', title: 'Payment Terms', component: PaymentTerms },
@@ -157,6 +163,8 @@ const ContractBuilder = () => {
   const [contractData, setContractData] = useState<ContractData>({
     documentTitle: 'SERVICE AGREEMENT',
     documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
+    agreementIntroText: 'This Service Agreement ("Agreement") is entered into between the parties identified below for the provision of professional services as outlined in this document.',
+    effectiveDate: '',
     logoStyle: 'round',
     primaryColor: '#3B82F6',
     fontFamily: 'inter',
