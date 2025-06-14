@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,142 +19,21 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
     try {
       toast.info('Generating PDF...');
       
-      // Create a temporary div for PDF content
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '0';
-      tempDiv.style.width = '794px'; // A4 width in pixels at 96 DPI
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.fontFamily = 'serif';
-      tempDiv.style.fontSize = '12px';
-      tempDiv.style.lineHeight = '1.5';
-      tempDiv.style.padding = '40px';
+      if (!contractRef.current) {
+        throw new Error('Contract preview not found');
+      }
 
-      const contractHTML = `
-        <div style="font-family: serif; line-height: 1.6; color: #000;">
-          <!-- Header -->
-          <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;">
-            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 10px 0; letter-spacing: 2px;">${data.documentTitle || 'SERVICE AGREEMENT'}</h1>
-            <p style="font-size: 14px; color: #666; margin: 0; letter-spacing: 1px;">${data.documentSubtitle || 'Professional Service Contract'}</p>
-            <p style="font-size: 12px; color: #888; margin: 10px 0 0 0;">
-              Effective Date: ${data.startDate ? new Date(data.startDate).toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              }) : 'N/A'}
-            </p>
-          </div>
-          
-          <!-- Parties Section -->
-          <div style="margin-bottom: 30px;">
-            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">1. PARTIES</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-              <div>
-                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Service Provider:</h3>
-                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.freelancerName || 'Service Provider'}</p>
-                ${data.freelancerBusinessName ? `<p style="font-size: 12px; font-style: italic; margin: 5px 0;">${data.freelancerBusinessName}</p>` : ''}
-                <p style="font-size: 12px; margin: 5px 0;">Email: ${data.freelancerEmail || 'N/A'}</p>
-                ${data.freelancerPhone ? `<p style="font-size: 12px; margin: 5px 0;">Phone: ${data.freelancerPhone}</p>` : ''}
-              </div>
-              <div>
-                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Client:</h3>
-                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.clientName || 'Client'}</p>
-                ${data.clientCompany ? `<p style="font-size: 12px; font-style: italic; margin: 5px 0;">${data.clientCompany}</p>` : ''}
-                <p style="font-size: 12px; margin: 5px 0;">Email: ${data.clientEmail || 'N/A'}</p>
-                ${data.clientPhone ? `<p style="font-size: 12px; margin: 5px 0;">Phone: ${data.clientPhone}</p>` : ''}
-              </div>
-            </div>
-          </div>
-          
-          <!-- Scope of Work -->
-          <div style="margin-bottom: 30px;">
-            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">2. SCOPE OF WORK</h2>
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-              <p style="font-size: 12px; text-align: justify; line-height: 1.6; margin: 0;">${data.services || 'No scope of work specified'}</p>
-            </div>
-            ${data.deliverables ? `
-              <div style="margin-top: 15px;">
-                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Deliverables:</h3>
-                <p style="font-size: 12px; text-align: justify; line-height: 1.6; margin: 0;">${data.deliverables}</p>
-              </div>
-            ` : ''}
-          </div>
-          
-          <!-- Payment Terms -->
-          ${(data.rate > 0 || data.totalAmount) ? `
-            <div style="margin-bottom: 30px;">
-              <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">3. PAYMENT TERMS</h2>
-              <div style="background-color: #f0f8f0; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745;">
-                <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #28a745;">
-                  Total Amount: ₹${data.paymentType === 'fixed' && data.totalAmount ? data.totalAmount.toLocaleString() : data.rate + '/hour'}
-                </p>
-                ${data.paymentSchedule && data.paymentSchedule.length > 0 ? `
-                  <div style="margin-top: 10px;">
-                    <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Payment Schedule:</p>
-                    ${data.paymentSchedule.map(payment => `
-                      <p style="font-size: 12px; margin: 2px 0;">${payment.description}: ${payment.percentage}%</p>
-                    `).join('')}
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-          ` : ''}
-          
-          <!-- Additional Terms -->
-          <div style="margin-bottom: 30px;">
-            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">4. ADDITIONAL TERMS</h2>
-            <div style="font-size: 12px; line-height: 1.6;">
-              ${data.includeNDA ? '<p style="margin: 5px 0;"><strong>Confidentiality:</strong> Both parties agree to maintain confidentiality of all project information.</p>' : ''}
-              <p style="margin: 5px 0;"><strong>IP Rights:</strong> <span style="text-transform: capitalize;">${data.ipOwnership}</span> retains intellectual property rights.</p>
-              <p style="margin: 5px 0;"><strong>Response Time:</strong> ${data.responseTime}</p>
-              <p style="margin: 5px 0;"><strong>Revisions:</strong> ${data.revisionLimit} revisions included</p>
-              <p style="margin: 5px 0;"><strong>Termination:</strong> ${data.terminationConditions}</p>
-              <p style="margin: 5px 0;"><strong>Jurisdiction:</strong> ${data.jurisdiction}</p>
-            </div>
-          </div>
-          
-          <!-- Signature Section -->
-          <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #000;">
-            <h2 style="font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 40px;">SIGNATURES</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px;">
-              <div style="text-align: center;">
-                <div style="height: 60px; border-bottom: 2px solid #666; margin-bottom: 15px;"></div>
-                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.freelancerName || 'Service Provider'}</p>
-                <p style="font-size: 11px; color: #666; margin: 5px 0;">Service Provider</p>
-                <p style="font-size: 11px; color: #666; margin: 10px 0 0 0;">Date: ________________</p>
-              </div>
-              <div style="text-align: center;">
-                <div style="height: 60px; border-bottom: 2px solid #666; margin-bottom: 15px;"></div>
-                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.clientName || 'Client'}</p>
-                <p style="font-size: 11px; color: #666; margin: 5px 0;">Client</p>
-                <p style="font-size: 11px; color: #666; margin: 10px 0 0 0;">Date: ________________</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Footer -->
-          <div style="text-align: center; font-size: 10px; color: #888; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <p style="margin: 0;">Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
-          </div>
-        </div>
-      `;
-
-      tempDiv.innerHTML = contractHTML;
-      document.body.appendChild(tempDiv);
-
-      // Generate canvas from the temporary div
-      const canvas = await html2canvas(tempDiv, {
+      // Generate canvas from the contract preview
+      const canvas = await html2canvas(contractRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: 794,
-        height: tempDiv.scrollHeight
+        width: contractRef.current.scrollWidth,
+        height: contractRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       });
-
-      // Remove temporary div
-      document.body.removeChild(tempDiv);
 
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -207,6 +86,25 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
       toast.error('Failed to share contract');
     }
   };
+
+  // Listen for download and share events from the navbar
+  useEffect(() => {
+    const handleDownloadEvent = () => {
+      downloadPDF();
+    };
+
+    const handleShareEvent = () => {
+      shareContract();
+    };
+
+    window.addEventListener('downloadPDF', handleDownloadEvent);
+    window.addEventListener('shareContract', handleShareEvent);
+
+    return () => {
+      window.removeEventListener('downloadPDF', handleDownloadEvent);
+      window.removeEventListener('shareContract', handleShareEvent);
+    };
+  }, []);
 
   const getFontFamily = () => {
     switch (data.fontFamily) {
@@ -299,8 +197,9 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
       
       <div className="h-full overflow-y-auto bg-gray-50 p-4">
         {/* A4 Document Container */}
-        <div ref={contractRef} className="space-y-0 contract-preview">
+        <div className="space-y-0 contract-preview">
           <motion.div
+            ref={contractRef}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-[794px] mx-auto bg-white shadow-lg"
