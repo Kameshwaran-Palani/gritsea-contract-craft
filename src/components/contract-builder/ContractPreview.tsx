@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -221,29 +220,6 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
       </style>
       
       <div className="h-full overflow-y-auto bg-gray-50 p-4">
-        <div className="sticky top-0 bg-gray-50 pb-3 mb-3 border-b border-gray-200 z-10">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Live Preview
-            </h2>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Auto-updating
-            </Badge>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button onClick={downloadPDF} size="sm" className="rounded-xl">
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            <Button onClick={shareContract} variant="outline" size="sm" className="rounded-xl">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-          </div>
-        </div>
-
         {/* A4 Document Container */}
         <div ref={contractRef} className="space-y-0 contract-preview">
           <motion.div

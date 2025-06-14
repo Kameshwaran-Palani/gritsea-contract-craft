@@ -496,14 +496,6 @@ const ContractBuilder = () => {
           <div className="w-2/5 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">
-                    {isEditMode ? 'Contract Builder' : 'Build Your Contract'}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {isEditMode ? 'Update your contract details and design' : 'Complete each section to create your contract'}
-                  </p>
-                </div>
                 {saving && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
