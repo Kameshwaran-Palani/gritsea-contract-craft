@@ -244,7 +244,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      contract_status: "draft" | "sent" | "signed" | "cancelled"
+      contract_status:
+        | "draft"
+        | "sent"
+        | "signed"
+        | "cancelled"
+        | "sent_for_signature"
       signer_type: "freelancer" | "client"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
       user_plan: "free" | "pro" | "agency"
@@ -363,7 +368,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      contract_status: ["draft", "sent", "signed", "cancelled"],
+      contract_status: [
+        "draft",
+        "sent",
+        "signed",
+        "cancelled",
+        "sent_for_signature",
+      ],
       signer_type: ["freelancer", "client"],
       subscription_status: ["active", "cancelled", "expired", "pending"],
       user_plan: ["free", "pro", "agency"],
