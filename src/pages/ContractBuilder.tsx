@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Sen
 import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 
 // Step Components
 import TemplateSelection from '@/components/contract-builder/TemplateSelection';
@@ -216,9 +217,11 @@ const ContractBuilder = () => {
   });
   
   const [contractId, setContractId] = useState<string | null>(id || null);
+  const [contractStatus, setContractStatus] = useState<'draft' | 'sent' | 'signed' | 'cancelled' | 'sent_for_signature' | 'revision_requested'>('draft');
   const [saving, setSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [revisionRequests, setRevisionRequests] = useState<any[]>([]);
 
   // Auto-save functionality with debounce
   const debouncedSave = useCallback(
@@ -279,7 +282,6 @@ const ContractBuilder = () => {
       
       if (data && data.clauses_json) {
         const loadedData = data.clauses_json as unknown as ContractData;
-        // Ensure document headers exist
         setContractData({
           ...loadedData,
           documentTitle: loadedData.documentTitle || 'SERVICE AGREEMENT',
@@ -303,12 +305,73 @@ const ContractBuilder = () => {
           termsBullets: loadedData.termsBullets || false
         });
         setContractId(data.id);
+        setContractStatus(data.status || 'draft');
+        
+        // Load revision requests if status is revision_requested
+        if (data.status === 'revision_requested') {
+          loadRevisionRequests(data.id);
+        }
       }
     } catch (error) {
       console.error('Error loading contract:', error);
       toast({
         title: "Error",
         description: "Failed to load contract",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadRevisionRequests = async (contractId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('revision_requests')
+        .select('*')
+        .eq('contract_id', contractId)
+        .eq('resolved', false)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setRevisionRequests(data || []);
+    } catch (error) {
+      console.error('Error loading revision requests:', error);
+    }
+  };
+
+  const markRevisionAsResolved = async (revisionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('revision_requests')
+        .update({ resolved: true })
+        .eq('id', revisionId);
+      
+      if (error) throw error;
+      
+      // Update contract status back to draft for editing
+      if (contractId) {
+        const { error: statusError } = await supabase
+          .from('contracts')
+          .update({ status: 'draft' })
+          .eq('id', contractId);
+        
+        if (statusError) throw statusError;
+        setContractStatus('draft');
+      }
+      
+      // Reload revision requests
+      if (contractId) {
+        loadRevisionRequests(contractId);
+      }
+      
+      toast({
+        title: "Revision Resolved",
+        description: "You can now continue editing the contract."
+      });
+    } catch (error) {
+      console.error('Error resolving revision:', error);
+      toast({
+        title: "Error",
+        description: "Failed to resolve revision request",
         variant: "destructive"
       });
     }
@@ -322,7 +385,7 @@ const ContractBuilder = () => {
       const contractPayload = {
         user_id: user.id,
         title: contractData.templateName || `Contract with ${contractData.clientName || 'Client'}`,
-        status: 'draft' as const,
+        status: contractStatus,
         client_name: contractData.clientName,
         client_email: contractData.clientEmail,
         client_phone: contractData.clientPhone,
@@ -378,16 +441,13 @@ const ContractBuilder = () => {
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      // Import html2canvas dynamically
       const html2canvas = (await import('html2canvas')).default;
       
-      // Get the contract preview element
       const previewElement = document.querySelector('.contract-preview');
       if (!previewElement) {
         throw new Error('Contract preview not found');
       }
 
-      // Generate canvas from the preview
       const canvas = await html2canvas(previewElement as HTMLElement, {
         scale: 2,
         useCORS: true,
@@ -395,7 +455,6 @@ const ContractBuilder = () => {
         backgroundColor: '#ffffff'
       });
 
-      // Create PDF-like download
       const link = document.createElement('a');
       link.download = `${contractData.templateName || 'contract'}-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -419,26 +478,33 @@ const ContractBuilder = () => {
 
   const handleShareLink = async () => {
     if (!contractId) {
-      // Save the contract first
       await saveProgress();
     }
 
     setIsSharing(true);
     try {
+      // Update contract status to sent_for_signature
+      const { error: statusError } = await supabase
+        .from('contracts')
+        .update({ status: 'sent_for_signature' })
+        .eq('id', contractId);
+
+      if (statusError) throw statusError;
+      setContractStatus('sent_for_signature');
+
       const shareableLink = `${window.location.origin}/contract/view/${contractId}`;
       
       if (navigator.share) {
         await navigator.share({
-          title: 'Contract Sharing',
+          title: 'Contract Signing',
           text: 'Please review and sign this contract',
           url: shareableLink
         });
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(shareableLink);
         toast({
-          title: "Link Copied",
-          description: "Contract sharing link copied to clipboard."
+          title: "Link Copied & Contract Sent",
+          description: "Contract sharing link copied to clipboard and status updated to 'Awaiting Signature'."
         });
       }
     } catch (error) {
@@ -495,7 +561,8 @@ const ContractBuilder = () => {
           {/* Left Panel - Reduced width from w-1/2 to w-2/5 */}
           <div className="w-2/5 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <ContractStatusBadge status={contractStatus} />
                 {saving && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -503,6 +570,32 @@ const ContractBuilder = () => {
                   </div>
                 )}
               </div>
+
+              {contractStatus === 'revision_requested' && revisionRequests.length > 0 && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <h3 className="font-medium text-orange-900 mb-3">Revision Requests</h3>
+                  <div className="space-y-3">
+                    {revisionRequests.map((request) => (
+                      <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="text-sm font-medium">{request.client_name}</div>
+                          <Button
+                            size="sm"
+                            onClick={() => markRevisionAsResolved(request.id)}
+                            className="text-xs"
+                          >
+                            Mark Resolved
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{request.message}</p>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          {new Date(request.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

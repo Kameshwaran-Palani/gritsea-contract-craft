@@ -44,6 +44,48 @@ export type Database = {
           },
         ]
       }
+      contract_snapshots: {
+        Row: {
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          snapshot_data: Json
+          version_number: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot_data: Json
+          version_number?: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot_data?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_snapshots_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_snapshots_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           clauses_json: Json | null
@@ -54,16 +96,23 @@ export type Database = {
           contract_amount: number | null
           created_at: string
           id: string
+          ip_address: string | null
+          is_locked: boolean | null
+          locked_at: string | null
           payment_terms: string | null
           pdf_url: string | null
           project_timeline: string | null
           public_link_id: string | null
           scope_of_work: string | null
           signature_url: string | null
+          signed_at: string | null
+          signed_by_name: string | null
           status: Database["public"]["Enums"]["contract_status"] | null
           title: string
           updated_at: string
           user_id: string
+          verification_email_required: boolean | null
+          verification_phone_required: boolean | null
         }
         Insert: {
           clauses_json?: Json | null
@@ -74,16 +123,23 @@ export type Database = {
           contract_amount?: number | null
           created_at?: string
           id?: string
+          ip_address?: string | null
+          is_locked?: boolean | null
+          locked_at?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
           project_timeline?: string | null
           public_link_id?: string | null
           scope_of_work?: string | null
           signature_url?: string | null
+          signed_at?: string | null
+          signed_by_name?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
           title: string
           updated_at?: string
           user_id: string
+          verification_email_required?: boolean | null
+          verification_phone_required?: boolean | null
         }
         Update: {
           clauses_json?: Json | null
@@ -94,16 +150,23 @@ export type Database = {
           contract_amount?: number | null
           created_at?: string
           id?: string
+          ip_address?: string | null
+          is_locked?: boolean | null
+          locked_at?: string | null
           payment_terms?: string | null
           pdf_url?: string | null
           project_timeline?: string | null
           public_link_id?: string | null
           scope_of_work?: string | null
           signature_url?: string | null
+          signed_at?: string | null
+          signed_by_name?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
           title?: string
           updated_at?: string
           user_id?: string
+          verification_email_required?: boolean | null
+          verification_phone_required?: boolean | null
         }
         Relationships: [
           {
@@ -148,8 +211,49 @@ export type Database = {
         }
         Relationships: []
       }
+      revision_requests: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          contract_id: string
+          created_at: string
+          id: string
+          message: string
+          resolved: boolean | null
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          contract_id: string
+          created_at?: string
+          id?: string
+          message: string
+          resolved?: boolean | null
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          contract_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          resolved?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_requests_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signatures: {
         Row: {
+          client_verified_email: string | null
+          client_verified_name: string | null
+          client_verified_phone: string | null
           contract_id: string
           id: string
           ip_address: string | null
@@ -160,6 +264,9 @@ export type Database = {
           signer_type: Database["public"]["Enums"]["signer_type"]
         }
         Insert: {
+          client_verified_email?: string | null
+          client_verified_name?: string | null
+          client_verified_phone?: string | null
           contract_id: string
           id?: string
           ip_address?: string | null
@@ -170,6 +277,9 @@ export type Database = {
           signer_type: Database["public"]["Enums"]["signer_type"]
         }
         Update: {
+          client_verified_email?: string | null
+          client_verified_name?: string | null
+          client_verified_phone?: string | null
           contract_id?: string
           id?: string
           ip_address?: string | null
