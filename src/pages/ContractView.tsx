@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Download, Share, Edit, Calendar, User, DollarSign, Clock, ArrowLeft, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface Contract {
   id: string;
@@ -89,100 +91,176 @@ const ContractView = () => {
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      // Create a new window with the contract content for printing/PDF
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        throw new Error('Failed to open print window');
-      }
+      // Create a temporary div for PDF content
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '794px'; // A4 width in pixels at 96 DPI
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.fontFamily = 'serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.5';
+      tempDiv.style.padding = '40px';
 
       const contractHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${contract?.title || 'Contract'}</title>
-          <style>
-            body { font-family: serif; line-height: 1.6; margin: 0; padding: 20mm; }
-            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-            .section { margin-bottom: 30px; }
-            .section h2 { border-bottom: 1px solid #666; padding-bottom: 5px; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .signature-section { margin-top: 50px; border-top: 2px solid #000; padding-top: 20px; }
-            .signature-box { height: 60px; border-bottom: 2px solid #666; margin-bottom: 10px; }
-            @media print { body { margin: 0; padding: 20mm; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>SERVICE AGREEMENT</h1>
-            <p>${contract?.title || 'Professional Service Contract'}</p>
+        <div style="font-family: serif; line-height: 1.6; color: #000;">
+          <!-- Header -->
+          <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 10px 0; letter-spacing: 2px;">SERVICE AGREEMENT</h1>
+            <p style="font-size: 14px; color: #666; margin: 0; letter-spacing: 1px;">${contract?.title || 'Professional Service Contract'}</p>
+            <p style="font-size: 12px; color: #888; margin: 10px 0 0 0;">
+              Effective Date: ${contract?.created_at ? new Date(contract.created_at).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }) : 'N/A'}
+            </p>
           </div>
           
-          <div class="section">
-            <h2>1. PARTIES</h2>
-            <div class="grid">
+          <!-- Parties Section -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">1. PARTIES</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
               <div>
-                <h3>Service Provider:</h3>
-                <p><strong>${contract?.clauses_json?.freelancerName || 'Service Provider'}</strong></p>
-                <p>${contract?.clauses_json?.freelancerEmail || ''}</p>
+                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Service Provider:</h3>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${contract?.clauses_json?.freelancerName || 'Service Provider'}</p>
+                ${contract?.clauses_json?.freelancerBusinessName ? `<p style="font-size: 12px; font-style: italic; margin: 5px 0;">${contract.clauses_json.freelancerBusinessName}</p>` : ''}
+                <p style="font-size: 12px; margin: 5px 0;">Email: ${contract?.clauses_json?.freelancerEmail || 'N/A'}</p>
+                ${contract?.clauses_json?.freelancerPhone ? `<p style="font-size: 12px; margin: 5px 0;">Phone: ${contract.clauses_json.freelancerPhone}</p>` : ''}
               </div>
               <div>
-                <h3>Client:</h3>
-                <p><strong>${contract?.client_name || 'Client'}</strong></p>
-                <p>${contract?.client_email || ''}</p>
+                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Client:</h3>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${contract?.client_name || 'Client'}</p>
+                ${contract?.clauses_json?.clientCompany ? `<p style="font-size: 12px; font-style: italic; margin: 5px 0;">${contract.clauses_json.clientCompany}</p>` : ''}
+                <p style="font-size: 12px; margin: 5px 0;">Email: ${contract?.client_email || 'N/A'}</p>
+                ${contract?.clauses_json?.clientPhone ? `<p style="font-size: 12px; margin: 5px 0;">Phone: ${contract.clauses_json.clientPhone}</p>` : ''}
               </div>
             </div>
           </div>
           
-          <div class="section">
-            <h2>2. SCOPE OF WORK</h2>
-            <p>${contract?.scope_of_work || 'No scope of work specified'}</p>
-          </div>
-          
-          <div class="section">
-            <h2>3. PAYMENT TERMS</h2>
-            <p>Total Amount: ₹${contract?.contract_amount?.toLocaleString() || '0'}</p>
-            <p>${contract?.payment_terms || 'No payment terms specified'}</p>
-          </div>
-          
-          <div class="signature-section">
-            <h2>SIGNATURES</h2>
-            <div class="grid">
-              <div>
-                <div class="signature-box"></div>
-                <p><strong>${contract?.clauses_json?.freelancerName || 'Service Provider'}</strong></p>
-                <p>Service Provider</p>
-                <p>Date: ________________</p>
+          <!-- Scope of Work -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">2. SCOPE OF WORK</h2>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <p style="font-size: 12px; text-align: justify; line-height: 1.6; margin: 0;">${contract?.scope_of_work || 'No scope of work specified'}</p>
+            </div>
+            ${contract?.clauses_json?.deliverables ? `
+              <div style="margin-top: 15px;">
+                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Deliverables:</h3>
+                <p style="font-size: 12px; text-align: justify; line-height: 1.6; margin: 0;">${contract.clauses_json.deliverables}</p>
               </div>
-              <div>
-                <div class="signature-box"></div>
-                <p><strong>${contract?.client_name || 'Client'}</strong></p>
-                <p>Client</p>
-                <p>Date: ________________</p>
+            ` : ''}
+          </div>
+          
+          <!-- Payment Terms -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">3. PAYMENT TERMS</h2>
+            <div style="background-color: #f0f8f0; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745;">
+              <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #28a745;">
+                Total Amount: ₹${contract?.contract_amount?.toLocaleString() || '0'}
+              </p>
+              <p style="font-size: 12px; margin: 0; line-height: 1.6;">${formatPaymentTerms(contract?.payment_terms || '')}</p>
+            </div>
+          </div>
+          
+          <!-- Timeline -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">4. PROJECT TIMELINE</h2>
+            <p style="font-size: 12px; line-height: 1.6; margin: 0;">${contract?.project_timeline || 'No timeline specified'}</p>
+          </div>
+          
+          <!-- Additional Terms -->
+          ${contract?.clauses_json?.includeNDA || contract?.clauses_json?.ipOwnership ? `
+            <div style="margin-bottom: 30px;">
+              <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">5. ADDITIONAL TERMS</h2>
+              <div style="font-size: 12px; line-height: 1.6;">
+                ${contract?.clauses_json?.includeNDA ? '<p style="margin: 5px 0;"><strong>Confidentiality:</strong> Both parties agree to maintain confidentiality of all project information.</p>' : ''}
+                ${contract?.clauses_json?.ipOwnership ? `<p style="margin: 5px 0;"><strong>IP Rights:</strong> <span style="text-transform: capitalize;">${contract.clauses_json.ipOwnership}</span> retains intellectual property rights.</p>` : ''}
+                ${contract?.clauses_json?.responseTime ? `<p style="margin: 5px 0;"><strong>Response Time:</strong> ${contract.clauses_json.responseTime}</p>` : ''}
+                ${contract?.clauses_json?.revisionLimit ? `<p style="margin: 5px 0;"><strong>Revisions:</strong> ${contract.clauses_json.revisionLimit} revisions included</p>` : ''}
+                ${contract?.clauses_json?.terminationConditions ? `<p style="margin: 5px 0;"><strong>Termination:</strong> ${contract.clauses_json.terminationConditions}</p>` : ''}
+                ${contract?.clauses_json?.jurisdiction ? `<p style="margin: 5px 0;"><strong>Jurisdiction:</strong> ${contract.clauses_json.jurisdiction}</p>` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Signature Section -->
+          <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #000;">
+            <h2 style="font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 40px;">SIGNATURES</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px;">
+              <div style="text-align: center;">
+                <div style="height: 60px; border-bottom: 2px solid #666; margin-bottom: 15px;"></div>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${contract?.clauses_json?.freelancerName || 'Service Provider'}</p>
+                <p style="font-size: 11px; color: #666; margin: 5px 0;">Service Provider</p>
+                <p style="font-size: 11px; color: #666; margin: 10px 0 0 0;">Date: ________________</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="height: 60px; border-bottom: 2px solid #666; margin-bottom: 15px;"></div>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${contract?.client_name || 'Client'}</p>
+                <p style="font-size: 11px; color: #666; margin: 5px 0;">Client</p>
+                <p style="font-size: 11px; color: #666; margin: 10px 0 0 0;">Date: ________________</p>
               </div>
             </div>
           </div>
-        </body>
-        </html>
+          
+          <!-- Footer -->
+          <div style="text-align: center; font-size: 10px; color: #888; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <p style="margin: 0;">Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
+          </div>
+        </div>
       `;
 
-      printWindow.document.write(contractHTML);
-      printWindow.document.close();
-      
-      // Trigger print dialog
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
+      tempDiv.innerHTML = contractHTML;
+      document.body.appendChild(tempDiv);
+
+      // Generate canvas from the temporary div
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        height: tempDiv.scrollHeight
+      });
+
+      // Remove temporary div
+      document.body.removeChild(tempDiv);
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download the PDF
+      const fileName = `${contract?.title?.replace(/[^a-z0-9]/gi, '_') || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
 
       toast({
-        title: "PDF Generated",
-        description: "Print dialog opened. You can save as PDF from the print options."
+        title: "PDF Downloaded",
+        description: "Contract has been successfully downloaded as PDF."
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
         title: "Error",
-        description: "Failed to generate PDF",
+        description: "Failed to generate PDF. Please try again.",
         variant: "destructive"
       });
     } finally {
