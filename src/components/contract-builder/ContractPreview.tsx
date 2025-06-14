@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContractData } from '@/pages/ContractBuilder';
 import { FileText, Download, Share2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 
@@ -18,206 +19,168 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
     try {
       toast.info('Generating PDF...');
       
-      // Create PDF document
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const margin = 20;
-      
-      // Set font
-      pdf.setFont('helvetica');
-      
-      // Title
-      pdf.setFontSize(20);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(data.documentTitle || 'SERVICE AGREEMENT', pageWidth / 2, margin + 10, { align: 'center' });
-      
-      // Subtitle
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(data.documentSubtitle || 'Professional Service Contract', pageWidth / 2, margin + 20, { align: 'center' });
-      
-      let yPosition = margin + 40;
-      
-      // Helper function to add text with word wrapping
-      const addText = (text: string, fontSize: number = 11, isBold: boolean = false) => {
-        pdf.setFontSize(fontSize);
-        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-        
-        const lines = pdf.splitTextToSize(text, pageWidth - (margin * 2));
-        
-        // Check if we need a new page
-        if (yPosition + (lines.length * fontSize * 0.4) > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-        
-        pdf.text(lines, margin, yPosition);
-        yPosition += lines.length * fontSize * 0.4 + 5;
-      };
-      
-      // Helper function to add section header
-      const addSectionHeader = (title: string) => {
-        yPosition += 10;
-        addText(title, 14, true);
-        yPosition += 5;
-      };
-      
-      // Agreement Introduction
-      if (data.agreementIntroText) {
-        addText(data.agreementIntroText);
-      }
-      
-      if (data.effectiveDate) {
-        addText(`Effective Date: ${new Date(data.effectiveDate).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })}`);
-      }
-      
-      // Parties Section
-      addSectionHeader('1. PARTIES');
-      
-      addText('Service Provider:', 12, true);
-      if (data.freelancerName) addText(data.freelancerName);
-      if (data.freelancerBusinessName) addText(data.freelancerBusinessName);
-      if (data.freelancerAddress) addText(data.freelancerAddress);
-      if (data.freelancerEmail) addText(`Email: ${data.freelancerEmail}`);
-      if (data.freelancerPhone) addText(`Phone: ${data.freelancerPhone}`);
-      
-      yPosition += 10;
-      
-      addText('Client:', 12, true);
-      if (data.clientName) addText(data.clientName);
-      if (data.clientCompany) addText(data.clientCompany);
-      if (data.clientEmail) addText(`Email: ${data.clientEmail}`);
-      if (data.clientPhone) addText(`Phone: ${data.clientPhone}`);
-      
-      // Scope of Work
-      addSectionHeader('2. SCOPE OF WORK');
-      
-      addText('2.1 Services Description', 12, true);
-      if (data.services) addText(data.services);
-      
-      if (data.deliverables) {
-        addText('2.2 Deliverables', 12, true);
-        addText(data.deliverables);
-      }
-      
-      if (data.milestones && data.milestones.length > 0) {
-        addText('2.3 Project Milestones', 12, true);
-        data.milestones.forEach((milestone, index) => {
-          addText(`${index + 1}. ${milestone.title}`);
-          addText(milestone.description);
-          addText(`Due: ${milestone.dueDate}`);
-          if (milestone.amount) addText(`Amount: ₹${milestone.amount.toLocaleString()}`);
-          yPosition += 5;
-        });
-      }
-      
-      // Payment Terms
-      if (data.rate > 0 || data.totalAmount) {
-        addSectionHeader('3. PAYMENT TERMS');
-        
-        addText(`Payment Structure: ${data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}`);
-        
-        if (data.paymentType === 'fixed' && data.totalAmount) {
-          addText(`Total Amount: ₹${data.totalAmount.toLocaleString()}`, 12, true);
-        } else {
-          addText(`Rate: ₹${data.rate}/hour`, 12, true);
-        }
-        
-        if (data.paymentSchedule && data.paymentSchedule.length > 0) {
-          addText('Payment Schedule:', 12, true);
-          data.paymentSchedule.forEach(payment => {
-            addText(`• ${payment.description}: ${payment.percentage}%`);
-            if (payment.dueDate) addText(`  Due: ${payment.dueDate}`);
-          });
-        }
-        
-        if (data.lateFeeEnabled && data.lateFeeAmount) {
-          addText(`Late Payment Fee: ₹${data.lateFeeAmount} will be charged for payments made after the due date.`);
-        }
-      }
-      
-      // Terms and Conditions
-      addSectionHeader('4. TERMS AND CONDITIONS');
-      
-      addText('4.1 Service Level Agreement', 12, true);
-      addText(`Response Time: ${data.responseTime}`);
-      addText(`Revisions Included: ${data.revisionLimit}`);
-      if (data.uptimeRequirement) addText(`Uptime Requirement: ${data.uptimeRequirement}`);
-      
-      if (data.includeNDA) {
-        addText('4.2 Confidentiality', 12, true);
-        addText('Both parties acknowledge that they may have access to confidential information and agree to maintain strict confidentiality.');
-        if (data.confidentialityScope) addText(data.confidentialityScope);
-        if (data.confidentialityDuration) addText(`Duration: ${data.confidentialityDuration}`);
-      }
-      
-      addText('4.3 Intellectual Property', 12, true);
-      addText(`Ownership: ${data.ipOwnership} retains intellectual property rights`);
-      addText(`Usage Rights: ${data.usageRights} usage rights granted`);
-      
-      addText('4.4 Termination', 12, true);
-      addText(data.terminationConditions);
-      addText(`Notice Period: ${data.noticePeriod}`);
-      
-      if (data.isRetainer) {
-        addText('4.5 Retainer Agreement', 12, true);
-        if (data.retainerAmount) addText(`Monthly Retainer: ₹${data.retainerAmount.toLocaleString()}`);
-        if (data.renewalCycle) addText(`Renewal Cycle: ${data.renewalCycle}`);
-        addText(`Auto-renewal: ${data.autoRenew ? 'Yes' : 'No'}`);
-      }
-      
-      // Governing Law
-      addSectionHeader('5. GOVERNING LAW');
-      addText(`This Agreement shall be governed by and construed in accordance with the laws of ${data.jurisdiction}.`);
-      if (data.arbitrationClause) {
-        addText('Any disputes arising under this agreement shall be resolved through arbitration.');
-      }
-      
-      // Signatures
-      yPosition += 20;
-      addText('SIGNATURES', 16, true);
-      yPosition += 20;
-      
-      // Service Provider signature line
-      pdf.line(margin, yPosition, margin + 80, yPosition);
-      yPosition += 10;
-      addText(data.freelancerName || 'Service Provider Name');
-      addText('Service Provider');
-      if (data.signedDate) {
-        addText(`Date: ${new Date(data.signedDate).toLocaleDateString()}`);
-      } else {
-        addText('Date: ______________');
-      }
-      
-      // Client signature line
-      const clientSignatureY = yPosition - 40;
-      pdf.line(margin + 100, clientSignatureY, margin + 180, clientSignatureY);
-      const currentY = yPosition;
-      yPosition = clientSignatureY + 10;
-      addText(data.clientName || 'Client Name');
-      addText('Client');
-      addText('Date: ______________');
-      
-      yPosition = Math.max(currentY, yPosition);
-      
-      // Footer
-      yPosition += 20;
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('This agreement is governed by the Indian Contract Act, 1872 | Generated with Agrezy Platform', 
-               pageWidth / 2, pageHeight - 10, { align: 'center' });
+      // Create a temporary div for PDF content
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '794px'; // A4 width in pixels at 96 DPI
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.fontFamily = 'serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.5';
+      tempDiv.style.padding = '40px';
 
-      // Generate filename with current date
-      const fileName = `${data.templateName || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
-      
+      const contractHTML = `
+        <div style="font-family: serif; line-height: 1.6; color: #000;">
+          <!-- Header -->
+          <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 10px 0; letter-spacing: 2px;">${data.documentTitle || 'SERVICE AGREEMENT'}</h1>
+            <p style="font-size: 14px; color: #666; margin: 0; letter-spacing: 1px;">${data.documentSubtitle || 'Professional Service Contract'}</p>
+            <p style="font-size: 12px; color: #888; margin: 10px 0 0 0;">
+              Effective Date: ${data.startDate ? new Date(data.startDate).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }) : 'N/A'}
+            </p>
+          </div>
+          
+          <!-- Parties Section -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">1. PARTIES</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+              <div>
+                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Service Provider:</h3>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.freelancerName || 'Service Provider'}</p>
+                ${data.freelancerBusinessName ? `<p style="font-size: 12px; font-style: italic; margin: 5px 0;">${data.freelancerBusinessName}</p>` : ''}
+                <p style="font-size: 12px; margin: 5px 0;">Email: ${data.freelancerEmail || 'N/A'}</p>
+                ${data.freelancerPhone ? `<p style="font-size: 12px; margin: 5px 0;">Phone: ${data.freelancerPhone}</p>` : ''}
+              </div>
+              <div>
+                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Client:</h3>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.clientName || 'Client'}</p>
+                ${data.clientCompany ? `<p style="font-size: 12px; font-style: italic; margin: 5px 0;">${data.clientCompany}</p>` : ''}
+                <p style="font-size: 12px; margin: 5px 0;">Email: ${data.clientEmail || 'N/A'}</p>
+                ${data.clientPhone ? `<p style="font-size: 12px; margin: 5px 0;">Phone: ${data.clientPhone}</p>` : ''}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Scope of Work -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">2. SCOPE OF WORK</h2>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <p style="font-size: 12px; text-align: justify; line-height: 1.6; margin: 0;">${data.services || 'No scope of work specified'}</p>
+            </div>
+            ${data.deliverables ? `
+              <div style="margin-top: 15px;">
+                <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Deliverables:</h3>
+                <p style="font-size: 12px; text-align: justify; line-height: 1.6; margin: 0;">${data.deliverables}</p>
+              </div>
+            ` : ''}
+          </div>
+          
+          <!-- Payment Terms -->
+          ${(data.rate > 0 || data.totalAmount) ? `
+            <div style="margin-bottom: 30px;">
+              <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">3. PAYMENT TERMS</h2>
+              <div style="background-color: #f0f8f0; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745;">
+                <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #28a745;">
+                  Total Amount: ₹${data.paymentType === 'fixed' && data.totalAmount ? data.totalAmount.toLocaleString() : data.rate + '/hour'}
+                </p>
+                ${data.paymentSchedule && data.paymentSchedule.length > 0 ? `
+                  <div style="margin-top: 10px;">
+                    <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Payment Schedule:</p>
+                    ${data.paymentSchedule.map(payment => `
+                      <p style="font-size: 12px; margin: 2px 0;">${payment.description}: ${payment.percentage}%</p>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Additional Terms -->
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 15px;">4. ADDITIONAL TERMS</h2>
+            <div style="font-size: 12px; line-height: 1.6;">
+              ${data.includeNDA ? '<p style="margin: 5px 0;"><strong>Confidentiality:</strong> Both parties agree to maintain confidentiality of all project information.</p>' : ''}
+              <p style="margin: 5px 0;"><strong>IP Rights:</strong> <span style="text-transform: capitalize;">${data.ipOwnership}</span> retains intellectual property rights.</p>
+              <p style="margin: 5px 0;"><strong>Response Time:</strong> ${data.responseTime}</p>
+              <p style="margin: 5px 0;"><strong>Revisions:</strong> ${data.revisionLimit} revisions included</p>
+              <p style="margin: 5px 0;"><strong>Termination:</strong> ${data.terminationConditions}</p>
+              <p style="margin: 5px 0;"><strong>Jurisdiction:</strong> ${data.jurisdiction}</p>
+            </div>
+          </div>
+          
+          <!-- Signature Section -->
+          <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #000;">
+            <h2 style="font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 40px;">SIGNATURES</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px;">
+              <div style="text-align: center;">
+                <div style="height: 60px; border-bottom: 2px solid #666; margin-bottom: 15px;"></div>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.freelancerName || 'Service Provider'}</p>
+                <p style="font-size: 11px; color: #666; margin: 5px 0;">Service Provider</p>
+                <p style="font-size: 11px; color: #666; margin: 10px 0 0 0;">Date: ________________</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="height: 60px; border-bottom: 2px solid #666; margin-bottom: 15px;"></div>
+                <p style="font-size: 12px; font-weight: bold; margin: 5px 0;">${data.clientName || 'Client'}</p>
+                <p style="font-size: 11px; color: #666; margin: 5px 0;">Client</p>
+                <p style="font-size: 11px; color: #666; margin: 10px 0 0 0;">Date: ________________</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="text-align: center; font-size: 10px; color: #888; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <p style="margin: 0;">Governed by Indian Contract Act, 1872 | Generated by Agrezy</p>
+          </div>
+        </div>
+      `;
+
+      tempDiv.innerHTML = contractHTML;
+      document.body.appendChild(tempDiv);
+
+      // Generate canvas from the temporary div
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        height: tempDiv.scrollHeight
+      });
+
+      // Remove temporary div
+      document.body.removeChild(tempDiv);
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       // Download the PDF
+      const fileName = `${data.templateName?.replace(/[^a-z0-9]/gi, '_') || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
-      
+
       toast.success('PDF downloaded successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
