@@ -35,7 +35,7 @@ const ContractView = () => {
   const [loadingContract, setLoadingContract] = useState(true);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(true);
 
   useEffect(() => {
     if (user && id) {
@@ -343,7 +343,7 @@ const ContractView = () => {
             </div>
           </div>
 
-          {/* PDF Preview Section */}
+          {/* PDF Preview Section - Now shown by default */}
           {showPDFPreview && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
