@@ -149,34 +149,39 @@ const ContractNew = () => {
 
       {/* Template Selection Dialog */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto p-4">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="flex items-center gap-2 text-lg">
               <FileText className="h-5 w-5" />
               Choose Your Starting Point
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Select a template to get started quickly, or create a custom contract from scratch.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4">
-            <TemplateSelection
-              data={{} as ContractData}
-              updateData={handleTemplateSelect}
-              onNext={() => setShowTemplateDialog(false)}
-              onPrev={() => {}}
-              isFirst={true}
-              isLast={false}
-            />
-            <div className="mt-6 text-center">
-              <Button 
-                variant="outline" 
-                onClick={handleStartFromScratch}
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Start from Scratch
-              </Button>
+          
+          <div className="space-y-4">
+            {/* Start from Scratch - Moved to top */}
+            <Card className="cursor-pointer transition-all hover:shadow-lg border-dashed border-2 hover:border-primary/50">
+              <CardContent className="p-4 text-center" onClick={handleStartFromScratch}>
+                <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <h3 className="font-semibold mb-1">Start from Scratch</h3>
+                <p className="text-muted-foreground text-xs">
+                  Create a completely custom contract without using a template
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Template Selection */}
+            <div className="mt-4">
+              <TemplateSelection
+                data={{} as ContractData}
+                updateData={handleTemplateSelect}
+                onNext={() => setShowTemplateDialog(false)}
+                onPrev={() => {}}
+                isFirst={true}
+                isLast={false}
+              />
             </div>
           </div>
         </DialogContent>
