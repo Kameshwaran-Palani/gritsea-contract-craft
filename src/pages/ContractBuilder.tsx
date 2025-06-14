@@ -13,6 +13,20 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 import ESignDialog from '@/components/contract-builder/ESignDialog';
+import TemplateSelection from '@/components/contract-builder/TemplateSelection';
+import DocumentHeaders from '@/components/contract-builder/DocumentHeaders';
+import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
+import PartiesInformation from '@/components/contract-builder/PartiesInformation';
+import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
+import PaymentTerms from '@/components/contract-builder/PaymentTerms';
+import OngoingWork from '@/components/contract-builder/OngoingWork';
+import ServiceLevelAgreement from '@/components/contract-builder/ServiceLevelAgreement';
+import Confidentiality from '@/components/contract-builder/Confidentiality';
+import IntellectualProperty from '@/components/contract-builder/IntellectualProperty';
+import TerminationDispute from '@/components/contract-builder/TerminationDispute';
+import SignatureStep from '@/components/contract-builder/SignatureStep';
+import DesignCustomization from '@/components/contract-builder/DesignCustomization';
+import ContractPreview from '@/components/contract-builder/ContractPreview';
 
 export interface ContractData {
   // Template
@@ -622,7 +636,7 @@ const ContractBuilder = () => {
           </div>
         </div>
       </div>
-      <ESignDialog open={showESignDialog} onClose={() => setShowESignDialog(false)} />
+      <ESignDialog isOpen={showESignDialog} onClose={() => setShowESignDialog(false)} contractId={contractId} />
     </>
   );
 };

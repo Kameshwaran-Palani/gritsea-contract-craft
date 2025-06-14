@@ -5,59 +5,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { KeyRound, Mail, Phone, Send, Copy, Check } from 'lucide-react';
+import { KeyRound, Mail, Phone, Send, Copy, CheckCircle } from 'lucide-react';
 
 interface ESignDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  contractId: string;
-  clientEmail?: string;
-  clientPhone?: string;
+  contractId: string | null;
 }
 
-const ESignDialog: React.FC<ESignDialogProps> = ({
-  isOpen,
-  onClose,
-  contractId,
-  clientEmail,
-  clientPhone
-}) => {
+const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }) => {
   const { toast } = useToast();
-  const [step, setStep] = useState<'generate' | 'share'>('generate');
-  const [secretKey, setSecretKey] = useState('');
+  const [step, setStep] = useState<'setup' | 'generated'>('setup');
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
-  const [contactInfo, setContactInfo] = useState({
-    email: clientEmail || '',
-    phone: clientPhone || ''
+  const [clientInfo, setClientInfo] = useState({
+    email: '',
+    phone: ''
   });
+  const [secretKey, setSecretKey] = useState('');
+  const [shareLink, setShareLink] = useState('');
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const generateSecretKey = () => {
-    const key = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    setSecretKey(key.toUpperCase());
-    setStep('share');
+    const key = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setSecretKey(key);
+    return key;
   };
 
-  const handleSendInvitation = async () => {
-    if (!secretKey) return;
-    
-    if (authMethod === 'email' && !contactInfo.email) {
+  const handleGenerateLink = async () => {
+    if (!contractId) {
       toast({
-        title: "Email Required",
-        description: "Please enter the client's email address",
+        title: "Error",
+        description: "No contract ID available",
         variant: "destructive"
       });
       return;
     }
 
-    if (authMethod === 'phone' && !contactInfo.phone) {
+    const contactInfo = authMethod === 'email' ? clientInfo.email : clientInfo.phone;
+    if (!contactInfo) {
       toast({
-        title: "Phone Required", 
-        description: "Please enter the client's phone number",
+        title: `${authMethod === 'email' ? 'Email' : 'Phone'} Required`,
+        description: `Please enter the client's ${authMethod} address`,
         variant: "destructive"
       });
       return;
@@ -65,14 +55,15 @@ const ESignDialog: React.FC<ESignDialogProps> = ({
 
     setLoading(true);
     try {
-      // Update contract with secret key and contact info
+      const generatedKey = secretKey || generateSecretKey();
+      
+      // Update contract with access key and client info
       const { error } = await supabase
         .from('contracts')
         .update({
+          accessKey: generatedKey,
           status: 'sent_for_signature',
-          accessKey: secretKey,
-          client_email: authMethod === 'email' ? contactInfo.email : null,
-          client_phone: authMethod === 'phone' ? contactInfo.phone : null,
+          [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
           verification_email_required: authMethod === 'email',
           verification_phone_required: authMethod === 'phone'
         })
@@ -80,20 +71,19 @@ const ESignDialog: React.FC<ESignDialogProps> = ({
 
       if (error) throw error;
 
-      const signingLink = `${window.location.origin}/contract/view/${contractId}`;
-      
-      // In a real app, you'd send this via email/SMS
-      toast({
-        title: "Invitation Sent",
-        description: `Contract invitation has been prepared for ${authMethod === 'email' ? contactInfo.email : contactInfo.phone}`,
-      });
+      const link = `${window.location.origin}/contract/${contractId}`;
+      setShareLink(link);
+      setStep('generated');
 
-      onClose();
+      toast({
+        title: "eSign Link Generated",
+        description: "Share this link and secret key with your client for secure access."
+      });
     } catch (error) {
-      console.error('Error sending invitation:', error);
+      console.error('Error generating eSign link:', error);
       toast({
         title: "Error",
-        description: "Failed to send contract invitation",
+        description: "Failed to generate eSign link",
         variant: "destructive"
       });
     } finally {
@@ -101,170 +91,196 @@ const ESignDialog: React.FC<ESignDialogProps> = ({
     }
   };
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Copied!",
-        description: "Signing link copied to clipboard"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to copy to clipboard",
-        variant: "destructive"
-      });
-    }
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: `${type} copied to clipboard`
+    });
   };
 
-  const signingLink = secretKey ? `${window.location.origin}/contract/view/${contractId}` : '';
+  const handleClose = () => {
+    setStep('setup');
+    setSecretKey('');
+    setShareLink('');
+    setClientInfo({ email: '', phone: '' });
+    onClose();
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Get E-Signature
+            <Send className="h-5 w-5 text-primary" />
+            Generate eSign Link
           </DialogTitle>
         </DialogHeader>
 
-        {step === 'generate' && (
+        {step === 'setup' && (
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <KeyRound className="h-5 w-5" />
-                  Secure Access
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Generate a secure key that the client will use to access and sign the contract.
-                </p>
-                <Button 
-                  onClick={generateSecretKey}
-                  className="w-full"
-                  size="lg"
-                >
-                  Generate Secret Key
-                </Button>
-              </CardContent>
-            </Card>
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Authentication Method</Label>
+              <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'phone')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </TabsTrigger>
+                  <TabsTrigger value="phone" className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Phone
+                  </TabsTrigger>
+                </TabsList>
 
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">
-                The client will need this key along with their contact information to access the contract
+                <TabsContent value="email" className="mt-4">
+                  <div>
+                    <Label htmlFor="client-email">Client Email Address</Label>
+                    <Input
+                      id="client-email"
+                      type="email"
+                      value={clientInfo.email}
+                      onChange={(e) => setClientInfo(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="client@example.com"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Client will need to enter this email to access the contract
+                    </p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="phone" className="mt-4">
+                  <div>
+                    <Label htmlFor="client-phone">Client Phone Number</Label>
+                    <Input
+                      id="client-phone"
+                      type="tel"
+                      value={clientInfo.phone}
+                      onChange={(e) => setClientInfo(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+1234567890"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Client will need to enter this phone number to access the contract
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div>
+              <Label htmlFor="secret-key" className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4" />
+                Secret Key (Optional)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="secret-key"
+                  value={secretKey}
+                  onChange={(e) => setSecretKey(e.target.value.toUpperCase())}
+                  placeholder="Auto-generated if empty"
+                  className="font-mono"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSecretKey(generateSecretKey())}
+                >
+                  Generate
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                A secret key will be auto-generated if left empty
               </p>
             </div>
+
+            <Button 
+              onClick={handleGenerateLink}
+              disabled={loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? 'Generating...' : 'Generate eSign Link'}
+            </Button>
           </div>
         )}
 
-        {step === 'share' && (
+        {step === 'generated' && (
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm text-green-700">Secret Key Generated</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="p-3 bg-green-50 border border-green-200 rounded font-mono text-center text-lg font-bold text-green-800">
-                  {secretKey}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <h3 className="font-medium text-green-900">eSign Link Generated Successfully</h3>
+              <p className="text-sm text-green-700 mt-1">
+                Share both the link and secret key with your client
+              </p>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Client Authentication</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'phone')}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="email" className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </TabsTrigger>
-                    <TabsTrigger value="phone" className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Phone
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="email" className="space-y-4 mt-4">
-                    <div>
-                      <Label htmlFor="email">Client Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={contactInfo.email}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="client@example.com"
-                      />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="phone" className="space-y-4 mt-4">
-                    <div>
-                      <Label htmlFor="phone">Client Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={contactInfo.phone}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="+1234567890"
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Signing Link</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Contract Link</Label>
+                <div className="flex gap-2 mt-1">
                   <Input
-                    value={signingLink}
+                    value={shareLink}
                     readOnly
-                    className="font-mono text-xs"
+                    className="text-sm"
                   />
                   <Button
                     variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(signingLink)}
+                    size="sm"
+                    onClick={() => copyToClipboard(shareLink, 'Link')}
                   >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <Copy className="h-4 w-4" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('generate')} className="flex-1">
-                Back
-              </Button>
-              <Button 
-                onClick={handleSendInvitation}
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? 'Sending...' : 'Send Invitation'}
-              </Button>
+              <div>
+                <Label className="text-sm font-medium">Secret Key</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={secretKey}
+                    readOnly
+                    className="font-mono text-lg text-center"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(secretKey, 'Secret key')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Required Authentication</Label>
+                <div className="p-3 bg-muted rounded-lg mt-1">
+                  <div className="flex items-center gap-2">
+                    {authMethod === 'email' ? (
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="text-sm">
+                      {authMethod === 'email' ? clientInfo.email : clientInfo.phone}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-              <strong>Instructions for Client:</strong>
-              <br />
-              1. Visit the signing link
-              <br />
-              2. Enter their {authMethod} and the secret key
-              <br />
-              3. Review, approve/reject, and sign the contract
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-900 mb-2">Instructions for Client:</h4>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Click on the contract link</li>
+                <li>Enter the secret key: <code className="bg-blue-100 px-1 rounded">{secretKey}</code></li>
+                <li>Enter their {authMethod}: <code className="bg-blue-100 px-1 rounded">{authMethod === 'email' ? clientInfo.email : clientInfo.phone}</code></li>
+                <li>Review and sign the contract</li>
+              </ol>
             </div>
+
+            <Button onClick={handleClose} className="w-full">
+              Close
+            </Button>
           </div>
         )}
       </DialogContent>

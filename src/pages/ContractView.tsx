@@ -48,7 +48,7 @@ const ContractView = () => {
       }
       
       // If contract requires authentication, show access form
-      if (data.accessKey && !hasAccess) {
+      if (data.accesskey && !hasAccess) {
         setLoading(false);
         return;
       }
@@ -158,7 +158,7 @@ const ContractView = () => {
   }
 
   // Show access form if contract requires authentication
-  if (contract.accessKey && !hasAccess) {
+  if (contract.accesskey && !hasAccess) {
     return <ContractAccessForm contractId={contract.id} onAccessGranted={handleAccessGranted} />;
   }
 
