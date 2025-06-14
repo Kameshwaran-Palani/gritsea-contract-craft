@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Edit, Share } from 'lucide-react';
@@ -30,7 +31,6 @@ const HowItWorksSection = () => {
   return (
     <section className="py-24 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
-        {/* Title */}
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
@@ -49,7 +49,6 @@ const HowItWorksSection = () => {
         <div className="max-w-6xl mx-auto">
           {/* Progress Timeline */}
           <div className="relative mb-16">
-            {/* Timeline bar */}
             <div className="absolute top-16 left-0 w-full h-1 bg-muted rounded-full transform -translate-y-1/2 hidden md:block">
               <motion.div 
                 className="h-full bg-gradient-to-r from-primary via-secondary to-accent rounded-full"
@@ -60,7 +59,6 @@ const HowItWorksSection = () => {
               />
             </div>
 
-            {/* Step Items */}
             <div className="grid md:grid-cols-3 gap-8 relative">
               {steps.map((step, index) => (
                 <motion.div
@@ -71,21 +69,29 @@ const HowItWorksSection = () => {
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: index * 0.2 }}
                 >
-                  {/* Step Icon and Number */}
-                  <div className="relative flex flex-col items-center mb-6">
-                    <motion.div
-                      className={`w-20 h-20 ${step.bgColor} rounded-2xl flex items-center justify-center z-20`}
-                      whileHover={{ scale: 1.05, rotate: 5 }}
+                  {/* Step Number - Positioned behind the icon */}
+                  <div className="relative mb-6">
+                    <motion.div 
+                      className="w-16 h-16 bg-background border-4 border-primary rounded-full flex items-center justify-center mx-auto relative z-10 shadow-lg"
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <span className="text-primary font-bold text-lg">{index + 1}</span>
+                    </motion.div>
+
+                    {/* Icon positioned over the number */}
+                    <motion.div 
+                      className={`w-20 h-20 ${step.bgColor} rounded-2xl flex items-center justify-center mx-auto absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}
+                      whileHover={{ 
+                        scale: 1.05,
+                        rotate: 5
+                      }}
                       transition={{ type: "spring", stiffness: 300 }}
                     >
                       <step.icon className={`w-10 h-10 ${step.color}`} />
                     </motion.div>
-                    <div className="absolute -bottom-4 w-10 h-10 bg-background border-4 border-primary rounded-full flex items-center justify-center text-primary font-bold text-lg z-10 shadow-md">
-                      {index + 1}
-                    </div>
                   </div>
 
-                  {/* Step Content */}
                   <h3 className="text-2xl font-semibold mb-4 font-heading">{step.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{step.description}</p>
                 </motion.div>
@@ -93,7 +99,7 @@ const HowItWorksSection = () => {
             </div>
           </div>
 
-          {/* Interactive Demo Section */}
+          {/* Interactive Demo */}
           <motion.div 
             className="bg-card rounded-2xl p-8 shadow-lg"
             initial={{ opacity: 0, y: 30 }}
