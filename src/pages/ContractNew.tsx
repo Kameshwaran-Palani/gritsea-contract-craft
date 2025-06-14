@@ -6,75 +6,98 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Save, Send, Eye } from 'lucide-react';
-import DashboardLayout from '@/components/DashboardLayout';
+import { FileText, ChevronLeft, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import TemplateSelection from '@/components/contract-builder/TemplateSelection';
+import ContractBuilder, { ContractData } from './ContractBuilder';
 
 const ContractNew = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    client_name: '',
-    client_email: '',
-    client_phone: '',
-    scope_of_work: '',
-    payment_terms: '',
-    project_timeline: '',
-    contract_amount: '',
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async (status: 'draft' | 'sent') => {
+  const handleTemplateSelect = async (templateData: Partial<ContractData>) => {
     if (!user) return;
 
-    setSaving(true);
     try {
+      // Create a new contract with template data
+      const contractPayload = {
+        user_id: user.id,
+        title: templateData.templateName || 'New Contract',
+        status: 'draft' as const,
+        client_name: '',
+        client_email: '',
+        scope_of_work: templateData.services || '',
+        payment_terms: JSON.stringify(templateData.paymentSchedule || []),
+        clauses_json: {
+          ...templateData,
+          documentTitle: 'SERVICE AGREEMENT',
+          documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
+          logoStyle: 'round',
+          primaryColor: '#3B82F6',
+          fontFamily: 'inter',
+          fontSize: 'medium',
+          lineSpacing: 1.5,
+          freelancerName: user.user_metadata?.full_name || '',
+          freelancerEmail: user.email || '',
+          freelancerAddress: '',
+          clientName: '',
+          clientEmail: '',
+          startDate: '',
+          services: templateData.services || '',
+          deliverables: '',
+          milestones: [],
+          paymentType: 'fixed',
+          rate: 0,
+          paymentSchedule: templateData.paymentSchedule || [{ description: 'Full payment', percentage: 100 }],
+          lateFeeEnabled: false,
+          isRetainer: false,
+          autoRenew: false,
+          responseTime: '24 hours',
+          revisionLimit: 3,
+          includeNDA: true,
+          ipOwnership: 'client',
+          usageRights: 'full',
+          terminationConditions: 'Either party may terminate this agreement with written notice.',
+          noticePeriod: '30 days',
+          jurisdiction: 'India',
+          arbitrationClause: true
+        } as any
+      };
+
       const { data, error } = await supabase
         .from('contracts')
-        .insert({
-          user_id: user.id,
-          title: formData.title,
-          client_name: formData.client_name,
-          client_email: formData.client_email,
-          client_phone: formData.client_phone,
-          scope_of_work: formData.scope_of_work,
-          payment_terms: formData.payment_terms,
-          project_timeline: formData.project_timeline,
-          contract_amount: formData.contract_amount ? parseFloat(formData.contract_amount) : null,
-          status
-        })
-        .select()
+        .insert(contractPayload)
+        .select('id')
         .single();
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: status === 'draft' ? "Contract saved as draft" : "Contract sent to client"
+        title: "Contract Created",
+        description: "Your new contract has been created successfully."
       });
 
-      navigate('/contracts');
+      // Navigate to the edit page for the new contract
+      navigate(`/contract/edit/${data.id}`);
     } catch (error) {
-      console.error('Error saving contract:', error);
+      console.error('Error creating contract:', error);
       toast({
         title: "Error",
-        description: "Failed to save contract",
+        description: "Failed to create contract",
         variant: "destructive"
       });
-    } finally {
-      setSaving(false);
     }
+  };
+
+  const handleStartFromScratch = () => {
+    handleTemplateSelect({
+      templateId: undefined,
+      templateName: 'Custom Contract'
+    });
   };
 
   if (loading) {
@@ -90,163 +113,86 @@ const ContractNew = () => {
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center"
-        >
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Create New Contract</h1>
-            <p className="text-muted-foreground">Fill in the details to create a professional service contract.</p>
+    <div className="min-h-screen bg-background">
+      {/* Clean Header with Agrezy Branding */}
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex h-16 items-center justify-between px-6">
+          <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/contracts')}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back to Contracts
+            </Button>
+            <div className="h-6 w-px bg-border" />
+            {/* Agrezy Branding */}
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xs">A</span>
+              </div>
+              <span className="text-lg font-bold gradient-text">Agrezy</span>
+            </div>
+            <div className="h-6 w-px bg-border" />
+            <h1 className="text-lg font-semibold">Create New Contract</h1>
           </div>
-          <FileText className="h-8 w-8 text-muted-foreground" />
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid gap-8 lg:grid-cols-2"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Contract Details</CardTitle>
-              <CardDescription>Basic information about the contract</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="title">Contract Title</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., Website Development Agreement"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="contract_amount">Contract Amount (₹)</Label>
-                <Input
-                  id="contract_amount"
-                  type="number"
-                  placeholder="50000"
-                  value={formData.contract_amount}
-                  onChange={(e) => handleInputChange('contract_amount', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="project_timeline">Project Timeline</Label>
-                <Input
-                  id="project_timeline"
-                  placeholder="e.g., 6-8 weeks"
-                  value={formData.project_timeline}
-                  onChange={(e) => handleInputChange('project_timeline', e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
+              <User className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Client Information</CardTitle>
-              <CardDescription>Details about your client</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="client_name">Client Name</Label>
-                <Input
-                  id="client_name"
-                  placeholder="John Doe"
-                  value={formData.client_name}
-                  onChange={(e) => handleInputChange('client_name', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="client_email">Client Email</Label>
-                <Input
-                  id="client_email"
-                  type="email"
-                  placeholder="john@example.com"
-                  value={formData.client_email}
-                  onChange={(e) => handleInputChange('client_email', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="client_phone">Client Phone</Label>
-                <Input
-                  id="client_phone"
-                  placeholder="+91 98765 43210"
-                  value={formData.client_phone}
-                  onChange={(e) => handleInputChange('client_phone', e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* Template Selection Dialog */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Choose Your Starting Point
+            </DialogTitle>
+            <DialogDescription>
+              Select a template to get started quickly, or create a custom contract from scratch.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <TemplateSelection
+              data={{} as ContractData}
+              updateData={handleTemplateSelect}
+              onNext={() => setShowTemplateDialog(false)}
+              onPrev={() => {}}
+              isFirst={true}
+              isLast={false}
+            />
+            <div className="mt-6 text-center">
+              <Button 
+                variant="outline" 
+                onClick={handleStartFromScratch}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Start from Scratch
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid gap-8 lg:grid-cols-2"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Scope of Work</CardTitle>
-              <CardDescription>Detailed description of what you'll deliver</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Describe the work you'll be performing, deliverables, milestones, etc."
-                value={formData.scope_of_work}
-                onChange={(e) => handleInputChange('scope_of_work', e.target.value)}
-                rows={8}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Terms</CardTitle>
-              <CardDescription>How and when you'll be paid</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="e.g., 50% upfront, 50% on completion. Payment due within 30 days of invoice."
-                value={formData.payment_terms}
-                onChange={(e) => handleInputChange('payment_terms', e.target.value)}
-                rows={8}
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex justify-end space-x-4"
-        >
-          <Button
-            variant="outline"
-            onClick={() => handleSave('draft')}
-            disabled={saving || !formData.title}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save as Draft
-          </Button>
-          <Button
-            onClick={() => handleSave('sent')}
-            disabled={saving || !formData.title || !formData.client_email}
-            className="bg-accent hover:bg-accent/90"
-          >
-            <Send className="mr-2 h-4 w-4" />
-            Send to Client
-          </Button>
-        </motion.div>
-      </div>
-    </DashboardLayout>
+      {/* Placeholder content when dialog is open */}
+      {showTemplateDialog && (
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <div className="text-center">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold mb-2">Create Your Contract</h2>
+            <p className="text-muted-foreground">Choose a template or start from scratch to begin.</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

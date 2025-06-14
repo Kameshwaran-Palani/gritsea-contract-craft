@@ -153,7 +153,7 @@ const ContractBuilder = () => {
   ];
   
   const [activeTab, setActiveTab] = useState('edit');
-  const [activeSection, setActiveSection] = useState(isEditMode ? 'headers' : 'template');
+  const [activeSection, setActiveSection] = useState<string | undefined>(isEditMode ? 'headers' : 'template');
   const [contractData, setContractData] = useState<ContractData>({
     documentTitle: 'SERVICE AGREEMENT',
     documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
@@ -356,6 +356,10 @@ const ContractBuilder = () => {
     setContractData(prev => ({ ...prev, ...updates }));
   };
 
+  const handleSectionChange = (value: string | undefined) => {
+    setActiveSection(value);
+  };
+
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
@@ -482,7 +486,7 @@ const ContractBuilder = () => {
               </TabsList>
 
               <TabsContent value="edit" className="space-y-3">
-                <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
+                <Accordion type="single" value={activeSection} onValueChange={handleSectionChange} collapsible className="space-y-3">
                   {EDIT_STEPS.map((step, index) => {
                     const Component = step.component;
                     return (
@@ -514,7 +518,7 @@ const ContractBuilder = () => {
               </TabsContent>
 
               <TabsContent value="design" className="space-y-3">
-                <Accordion type="single" value={activeSection} onValueChange={setActiveSection} className="space-y-3">
+                <Accordion type="single" value={activeSection} onValueChange={handleSectionChange} collapsible className="space-y-3">
                   {DESIGN_STEPS.map((step, index) => {
                     const Component = step.component;
                     return (
