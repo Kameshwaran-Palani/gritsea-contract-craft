@@ -211,6 +211,16 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 </>
               )}
             </p>
+            
+            {data.introductionClauses && data.introductionClauses.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {data.introductionClauses.map((clause, index) => (
+                  <p key={index} className="text-justify leading-relaxed pl-4 border-l-2 border-gray-300">
+                    {clause}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 1. PARTIES */}

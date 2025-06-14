@@ -127,6 +127,7 @@ export interface ContractData {
   // Agreement Introduction
   agreementIntroText: string;
   effectiveDate: string;
+  introductionClauses?: string[];
 }
 
 const ContractBuilder = () => {

@@ -7,8 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ContractData } from '@/pages/ContractBuilder';
-import { DollarSign, Plus, Trash2, Clock } from 'lucide-react';
+import { DollarSign, Plus, Trash2, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface PaymentTermsProps {
   data: ContractData;
@@ -151,10 +155,10 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.1 }}
-                    className="border rounded-lg p-4"
+                    className="border rounded-lg p-6 bg-gray-50"
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium">Payment {index + 1}</h4>
+                      <h4 className="font-semibold text-base">Payment {index + 1}</h4>
                       {data.paymentSchedule.length > 1 && (
                         <Button
                           variant="ghost"
@@ -167,19 +171,20 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
                       )}
                     </div>
                     
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div>
-                        <Label htmlFor={`payment-description-${index}`}>Description</Label>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <Label htmlFor={`payment-description-${index}`} className="font-medium">Description</Label>
                         <Input
                           id={`payment-description-${index}`}
                           value={schedule.description}
                           onChange={(e) => updatePaymentSchedule(index, 'description', e.target.value)}
                           placeholder="e.g., Upfront payment"
+                          className="mt-1"
                         />
                       </div>
                       
                       <div>
-                        <Label htmlFor={`payment-percentage-${index}`}>Percentage (%)</Label>
+                        <Label htmlFor={`payment-percentage-${index}`} className="font-medium">Percentage (%)</Label>
                         <Input
                           id={`payment-percentage-${index}`}
                           type="number"
@@ -188,23 +193,46 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
                           value={schedule.percentage || ''}
                           onChange={(e) => updatePaymentSchedule(index, 'percentage', parseFloat(e.target.value) || 0)}
                           placeholder="50"
+                          className="mt-1"
                         />
                       </div>
                       
                       <div>
-                        <Label htmlFor={`payment-due-${index}`}>Due Date (Optional)</Label>
-                        <Input
-                          id={`payment-due-${index}`}
-                          type="date"
-                          value={schedule.dueDate || ''}
-                          onChange={(e) => updatePaymentSchedule(index, 'dueDate', e.target.value)}
-                        />
+                        <Label htmlFor={`payment-due-${index}`} className="font-medium">Due Date (Optional)</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal mt-1",
+                                !schedule.dueDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {schedule.dueDate ? format(new Date(schedule.dueDate), "PPP") : <span>Pick a date</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={schedule.dueDate ? new Date(schedule.dueDate) : undefined}
+                              onSelect={(date) => updatePaymentSchedule(index, 'dueDate', date ? date.toISOString().split('T')[0] : '')}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     
                     {data.totalAmount && schedule.percentage > 0 && (
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        Amount: ₹{((data.totalAmount * schedule.percentage) / 100).toLocaleString()}
+                      <div className="mt-4 p-3 bg-white border border-gray-200 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-gray-700">Payment Amount:</span>
+                          <span className="text-xl font-bold text-primary">
+                            ₹{((data.totalAmount * schedule.percentage) / 100).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </motion.div>
@@ -212,8 +240,8 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
               </div>
               
               {totalPercentage !== 100 && (
-                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-sm text-orange-800">
+                <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-800 font-medium">
                     ⚠️ Payment schedule should total 100%. Current total: {totalPercentage}%
                   </p>
                 </div>
@@ -239,7 +267,7 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Include Late Fee Clause</Label>
+                <Label className="font-medium">Include Late Fee Clause</Label>
                 <p className="text-sm text-muted-foreground">
                   Add penalty for delayed payments
                 </p>
@@ -251,16 +279,17 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
             </div>
             
             {data.lateFeeEnabled && (
-              <div>
-                <Label htmlFor="lateFeeAmount">Late Fee Amount (₹ per day)</Label>
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <Label htmlFor="lateFeeAmount" className="font-medium">Late Fee Amount (₹ per day)</Label>
                 <Input
                   id="lateFeeAmount"
                   type="number"
                   value={data.lateFeeAmount || ''}
                   onChange={(e) => updateData({ lateFeeAmount: parseFloat(e.target.value) || 0 })}
                   placeholder="500"
+                  className="mt-2"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Daily penalty for payments made after due date
                 </p>
               </div>
