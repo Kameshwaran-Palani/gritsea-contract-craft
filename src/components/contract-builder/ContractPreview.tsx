@@ -24,81 +24,199 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
       toast.info('Generating PDF...');
       
-      // Create canvas with better settings for PDF generation
-      const canvas = await html2canvas(contractRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        height: contractRef.current.scrollHeight,
-        width: contractRef.current.scrollWidth,
-        logging: false
-      });
-
-      // Create PDF with A4 dimensions
+      // Create PDF document
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      const margin = 10;
-      const contentWidth = pageWidth - (margin * 2);
-      const contentHeight = pageHeight - (margin * 2);
+      const margin = 20;
       
-      // Calculate dimensions to fit content
-      const imgWidth = contentWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Set font
+      pdf.setFont('helvetica');
       
-      // Convert canvas to image data
-      const imgData = canvas.toDataURL('image/png');
+      // Title
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(data.documentTitle || 'SERVICE AGREEMENT', pageWidth / 2, margin + 10, { align: 'center' });
       
-      // If content fits on one page
-      if (imgHeight <= contentHeight) {
-        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-      } else {
-        // Multi-page handling
-        let yPosition = 0;
+      // Subtitle
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(data.documentSubtitle || 'Professional Service Contract', pageWidth / 2, margin + 20, { align: 'center' });
+      
+      let yPosition = margin + 40;
+      
+      // Helper function to add text with word wrapping
+      const addText = (text: string, fontSize: number = 11, isBold: boolean = false) => {
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
         
-        while (yPosition < imgHeight) {
-          const remainingHeight = imgHeight - yPosition;
-          const heightToAdd = Math.min(remainingHeight, contentHeight);
-          
-          // Calculate source coordinates for this page
-          const sourceY = (yPosition / imgHeight) * canvas.height;
-          const sourceHeight = (heightToAdd / imgHeight) * canvas.height;
-          
-          // Create temporary canvas for this page section
-          const pageCanvas = document.createElement('canvas');
-          const pageCtx = pageCanvas.getContext('2d');
-          
-          if (pageCtx) {
-            pageCanvas.width = canvas.width;
-            pageCanvas.height = sourceHeight;
-            
-            // Draw the section
-            pageCtx.drawImage(
-              canvas,
-              0, sourceY, canvas.width, sourceHeight,
-              0, 0, canvas.width, sourceHeight
-            );
-            
-            // Add to PDF
-            pdf.addImage(
-              pageCanvas.toDataURL('image/png'),
-              'PNG',
-              margin,
-              margin,
-              imgWidth,
-              heightToAdd
-            );
-          }
-          
-          yPosition += heightToAdd;
-          
-          // Add new page if more content exists
-          if (yPosition < imgHeight) {
-            pdf.addPage();
-          }
+        const lines = pdf.splitTextToSize(text, pageWidth - (margin * 2));
+        
+        // Check if we need a new page
+        if (yPosition + (lines.length * fontSize * 0.4) > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        pdf.text(lines, margin, yPosition);
+        yPosition += lines.length * fontSize * 0.4 + 5;
+      };
+      
+      // Helper function to add section header
+      const addSectionHeader = (title: string) => {
+        yPosition += 10;
+        addText(title, 14, true);
+        yPosition += 5;
+      };
+      
+      // Agreement Introduction
+      if (data.agreementIntroText) {
+        addText(data.agreementIntroText);
+      }
+      
+      if (data.effectiveDate) {
+        addText(`Effective Date: ${new Date(data.effectiveDate).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}`);
+      }
+      
+      // Parties Section
+      addSectionHeader('1. PARTIES');
+      
+      addText('Service Provider:', 12, true);
+      if (data.freelancerName) addText(data.freelancerName);
+      if (data.freelancerBusinessName) addText(data.freelancerBusinessName);
+      if (data.freelancerAddress) addText(data.freelancerAddress);
+      if (data.freelancerEmail) addText(`Email: ${data.freelancerEmail}`);
+      if (data.freelancerPhone) addText(`Phone: ${data.freelancerPhone}`);
+      
+      yPosition += 10;
+      
+      addText('Client:', 12, true);
+      if (data.clientName) addText(data.clientName);
+      if (data.clientCompany) addText(data.clientCompany);
+      if (data.clientEmail) addText(`Email: ${data.clientEmail}`);
+      if (data.clientPhone) addText(`Phone: ${data.clientPhone}`);
+      
+      // Scope of Work
+      addSectionHeader('2. SCOPE OF WORK');
+      
+      addText('2.1 Services Description', 12, true);
+      if (data.services) addText(data.services);
+      
+      if (data.deliverables) {
+        addText('2.2 Deliverables', 12, true);
+        addText(data.deliverables);
+      }
+      
+      if (data.milestones && data.milestones.length > 0) {
+        addText('2.3 Project Milestones', 12, true);
+        data.milestones.forEach((milestone, index) => {
+          addText(`${index + 1}. ${milestone.title}`);
+          addText(milestone.description);
+          addText(`Due: ${milestone.dueDate}`);
+          if (milestone.amount) addText(`Amount: ₹${milestone.amount.toLocaleString()}`);
+          yPosition += 5;
+        });
+      }
+      
+      // Payment Terms
+      if (data.rate > 0 || data.totalAmount) {
+        addSectionHeader('3. PAYMENT TERMS');
+        
+        addText(`Payment Structure: ${data.paymentType === 'fixed' ? 'Fixed Price Project' : 'Hourly Rate'}`);
+        
+        if (data.paymentType === 'fixed' && data.totalAmount) {
+          addText(`Total Amount: ₹${data.totalAmount.toLocaleString()}`, 12, true);
+        } else {
+          addText(`Rate: ₹${data.rate}/hour`, 12, true);
+        }
+        
+        if (data.paymentSchedule && data.paymentSchedule.length > 0) {
+          addText('Payment Schedule:', 12, true);
+          data.paymentSchedule.forEach(payment => {
+            addText(`• ${payment.description}: ${payment.percentage}%`);
+            if (payment.dueDate) addText(`  Due: ${payment.dueDate}`);
+          });
+        }
+        
+        if (data.lateFeeEnabled && data.lateFeeAmount) {
+          addText(`Late Payment Fee: ₹${data.lateFeeAmount} will be charged for payments made after the due date.`);
         }
       }
+      
+      // Terms and Conditions
+      addSectionHeader('4. TERMS AND CONDITIONS');
+      
+      addText('4.1 Service Level Agreement', 12, true);
+      addText(`Response Time: ${data.responseTime}`);
+      addText(`Revisions Included: ${data.revisionLimit}`);
+      if (data.uptimeRequirement) addText(`Uptime Requirement: ${data.uptimeRequirement}`);
+      
+      if (data.includeNDA) {
+        addText('4.2 Confidentiality', 12, true);
+        addText('Both parties acknowledge that they may have access to confidential information and agree to maintain strict confidentiality.');
+        if (data.confidentialityScope) addText(data.confidentialityScope);
+        if (data.confidentialityDuration) addText(`Duration: ${data.confidentialityDuration}`);
+      }
+      
+      addText('4.3 Intellectual Property', 12, true);
+      addText(`Ownership: ${data.ipOwnership} retains intellectual property rights`);
+      addText(`Usage Rights: ${data.usageRights} usage rights granted`);
+      
+      addText('4.4 Termination', 12, true);
+      addText(data.terminationConditions);
+      addText(`Notice Period: ${data.noticePeriod}`);
+      
+      if (data.isRetainer) {
+        addText('4.5 Retainer Agreement', 12, true);
+        if (data.retainerAmount) addText(`Monthly Retainer: ₹${data.retainerAmount.toLocaleString()}`);
+        if (data.renewalCycle) addText(`Renewal Cycle: ${data.renewalCycle}`);
+        addText(`Auto-renewal: ${data.autoRenew ? 'Yes' : 'No'}`);
+      }
+      
+      // Governing Law
+      addSectionHeader('5. GOVERNING LAW');
+      addText(`This Agreement shall be governed by and construed in accordance with the laws of ${data.jurisdiction}.`);
+      if (data.arbitrationClause) {
+        addText('Any disputes arising under this agreement shall be resolved through arbitration.');
+      }
+      
+      // Signatures
+      yPosition += 20;
+      addText('SIGNATURES', 16, true);
+      yPosition += 20;
+      
+      // Service Provider signature line
+      pdf.line(margin, yPosition, margin + 80, yPosition);
+      yPosition += 10;
+      addText(data.freelancerName || 'Service Provider Name');
+      addText('Service Provider');
+      if (data.signedDate) {
+        addText(`Date: ${new Date(data.signedDate).toLocaleDateString()}`);
+      } else {
+        addText('Date: ______________');
+      }
+      
+      // Client signature line
+      const clientSignatureY = yPosition - 40;
+      pdf.line(margin + 100, clientSignatureY, margin + 180, clientSignatureY);
+      const currentY = yPosition;
+      yPosition = clientSignatureY + 10;
+      addText(data.clientName || 'Client Name');
+      addText('Client');
+      addText('Date: ______________');
+      
+      yPosition = Math.max(currentY, yPosition);
+      
+      // Footer
+      yPosition += 20;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('This agreement is governed by the Indian Contract Act, 1872 | Generated with Agrezy Platform', 
+               pageWidth / 2, pageHeight - 10, { align: 'center' });
 
       // Generate filename with current date
       const fileName = `${data.templateName || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
