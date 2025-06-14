@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,8 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileText, Edit, Trash, Eye, Calendar, DollarSign } from 'lucide-react';
-import { generateContractCoverImage } from '@/utils/contractImageGenerator';
+import { Plus, FileText, Edit, Trash, Eye, Calendar, DollarSign, User } from 'lucide-react';
+import { generateContractCardImage } from '@/utils/contractCardImageGenerator';
 import SEOHead from '@/components/SEOHead';
 import { useToast } from '@/hooks/use-toast';
 
@@ -207,7 +208,7 @@ const Contracts = () => {
                       <div 
                         className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative"
                         style={{
-                          backgroundImage: `url(${generateContractCoverImage(contract.id)})`,
+                          backgroundImage: `url(${generateContractCardImage(contract)})`,
                           backgroundSize: 'cover',
                           backgroundPosition: 'center'
                         }}
