@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, FileText, Edit, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 
@@ -88,7 +89,8 @@ const Contracts = () => {
     }
   };
 
-  const deleteContract = async (contractId: string) => {
+  const deleteContract = async (contractId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
     try {
       const { error } = await supabase
         .from('contracts')
@@ -113,6 +115,11 @@ const Contracts = () => {
     }
   };
 
+  const handleEdit = (contractId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    navigate(`/contract/edit/${contractId}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-800';
@@ -122,7 +129,7 @@ const Contracts = () => {
     }
   };
 
-  // Generate actual contract first page preview
+  // Generate full contract first page preview
   const generateContractCover = (contract: Contract) => {
     const getFontFamily = () => {
       switch (contract.font_family) {
@@ -135,24 +142,24 @@ const Contracts = () => {
 
     return (
       <div 
-        className="w-full h-48 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm relative"
+        className="w-full h-80 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm relative"
         style={{ 
           fontFamily: getFontFamily(),
-          fontSize: '6px',
-          lineHeight: '1.2',
+          fontSize: '8px',
+          lineHeight: '1.3',
           color: contract.primary_color || '#000000'
         }}
       >
-        <div className="p-2 h-full flex flex-col">
+        <div className="p-4 h-full flex flex-col">
           {/* Header with Logos */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             {/* Left Logo */}
-            <div className="w-4 h-4 flex items-center justify-start">
+            <div className="w-6 h-6 flex items-center justify-start">
               {contract.left_logo && (
                 <img 
                   src={contract.left_logo} 
                   alt="Left logo" 
-                  className={`w-4 h-4 object-cover ${
+                  className={`w-6 h-6 object-cover ${
                     contract.logo_style === 'round' ? 'rounded-full' : 'rounded-sm'
                   }`}
                 />
@@ -161,10 +168,10 @@ const Contracts = () => {
 
             {/* Center - Document Header */}
             <div className="text-center flex-1">
-              <h1 className="text-xs font-bold uppercase tracking-wider mb-0.5">
+              <h1 className="text-sm font-bold uppercase tracking-wider mb-1">
                 {contract.document_title || 'SERVICE AGREEMENT'}
               </h1>
-              <p className="text-xs text-gray-600 uppercase tracking-wide">
+              <p className="text-sm text-gray-600 uppercase tracking-wide">
                 {contract.document_subtitle || contract.title}
               </p>
               {contract.start_date && (
@@ -175,12 +182,12 @@ const Contracts = () => {
             </div>
 
             {/* Right Logo */}
-            <div className="w-4 h-4 flex items-center justify-end">
+            <div className="w-6 h-6 flex items-center justify-end">
               {contract.right_logo && (
                 <img 
                   src={contract.right_logo} 
                   alt="Right logo" 
-                  className={`w-4 h-4 object-cover ${
+                  className={`w-6 h-6 object-cover ${
                     contract.logo_style === 'round' ? 'rounded-full' : 'rounded-sm'
                   }`}
                 />
@@ -188,10 +195,10 @@ const Contracts = () => {
             </div>
           </div>
 
-          <div className="border-b border-gray-800 mb-2"></div>
+          <div className="border-b border-gray-800 mb-3"></div>
 
           {/* Agreement Introduction */}
-          <div className="mb-2">
+          <div className="mb-3">
             <p className="text-justify text-xs leading-tight">
               This Service Agreement ("Agreement") is entered into on{' '}
               <span className="font-semibold underline">
@@ -202,15 +209,15 @@ const Contracts = () => {
           </div>
 
           {/* Parties Section */}
-          <div className="mb-3">
-            <h2 className="text-xs font-bold uppercase mb-1 border-b border-gray-400 pb-0.5">
+          <div className="mb-4">
+            <h2 className="text-xs font-bold uppercase mb-2 border-b border-gray-400 pb-1">
               1. PARTIES
             </h2>
             
-            <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <h3 className="font-bold text-xs uppercase mb-0.5 text-gray-700">Service Provider:</h3>
-                <div className="space-y-0.5 text-xs">
+                <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Service Provider:</h3>
+                <div className="space-y-1 text-xs">
                   {contract.freelancer_name && <p className="font-semibold">{contract.freelancer_name}</p>}
                   {contract.freelancer_business_name && <p className="italic">{contract.freelancer_business_name}</p>}
                   {contract.freelancer_address && <p className="truncate">{contract.freelancer_address}</p>}
@@ -220,8 +227,8 @@ const Contracts = () => {
               </div>
               
               <div>
-                <h3 className="font-bold text-xs uppercase mb-0.5 text-gray-700">Client:</h3>
-                <div className="space-y-0.5 text-xs">
+                <h3 className="font-bold text-xs uppercase mb-1 text-gray-700">Client:</h3>
+                <div className="space-y-1 text-xs">
                   {contract.client_name && <p className="font-semibold">{contract.client_name}</p>}
                   {contract.client_company && <p className="italic">{contract.client_company}</p>}
                   {contract.client_email && <p className="truncate">Email: {contract.client_email}</p>}
@@ -232,31 +239,45 @@ const Contracts = () => {
           </div>
 
           {/* Scope of Work Preview */}
-          <div className="mb-2 flex-1">
-            <h2 className="text-xs font-bold uppercase mb-1 border-b border-gray-400 pb-0.5">
+          <div className="mb-3 flex-1">
+            <h2 className="text-xs font-bold uppercase mb-2 border-b border-gray-400 pb-1">
               2. SCOPE OF WORK
             </h2>
             
             <h3 className="font-semibold mb-1 text-xs">2.1 Services Description</h3>
-            <p className="text-justify text-xs leading-tight">
-              {contract.services ? contract.services.substring(0, 200) + (contract.services.length > 200 ? '...' : '') : 'Services to be defined...'}
+            <p className="text-justify text-xs leading-tight mb-2">
+              {contract.services ? contract.services.substring(0, 300) + (contract.services.length > 300 ? '...' : '') : 'Services to be defined...'}
             </p>
+
+            {contract.deliverables && (
+              <>
+                <h3 className="font-semibold mb-1 text-xs">2.2 Deliverables</h3>
+                <p className="text-justify text-xs leading-tight">
+                  {contract.deliverables.substring(0, 200) + (contract.deliverables.length > 200 ? '...' : '')}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Payment Terms Preview */}
           {(contract.rate > 0 || contract.total_amount || contract.contract_amount) && (
             <div className="mt-auto">
-              <div className="bg-gray-50 p-1 rounded text-xs">
-                <p className="font-semibold">Payment:</p>
+              <div className="bg-gray-50 p-2 rounded text-xs">
+                <h3 className="font-bold mb-1">3. PAYMENT TERMS</h3>
                 <p className="font-bold text-gray-800">
-                  ₹{(contract.total_amount || contract.contract_amount || 0).toLocaleString()}
+                  Total Amount: ₹{(contract.total_amount || contract.contract_amount || 0).toLocaleString()}
                 </p>
+                {contract.rate && (
+                  <p className="text-gray-600">
+                    Rate: ₹{contract.rate.toLocaleString()} {contract.payment_type === 'hourly' ? '/hour' : '/project'}
+                  </p>
+                )}
               </div>
             </div>
           )}
 
           {/* Footer */}
-          <div className="text-center text-xs text-gray-500 pt-1 border-t border-gray-300 mt-1">
+          <div className="text-center text-xs text-gray-500 pt-2 border-t border-gray-300 mt-2">
             <p>Generated by Agrezy</p>
           </div>
         </div>
@@ -303,12 +324,11 @@ const Contracts = () => {
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-4">
-                    <div className="h-48 bg-muted rounded mb-4"></div>
+                    <div className="h-80 bg-muted rounded mb-4"></div>
                     <div className="space-y-2">
                       <div className="h-4 bg-muted rounded w-3/4"></div>
                       <div className="h-3 bg-muted rounded w-1/2"></div>
                       <div className="flex gap-2">
-                        <div className="h-8 bg-muted rounded flex-1"></div>
                         <div className="h-8 bg-muted rounded flex-1"></div>
                         <div className="h-8 bg-muted rounded flex-1"></div>
                       </div>
@@ -343,10 +363,13 @@ const Contracts = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="hover:shadow-lg transition-all duration-200 group">
+                  <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer">
                     <CardContent className="p-4">
-                      {/* Actual Contract Cover Preview */}
-                      <div className="mb-4 cursor-pointer" onClick={() => navigate(`/contract/${contract.id}`)}>
+                      {/* Full Contract Cover Preview - Clickable */}
+                      <div 
+                        className="mb-4 cursor-pointer" 
+                        onClick={() => navigate(`/contract/${contract.id}`)}
+                      >
                         {generateContractCover(contract)}
                       </div>
                       
@@ -377,33 +400,24 @@ const Contracts = () => {
                           </div>
                         </div>
                         
-                        {/* Action Buttons */}
+                        {/* Action Buttons - Improved Design */}
                         <div className="flex gap-2 pt-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => navigate(`/contract/${contract.id}`)}
-                            className="flex items-center gap-1 flex-1"
+                            onClick={(e) => handleEdit(contract.id, e)}
+                            className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
                           >
-                            <Eye className="h-3 w-3" />
-                            View
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/contract/edit/${contract.id}`)}
-                            className="flex items-center gap-1 flex-1"
-                          >
-                            <Edit className="h-3 w-3" />
+                            <Edit className="h-4 w-4" />
                             Edit
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => deleteContract(contract.id)}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                            onClick={(e) => deleteContract(contract.id, e)}
+                            className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                             Delete
                           </Button>
                         </div>
