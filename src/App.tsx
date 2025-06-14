@@ -13,6 +13,7 @@ import ContractBuilder from "./pages/ContractBuilder";
 import ContractEdit from "./pages/ContractEdit";
 import ContractView from "./pages/ContractView";
 import ContractRedirect from "./pages/ContractRedirect";
+import ESignView from "./pages/ESignView";
 import Templates from "./pages/Templates";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/contract/edit/:id" element={<ContractEdit />} />
                 <Route path="/contract/view/:id" element={<ContractView />} />
                 <Route path="/contract/:id" element={<ContractRedirect />} />
+                <Route path="/esign/:contractId/:authMethod" element={<ESignView />} />
                 <Route path="/templates" element={<Templates />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/settings" element={<Settings />} />

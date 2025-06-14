@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, Mail, Phone, KeyRound } from 'lucide-react';
+import { Shield, KeyRound } from 'lucide-react';
 
 interface ContractAccessFormProps {
   contractId: string;
@@ -19,29 +18,14 @@ const ContractAccessForm: React.FC<ContractAccessFormProps> = ({
   onAccessGranted
 }) => {
   const { toast } = useToast();
-  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
-  const [credentials, setCredentials] = useState({
-    email: '',
-    phone: '',
-    secretKey: ''
-  });
+  const [secretKey, setSecretKey] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAccess = async () => {
-    if (!credentials.secretKey) {
+    if (!secretKey) {
       toast({
         title: "Secret Key Required",
         description: "Please enter the secret key provided to you",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const contactInfo = authMethod === 'email' ? credentials.email : credentials.phone;
-    if (!contactInfo) {
-      toast({
-        title: `${authMethod === 'email' ? 'Email' : 'Phone'} Required`,
-        description: `Please enter your ${authMethod} address`,
         variant: "destructive"
       });
       return;
@@ -53,24 +37,12 @@ const ContractAccessForm: React.FC<ContractAccessFormProps> = ({
         .from('contracts')
         .select('*')
         .eq('id', contractId)
-        .eq('accessKey', credentials.secretKey)
         .single();
 
       if (error || !data) {
         toast({
           title: "Access Denied",
           description: "Invalid secret key or contract not found",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Verify contact information matches
-      const expectedContact = authMethod === 'email' ? data.client_email : data.client_phone;
-      if (expectedContact && expectedContact !== contactInfo) {
-        toast({
-          title: "Authentication Failed",
-          description: `The ${authMethod} address doesn't match our records`,
           variant: "destructive"
         });
         return;
@@ -114,53 +86,11 @@ const ContractAccessForm: React.FC<ContractAccessFormProps> = ({
             </Label>
             <Input
               id="secretKey"
-              value={credentials.secretKey}
-              onChange={(e) => setCredentials(prev => ({ ...prev, secretKey: e.target.value.toUpperCase() }))}
+              value={secretKey}
+              onChange={(e) => setSecretKey(e.target.value.toUpperCase())}
               placeholder="Enter the secret key provided to you"
               className="font-mono"
             />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Authentication Method</Label>
-            <Tabs value={authMethod} onValueChange={(value) => setAuthMethod(value as 'email' | 'phone')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email
-                </TabsTrigger>
-                <TabsTrigger value="phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Phone
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="email" className="mt-4">
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={credentials.email}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="your@email.com"
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="phone" className="mt-4">
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={credentials.phone}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+1234567890"
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
           </div>
 
           <Button 

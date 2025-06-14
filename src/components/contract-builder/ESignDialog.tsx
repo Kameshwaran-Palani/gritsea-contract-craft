@@ -61,7 +61,6 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
       const { error } = await supabase
         .from('contracts')
         .update({
-          accessKey: generatedKey,
           status: 'sent_for_signature',
           [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
           verification_email_required: authMethod === 'email',
@@ -71,7 +70,7 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
 
       if (error) throw error;
 
-      const link = `${window.location.origin}/contract/${contractId}`;
+      const link = `${window.location.origin}/esign/${contractId}/${authMethod}`;
       setShareLink(link);
       setStep('generated');
 
