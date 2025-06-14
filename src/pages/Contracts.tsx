@@ -101,6 +101,47 @@ const Contracts = () => {
     }
   };
 
+  // Generate contract preview image (simplified representation)
+  const generateContractPreview = (contract: Contract) => {
+    return (
+      <div className="w-full h-32 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+        <div className="p-3 h-full flex flex-col text-xs">
+          {/* Header */}
+          <div className="text-center border-b border-gray-300 pb-2 mb-2">
+            <div className="font-bold text-gray-800 text-sm">SERVICE AGREEMENT</div>
+            <div className="text-gray-600 text-xs">{contract.title}</div>
+          </div>
+          
+          {/* Content preview */}
+          <div className="flex-1 space-y-1">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <div className="font-semibold text-gray-700">Service Provider:</div>
+                <div className="text-gray-600 truncate">Provider Name</div>
+              </div>
+              <div>
+                <div className="font-semibold text-gray-700">Client:</div>
+                <div className="text-gray-600 truncate">{contract.client_name || 'Client'}</div>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-1 mt-2">
+              <div className="text-xs text-gray-500">Amount: ₹{contract.contract_amount?.toLocaleString() || '0'}</div>
+            </div>
+          </div>
+          
+          {/* Footer lines to simulate signature area */}
+          <div className="border-t border-gray-200 pt-1 mt-1">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border-b border-gray-300 h-1"></div>
+              <div className="border-b border-gray-300 h-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -136,17 +177,19 @@ const Contracts = () => {
           </div>
 
           {contractsLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4">
+                    <div className="h-32 bg-muted rounded mb-4"></div>
                     <div className="space-y-2">
-                      <div className="h-3 bg-muted rounded"></div>
-                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                      <div className="h-4 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                      <div className="flex gap-2">
+                        <div className="h-8 bg-muted rounded flex-1"></div>
+                        <div className="h-8 bg-muted rounded flex-1"></div>
+                        <div className="h-8 bg-muted rounded flex-1"></div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -170,7 +213,7 @@ const Contracts = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {contracts.map((contract) => (
                 <motion.div
                   key={contract.id}
@@ -178,58 +221,70 @@ const Contracts = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg font-semibold truncate">
-                          {contract.title}
-                        </CardTitle>
-                        <Badge className={getStatusColor(contract.status)}>
-                          {contract.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Client: {contract.client_name}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2 mb-4">
-                        <div className="text-sm">
-                          <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Created: {new Date(contract.created_at).toLocaleDateString()}
-                        </div>
+                  <Card className="hover:shadow-lg transition-all duration-200 group">
+                    <CardContent className="p-4">
+                      {/* Contract Preview Image */}
+                      <div className="mb-4 cursor-pointer" onClick={() => navigate(`/contract/${contract.id}`)}>
+                        {generateContractPreview(contract)}
                       </div>
                       
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/contract/${contract.id}`)}
-                          className="flex items-center gap-1"
-                        >
-                          <Eye className="h-3 w-3" />
-                          View
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/contract/edit/${contract.id}`)}
-                          className="flex items-center gap-1"
-                        >
-                          <Edit className="h-3 w-3" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteContract(contract.id)}
-                          className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Delete
-                        </Button>
+                      {/* Contract Info */}
+                      <div className="space-y-3">
+                        {/* Title and Status */}
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                              {contract.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Client: {contract.client_name || 'Not specified'}
+                            </p>
+                          </div>
+                          <Badge className={getStatusColor(contract.status)}>
+                            {contract.status}
+                          </Badge>
+                        </div>
+
+                        {/* Amount and Date */}
+                        <div className="text-sm space-y-1">
+                          <div>
+                            <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
+                          </div>
+                          <div className="text-muted-foreground">
+                            Created: {new Date(contract.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/contract/${contract.id}`)}
+                            className="flex items-center gap-1 flex-1"
+                          >
+                            <Eye className="h-3 w-3" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/contract/edit/${contract.id}`)}
+                            className="flex items-center gap-1 flex-1"
+                          >
+                            <Edit className="h-3 w-3" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteContract(contract.id)}
+                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
