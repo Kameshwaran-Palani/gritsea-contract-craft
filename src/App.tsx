@@ -12,6 +12,7 @@ import Contracts from "./pages/Contracts";
 import ContractBuilder from "./pages/ContractBuilder";
 import ContractEdit from "./pages/ContractEdit";
 import ContractView from "./pages/ContractView";
+import ContractRedirect from "./pages/ContractRedirect";
 import Templates from "./pages/Templates";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/contract/builder" element={<ContractBuilder />} />
                 <Route path="/contract/edit/:id" element={<ContractEdit />} />
                 <Route path="/contract/view/:id" element={<ContractView />} />
+                <Route path="/contract/:id" element={<ContractRedirect />} />
                 <Route path="/templates" element={<Templates />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/settings" element={<Settings />} />
