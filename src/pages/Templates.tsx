@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +24,7 @@ import {
   Camera
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import TemplatePreviewModal from '@/components/TemplatePreviewModal';
 
 const templateCategories = [
   {
@@ -123,12 +123,16 @@ const Templates = () => {
   const { user, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<typeof templateCategories[0] | null>(null);
 
   const filteredTemplates = templateCategories.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handlePreviewClick = (template: typeof templateCategories[0]) => {
+    setPreviewTemplate(template);
+  };
 
   if (loading) {
     return (
@@ -253,7 +257,7 @@ const Templates = () => {
                             variant="outline" 
                             size="sm" 
                             className="rounded-xl"
-                            onClick={() => setPreviewTemplate(template.id)}
+                            onClick={() => handlePreviewClick(template)}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -327,7 +331,7 @@ const Templates = () => {
                             variant="outline" 
                             size="sm" 
                             className="rounded-xl"
-                            onClick={() => setPreviewTemplate(template.id)}
+                            onClick={() => handlePreviewClick(template)}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -358,6 +362,13 @@ const Templates = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Template Preview Modal */}
+        <TemplatePreviewModal
+          isOpen={previewTemplate !== null}
+          onClose={() => setPreviewTemplate(null)}
+          template={previewTemplate}
+        />
       </div>
     </DashboardLayout>
   );
