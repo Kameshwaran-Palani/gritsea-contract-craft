@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,44 +6,54 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Bot, 
-  CreditCard, 
-  Settings, 
-  LogOut, 
-  Menu,
-  User,
-  Users,
-  Bookmark,
-  Zap,
-  PanelLeft
-} from 'lucide-react';
-
+import { LayoutDashboard, FileText, Bot, CreditCard, Settings, LogOut, Menu, User, Users, Bookmark, Zap, PanelLeft } from 'lucide-react';
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
-
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, signOut } = useAuth();
+const DashboardLayout = ({
+  children
+}: DashboardLayoutProps) => {
+  const {
+    user,
+    signOut
+  } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Contracts', href: '/contracts', icon: FileText },
-    { name: 'Templates', href: '/templates', icon: Bookmark },
-    { name: 'AI Prompt', href: '/prompt', icon: Zap },
-    { name: 'Community', href: '/community', icon: Users },
-    { name: 'AI Assistant', href: '/ai-assistant', icon: Bot },
-    { name: 'Pricing', href: '/pricing', icon: CreditCard },
-    { name: 'Settings', href: '/settings', icon: Settings },
-  ];
-
+  const navigation = [{
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard
+  }, {
+    name: 'Contracts',
+    href: '/contracts',
+    icon: FileText
+  }, {
+    name: 'Templates',
+    href: '/templates',
+    icon: Bookmark
+  }, {
+    name: 'AI Prompt',
+    href: '/prompt',
+    icon: Zap
+  }, {
+    name: 'Community',
+    href: '/community',
+    icon: Users
+  }, {
+    name: 'AI Assistant',
+    href: '/ai-assistant',
+    icon: Bot
+  }, {
+    name: 'Pricing',
+    href: '/pricing',
+    icon: CreditCard
+  }, {
+    name: 'Settings',
+    href: '/settings',
+    icon: Settings
+  }];
   const isActive = (href: string) => location.pathname === href;
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -52,50 +61,32 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       console.error('Error signing out:', error);
     }
   };
-
-  const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
-    <div className="flex h-full flex-col bg-card border-r">
+  const Sidebar = ({
+    mobile = false
+  }: {
+    mobile?: boolean;
+  }) => <div className="flex h-full flex-col bg-card border-r">
       {/* Collapse button - only show on desktop */}
-      {!mobile && (
-        <div className="px-4 py-4 border-b">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`rounded-2xl ${sidebarCollapsed ? 'w-full justify-center' : 'w-full justify-start'}`}
-          >
+      {!mobile && <div className="px-4 border-b py-[13px]">
+          <Button variant="ghost" size="sm" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className={`rounded-2xl ${sidebarCollapsed ? 'w-full justify-center' : 'w-full justify-start'}`}>
             <PanelLeft className="h-5 w-5" />
             {!sidebarCollapsed && <span className="ml-2">Collapse</span>}
           </Button>
-        </div>
-      )}
+        </div>}
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-4 py-6">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={() => mobile && setSidebarOpen(false)}
-              className={`group flex items-center ${sidebarCollapsed && !mobile ? 'px-3 py-3 justify-center' : 'px-3 py-2'} text-sm font-medium rounded-2xl transition-all duration-200 ${
-                isActive(item.href)
-                  ? 'bg-primary text-white shadow-lg'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
-              title={sidebarCollapsed && !mobile ? item.name : undefined}
-            >
+        {navigation.map(item => {
+        const Icon = item.icon;
+        return <Link key={item.name} to={item.href} onClick={() => mobile && setSidebarOpen(false)} className={`group flex items-center ${sidebarCollapsed && !mobile ? 'px-3 py-3 justify-center' : 'px-3 py-2'} text-sm font-medium rounded-2xl transition-all duration-200 ${isActive(item.href) ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`} title={sidebarCollapsed && !mobile ? item.name : undefined}>
               <Icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed && !mobile ? '' : 'mr-3'}`} />
               {(!sidebarCollapsed || mobile) && item.name}
-            </Link>
-          );
-        })}
+            </Link>;
+      })}
       </nav>
 
       {/* User section */}
-      {(!sidebarCollapsed || mobile) && user && (
-        <div className="border-t p-4">
+      {(!sidebarCollapsed || mobile) && user && <div className="border-t p-4">
           <div className="flex items-center space-x-3 mb-4">
             <Avatar className="h-10 w-10">
               <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -112,38 +103,25 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-foreground rounded-2xl"
-            onClick={handleSignOut}
-          >
+          <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground rounded-2xl" onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
-        </div>
-      )}
+        </div>}
 
       {/* Collapsed User Avatar */}
-      {sidebarCollapsed && !mobile && user && (
-        <div className="border-t p-4 flex justify-center">
+      {sidebarCollapsed && !mobile && user && <div className="border-t p-4 flex justify-center">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
             <AvatarFallback className="bg-primary text-white text-xs">
               {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="flex h-screen bg-background w-full">
+        </div>}
+    </div>;
+  return <div className="flex h-screen bg-background w-full">
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 ${
-        sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'
-      }`}>
+      <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}`}>
         <Sidebar />
       </div>
 
@@ -155,19 +133,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </Sheet>
 
       {/* Main Content */}
-      <div className={`flex flex-1 flex-col transition-all duration-300 ${
-        sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
-      }`}>
+      <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         {/* Top Bar */}
         <header className="flex h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
           <div className="flex items-center space-x-4">
             {/* Mobile menu trigger */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="lg:hidden rounded-2xl" 
-              onClick={() => setSidebarOpen(true)}
-            >
+            <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open sidebar</span>
             </Button>
@@ -200,8 +171,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </main>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardLayout;
