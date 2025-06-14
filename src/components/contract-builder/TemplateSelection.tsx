@@ -137,20 +137,12 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
     onNext();
   };
 
-  const handleStartFromScratch = () => {
-    updateData({
-      templateId: undefined,
-      templateName: 'Custom Contract'
-    });
-    onNext();
-  };
-
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-semibold mb-2">Choose a Template</h2>
-        <p className="text-muted-foreground">
-          Start with a pre-built template or create a custom contract from scratch
+        <h2 className="text-xl font-semibold mb-2">Choose a Template</h2>
+        <p className="text-muted-foreground text-sm">
+          Select from our pre-built templates to get started quickly
         </p>
       </div>
 
@@ -205,23 +197,6 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
           );
         })}
       </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="text-center"
-      >
-        <Card className="max-w-md mx-auto cursor-pointer transition-all hover:shadow-lg border-dashed border-2">
-          <CardContent className="p-6" onClick={handleStartFromScratch}>
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Start from Scratch</h3>
-            <p className="text-muted-foreground text-sm">
-              Create a completely custom contract without using a template
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
     </div>
   );
 };
