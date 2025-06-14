@@ -250,6 +250,7 @@ export type Database = {
         | "signed"
         | "cancelled"
         | "sent_for_signature"
+        | "revision_requested"
       signer_type: "freelancer" | "client"
       subscription_status: "active" | "cancelled" | "expired" | "pending"
       user_plan: "free" | "pro" | "agency"
@@ -374,6 +375,7 @@ export const Constants = {
         "signed",
         "cancelled",
         "sent_for_signature",
+        "revision_requested",
       ],
       signer_type: ["freelancer", "client"],
       subscription_status: ["active", "cancelled", "expired", "pending"],
