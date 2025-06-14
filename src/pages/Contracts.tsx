@@ -63,27 +63,37 @@ const Contracts = () => {
   // Generate images for contracts when they're loaded
   useEffect(() => {
     if (contracts.length > 0) {
+      console.log('Contracts loaded, generating images for', contracts.length, 'contracts');
       generateImagesForContracts();
     }
   }, [contracts]);
 
   const generateImagesForContracts = async () => {
-    const imagePromises = contracts.map(async (contract) => {
-      if (contractImages[contract.id]) return; // Skip if already generated
+    console.log('Starting image generation for all contracts');
+    
+    for (const contract of contracts) {
+      if (contractImages[contract.id]) {
+        console.log('Image already exists for contract:', contract.id);
+        continue; // Skip if already generated
+      }
       
+      console.log('Generating image for contract:', contract.id);
       setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
       
       try {
         const imageDataUrl = await generateContractCoverImage(contract);
-        setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
+        if (imageDataUrl) {
+          console.log('Image generated successfully for contract:', contract.id);
+          setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
+        } else {
+          console.error('Empty image data URL for contract:', contract.id);
+        }
       } catch (error) {
         console.error(`Error generating image for contract ${contract.id}:`, error);
       } finally {
         setImagesLoading(prev => ({ ...prev, [contract.id]: false }));
       }
-    });
-
-    await Promise.all(imagePromises);
+    }
   };
 
   const loadContracts = async () => {
@@ -235,32 +245,38 @@ const Contracts = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer">
-                    <CardContent className="p-4">
+                  <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
+                    <CardContent className="p-0">
                       {/* Contract Cover Image - Clickable */}
                       <div 
-                        className="mb-4 cursor-pointer aspect-[794/1123] bg-gray-50 rounded-lg overflow-hidden border" 
+                        className="cursor-pointer aspect-[794/1123] bg-gray-50 overflow-hidden border-b" 
                         onClick={() => navigate(`/contract/${contract.id}`)}
                       >
                         {imagesLoading[contract.id] ? (
                           <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <span className="ml-2 text-sm text-muted-foreground">Generating preview...</span>
                           </div>
                         ) : contractImages[contract.id] ? (
                           <img 
                             src={contractImages[contract.id]} 
                             alt={`${contract.title} preview`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              console.error('Error loading contract image:', contract.id);
+                              e.currentTarget.style.display = 'none';
+                            }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                            <FileText className="h-12 w-12" />
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                            <FileText className="h-12 w-12 mb-2" />
+                            <span className="text-sm">Preview not available</span>
                           </div>
                         )}
                       </div>
                       
                       {/* Contract Info */}
-                      <div className="space-y-3">
+                      <div className="p-4 space-y-3">
                         {/* Title and Status */}
                         <div className="flex justify-between items-start">
                           <div className="flex-1 min-w-0">
@@ -292,7 +308,7 @@ const Contracts = () => {
                             size="sm"
                             variant="outline"
                             onClick={(e) => handleEdit(contract.id, e)}
-                            className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                            className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
                           >
                             <Edit className="h-4 w-4" />
                             Edit
@@ -301,7 +317,7 @@ const Contracts = () => {
                             size="sm"
                             variant="outline"
                             onClick={(e) => deleteContract(contract.id, e)}
-                            className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                            className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete

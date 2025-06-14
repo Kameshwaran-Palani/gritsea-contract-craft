@@ -34,6 +34,8 @@ interface Contract {
 }
 
 export const generateContractCoverImage = async (contract: Contract): Promise<string> => {
+  console.log('Starting contract image generation for:', contract.id);
+  
   const getFontFamily = () => {
     switch (contract.font_family) {
       case 'serif': return 'Times, serif';
@@ -57,19 +59,20 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
   tempDiv.style.color = contract.primary_color || '#000000';
   tempDiv.style.padding = '60px';
   tempDiv.style.boxSizing = 'border-box';
+  tempDiv.style.overflow = 'hidden';
 
   tempDiv.innerHTML = `
-    <div style="display: flex; flex-direction: column; height: 100%;">
+    <div style="display: flex; flex-direction: column; height: 100%; font-family: ${getFontFamily()};">
       <!-- Header with Logos -->
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px;">
         <!-- Left Logo -->
         <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: flex-start;">
-          ${contract.left_logo ? `<img src="${contract.left_logo}" alt="Left logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" />` : ''}
+          ${contract.left_logo ? `<img src="${contract.left_logo}" alt="Left logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" crossorigin="anonymous" />` : ''}
         </div>
 
         <!-- Center - Document Header -->
         <div style="text-align: center; flex: 1;">
-          <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 10px 0;">
+          <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 10px 0; color: ${contract.primary_color || '#000000'};">
             ${contract.document_title || 'SERVICE AGREEMENT'}
           </h1>
           <p style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0;">
@@ -80,7 +83,7 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
 
         <!-- Right Logo -->
         <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: flex-end;">
-          ${contract.right_logo ? `<img src="${contract.right_logo}" alt="Right logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" />` : ''}
+          ${contract.right_logo ? `<img src="${contract.right_logo}" alt="Right logo" style="width: 80px; height: 80px; object-fit: cover; ${contract.logo_style === 'round' ? 'border-radius: 50%;' : 'border-radius: 8px;'}" crossorigin="anonymous" />` : ''}
         </div>
       </div>
 
@@ -135,13 +138,13 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
         
         <h3 style="font-weight: bold; margin: 0 0 10px 0; font-size: 14px;">2.1 Services Description</h3>
         <p style="text-align: justify; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-          ${contract.services ? contract.services.substring(0, 800) + (contract.services.length > 800 ? '...' : '') : 'Services to be defined...'}
+          ${contract.services ? contract.services.substring(0, 600) + (contract.services.length > 600 ? '...' : '') : 'Services to be defined...'}
         </p>
 
         ${contract.deliverables ? `
           <h3 style="font-weight: bold; margin: 0 0 10px 0; font-size: 14px;">2.2 Deliverables</h3>
           <p style="text-align: justify; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-            ${contract.deliverables.substring(0, 600) + (contract.deliverables.length > 600 ? '...' : '')}
+            ${contract.deliverables.substring(0, 400) + (contract.deliverables.length > 400 ? '...' : '')}
           </p>
         ` : ''}
       </div>
@@ -171,22 +174,31 @@ export const generateContractCoverImage = async (contract: Contract): Promise<st
   `;
 
   document.body.appendChild(tempDiv);
+  console.log('Temporary div created and appended to body');
 
   try {
+    // Wait a bit for fonts and images to load
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    console.log('Starting html2canvas conversion...');
     const canvas = await html2canvas(tempDiv, {
       backgroundColor: '#ffffff',
       scale: 1,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       width: 794,
-      height: 1123
+      height: 1123,
+      logging: true,
+      foreignObjectRendering: false
     });
 
     document.body.removeChild(tempDiv);
-    return canvas.toDataURL('image/png', 0.8);
+    const dataUrl = canvas.toDataURL('image/png', 0.9);
+    console.log('Contract image generated successfully for:', contract.id, 'Data URL length:', dataUrl.length);
+    return dataUrl;
   } catch (error) {
     document.body.removeChild(tempDiv);
-    console.error('Error generating contract image:', error);
+    console.error('Error generating contract image for:', contract.id, error);
     return '';
   }
 };
