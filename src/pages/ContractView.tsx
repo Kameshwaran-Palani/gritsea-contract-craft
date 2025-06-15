@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, AlertCircle, Eye, PenTool, Share2, Send } from 'lucide-react';
+import { CheckCircle, AlertCircle, Eye, PenTool, Share2, Send, Edit } from 'lucide-react';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 import RevisionRequestModal from '@/components/contract-builder/RevisionRequestModal';
@@ -16,6 +16,7 @@ import { ContractData } from '@/pages/ContractBuilder';
 
 const ContractView = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [contract, setContract] = useState<any>(null);
   const [contractData, setContractData] = useState<ContractData | null>(null);
@@ -25,6 +26,7 @@ const ContractView = () => {
   const [showSignature, setShowSignature] = useState(false);
   const [showESignDialog, setShowESignDialog] = useState(false);
   const [clientApproved, setClientApproved] = useState(false);
+  const [revisionRequests, setRevisionRequests] = useState<any[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -49,6 +51,11 @@ const ContractView = () => {
       if (data.clauses_json) {
         setContractData(data.clauses_json as unknown as ContractData);
       }
+
+      // Load revision requests if status is revision_requested
+      if (data.status === 'revision_requested') {
+        loadRevisionRequests(data.id);
+      }
     } catch (error) {
       console.error('Error loading contract:', error);
       toast({
@@ -58,6 +65,65 @@ const ContractView = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRevisionRequests = async (contractId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('revision_requests')
+        .select('*')
+        .eq('contract_id', contractId)
+        .eq('resolved', false)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setRevisionRequests(data || []);
+    } catch (error) {
+      console.error('Error loading revision requests:', error);
+    }
+  };
+
+  const markRevisionAsResolved = async (revisionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('revision_requests')
+        .update({ resolved: true })
+        .eq('id', revisionId);
+      
+      if (error) throw error;
+      
+      // Update contract status back to draft and unlock for editing
+      if (contract?.id) {
+        const { error: statusError } = await supabase
+          .from('contracts')
+          .update({ 
+            status: 'draft',
+            is_locked: false,
+            locked_at: null
+          })
+          .eq('id', contract.id);
+        
+        if (statusError) throw statusError;
+        setContract(prev => ({ ...prev, status: 'draft', is_locked: false, locked_at: null }));
+      }
+      
+      // Reload revision requests
+      if (contract?.id) {
+        loadRevisionRequests(contract.id);
+      }
+      
+      toast({
+        title: "Revision Resolved",
+        description: "Contract has been unlocked. You can now continue editing."
+      });
+    } catch (error) {
+      console.error('Error resolving revision:', error);
+      toast({
+        title: "Error",
+        description: "Failed to resolve revision request",
+        variant: "destructive"
+      });
     }
   };
 
@@ -124,6 +190,9 @@ const ContractView = () => {
 
   const handleRevisionRequested = () => {
     setContract(prev => ({ ...prev, status: 'revision_requested' }));
+    if (contract?.id) {
+      loadRevisionRequests(contract.id);
+    }
   };
 
   const handleESignSuccess = () => {
@@ -133,6 +202,10 @@ const ContractView = () => {
       title: "eSign Link Generated",
       description: "Contract has been shared with client for signing."
     });
+  };
+
+  const handleEditContract = () => {
+    navigate(`/contract/edit/${id}`);
   };
 
   if (loading) {
@@ -170,6 +243,17 @@ const ContractView = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              {(contract.status === 'draft' || contract.status === 'revision_requested') && (
+                <Button
+                  onClick={handleEditContract}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit Contract
+                </Button>
+              )}
+
               {contract.status === 'draft' && (
                 <Button
                   onClick={() => setShowESignDialog(true)}
@@ -203,15 +287,32 @@ const ContractView = () => {
 
         {/* Content */}
         <div className="max-w-6xl mx-auto p-6">
-          {contract.status === 'revision_requested' && (
+          {contract.status === 'revision_requested' && revisionRequests.length > 0 && (
             <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center gap-2 text-orange-800">
+              <div className="flex items-center gap-2 text-orange-800 mb-3">
                 <AlertCircle className="h-5 w-5" />
-                <h3 className="font-medium">Revision Requested</h3>
+                <h3 className="font-medium">Revision Requests</h3>
               </div>
-              <p className="text-sm text-orange-700 mt-1">
-                Client has requested changes to this contract. Please review and make necessary updates.
-              </p>
+              <div className="space-y-3">
+                {revisionRequests.map((request) => (
+                  <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="text-sm font-medium">{request.client_name}</div>
+                      <Button
+                        size="sm"
+                        onClick={() => markRevisionAsResolved(request.id)}
+                        className="text-xs"
+                      >
+                        Mark Resolved
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{request.message}</p>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      {new Date(request.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
