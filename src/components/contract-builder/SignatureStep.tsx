@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,13 +63,19 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     }
   }, [data.freelancerName, signatureType, fontSignatureName]);
 
+  // Wrap updateData to log
+  const debugUpdateData = (field: keyof ContractData, value: any) => {
+    console.log("[SignatureStep] updateData called:", field, value);
+    updateData(field, value);
+  };
+
   // Real-time signature update for drawing
   const handleSignatureEnd = () => {
     if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
       const signatureData = freelancerSigRef.current.toDataURL();
-      console.log('Real-time signature update:', signatureData);
-      updateData('freelancerSignature', signatureData);
-      updateData('signedDate', new Date().toISOString());
+      console.log('[SignatureStep] Real-time signature update:', signatureData.slice(0, 50), '...');
+      debugUpdateData('freelancerSignature', signatureData);
+      debugUpdateData('signedDate', new Date().toISOString());
       setIsSignatureSaved(true);
     }
   };
@@ -81,8 +86,8 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (name.trim()) {
       generateFontSignature(name);
     } else {
-      updateData('freelancerSignature', '');
-      updateData('signedDate', '');
+      debugUpdateData('freelancerSignature', '');
+      debugUpdateData('signedDate', '');
       setIsSignatureSaved(false);
     }
   };
@@ -91,8 +96,8 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
     }
-    updateData('freelancerSignature', '');
-    updateData('signedDate', '');
+    debugUpdateData('freelancerSignature', '');
+    debugUpdateData('signedDate', '');
     setIsSignatureSaved(false);
     setIsCanvasLoaded(false);
     
@@ -106,9 +111,9 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (signatureType === 'draw') {
       if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
         const signatureData = freelancerSigRef.current.toDataURL();
-        console.log('Saving drawn signature:', signatureData);
-        updateData('freelancerSignature', signatureData);
-        updateData('signedDate', new Date().toISOString());
+        console.log('[SignatureStep] Saving drawn signature:', signatureData.slice(0, 50), '...');
+        debugUpdateData('freelancerSignature', signatureData);
+        debugUpdateData('signedDate', new Date().toISOString());
         setIsSignatureSaved(true);
         
         toast({
@@ -164,9 +169,9 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       
       // Convert to data URL and update
       const signatureData = canvas.toDataURL();
-      console.log('Generating font signature:', signatureData);
-      updateData('freelancerSignature', signatureData);
-      updateData('signedDate', new Date().toISOString());
+      console.log('[SignatureStep] Generating font signature:', signatureData.slice(0, 50), '...');
+      debugUpdateData('freelancerSignature', signatureData);
+      debugUpdateData('signedDate', new Date().toISOString());
       setIsSignatureSaved(true);
     }
   };
@@ -315,6 +320,12 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   src={data.freelancerSignature} 
                   alt="Your Signature" 
                   className="h-16 object-contain"
+                  onError={() => {
+                    console.error("[SignatureStep] Error loading signature preview in left panel");
+                  }}
+                  onLoad={() => {
+                    console.log("[SignatureStep] Signature preview image loaded in left panel");
+                  }}
                 />
               </div>
               {data.signedDate && (
@@ -324,6 +335,9 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               )}
               <div className="mt-2">
                 <p className="text-sm text-green-600 font-medium">✓ Signature saved and will appear in the contract</p>
+                <p className="text-xs text-gray-400">
+                  [DEBUG] <span className="break-all">{data.freelancerSignature?.slice(0, 40)}...</span>
+                </p>
               </div>
             </div>
           )}

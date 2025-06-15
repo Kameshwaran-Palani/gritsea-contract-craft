@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -22,11 +21,9 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
   // Force update when signature data changes
   useEffect(() => {
-    console.log('Signature data changed:', {
-      freelancerSignature: data.freelancerSignature?.slice(0, 50) + '...',
-      clientSignature: data.clientSignature?.slice(0, 50) + '...',
-      signedDate: data.signedDate
-    });
+    // Show full visibility into incoming signature data
+    console.log('[PaginatedContractPreview] data.freelancerSignature:', !!data.freelancerSignature, data.freelancerSignature?.slice ? data.freelancerSignature.slice(0, 50) : data.freelancerSignature, '...');
+    console.log('[PaginatedContractPreview] data.signedDate:', data.signedDate);
     setSignatureUpdateKey(prev => prev + 1);
   }, [data.freelancerSignature, data.clientSignature, data.signedDate]);
 
@@ -414,20 +411,26 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
             {/* Service Provider Signature */}
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
-                {data.freelancerSignature && (
-                  <img 
-                    src={data.freelancerSignature} 
-                    alt="Service Provider Signature" 
+                {data.freelancerSignature ? (
+                  <img
+                    src={data.freelancerSignature}
+                    alt="Service Provider Signature"
                     className="h-16 object-contain"
                     key={`freelancer-sig-${signatureUpdateKey}`}
-                    onLoad={() => console.log('Freelancer signature loaded in preview')}
-                    onError={() => console.error('Error loading freelancer signature')}
+                    onLoad={() => {
+                      console.log('[PaginatedContractPreview] Freelancer signature rendered in preview (right panel)');
+                    }}
+                    onError={() => {
+                      console.error('[PaginatedContractPreview] Error loading freelancer signature in preview');
+                    }}
                   />
+                ) : (
+                  <span className="text-xs text-gray-400">[DEBUG] No freelancerSignature present</span>
                 )}
               </div>
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
                 <p className="font-bold text-gray-900">SERVICE PROVIDER</p>
-                <p className="text-gray-700">{data.freelancerName}</p>
+                <p className="text-gray-700">{data.freelancerName || <span className="text-gray-400">[DEBUG] No freelancerName</span>}</p>
                 <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
               </div>
             </div>
