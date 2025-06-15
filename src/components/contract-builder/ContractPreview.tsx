@@ -76,19 +76,23 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   };
 
   return (
-    <div className="contract-preview h-full overflow-auto">
+    <div className="contract-preview h-full overflow-auto bg-gray-100 p-4">
+      {/* A4 sized container with proper margins and spacing */}
       <div 
-        className="max-w-4xl mx-auto bg-white shadow-lg min-h-full"
+        className="max-w-4xl mx-auto bg-white shadow-lg min-h-[297mm]"
         style={{
+          width: '210mm',
+          minHeight: '297mm',
           fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
                      data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
                      data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
           lineHeight: data.lineSpacing || 1.5,
-          color: '#1a1a1a'
+          color: '#1a1a1a',
+          padding: '20mm'
         }}
       >
         {/* Header Section */}
-        <div className="border-b-2 border-gray-200 p-8">
+        <div className="border-b-2 border-gray-200 pb-8 mb-8">
           <div className="flex justify-between items-start mb-6">
             {/* Left Logo */}
             {data.leftLogo && (
@@ -127,15 +131,15 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Content Sections */}
-        <div className="p-8 space-y-8">
+        {/* Content Sections with proper spacing */}
+        <div className="space-y-10">
           {/* Agreement Introduction */}
           {data.agreementIntroText && (
-            <section>
+            <section className="page-break-inside-avoid">
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
                 Agreement Introduction
               </h3>
-              <p className={`${getFontSizeClass(data.bodyFontSize)} mb-4`}>
+              <p className={`${getFontSizeClass(data.bodyFontSize)} mb-4 leading-relaxed`}>
                 {data.agreementIntroText}
               </p>
               {data.effectiveDate && (
@@ -147,16 +151,16 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Parties Information */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+          <section className="page-break-inside-avoid">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Parties to the Agreement
             </h3>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-8">
               <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.partiesBold ? 'font-bold' : ''}`}>
+                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
                   Service Provider
                 </h4>
-                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
                   <p><strong>Name:</strong> {data.freelancerName}</p>
                   {data.freelancerBusinessName && <p><strong>Business:</strong> {data.freelancerBusinessName}</p>}
                   <p><strong>Address:</strong> {data.freelancerAddress}</p>
@@ -165,10 +169,10 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 </div>
               </div>
               <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.partiesBold ? 'font-bold' : ''}`}>
+                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
                   Client
                 </h4>
-                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
                   <p><strong>Name:</strong> {data.clientName}</p>
                   {data.clientCompany && <p><strong>Company:</strong> {data.clientCompany}</p>}
                   <p><strong>Email:</strong> {data.clientEmail}</p>
@@ -180,37 +184,37 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* Scope of Work */}
           {data.services && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+            <section className="page-break-inside-avoid">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Scope of Work
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-4`}>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
                 <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.scopeBold ? 'font-bold' : ''}`}>
+                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
                     Services
                   </h4>
-                  <p>{data.services}</p>
+                  <p className="leading-relaxed">{data.services}</p>
                 </div>
                 {data.deliverables && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.scopeBold ? 'font-bold' : ''}`}>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
                       Deliverables
                     </h4>
-                    <p>{data.deliverables}</p>
+                    <p className="leading-relaxed">{data.deliverables}</p>
                   </div>
                 )}
                 {data.milestones && data.milestones.length > 0 && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.scopeBold ? 'font-bold' : ''}`}>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
                       Milestones
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {data.milestones.map((milestone, index) => (
-                        <div key={index} className="border-l-4 border-blue-200 pl-4">
+                        <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
                           <p className="font-medium">{milestone.title}</p>
-                          <p className="text-sm text-gray-600">{milestone.description}</p>
-                          <p className="text-sm text-gray-500">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>
-                          {milestone.amount && <p className="text-sm font-medium">Amount: ₹{milestone.amount.toLocaleString()}</p>}
+                          <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
+                          <p className="text-sm text-gray-500 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>
+                          {milestone.amount && <p className="text-sm font-medium mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
                         </div>
                       ))}
                     </div>
@@ -221,13 +225,13 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Payment Terms */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+          <section className="page-break-inside-avoid">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Payment Terms
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-4`}>
+            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
               <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.paymentBold ? 'font-bold' : ''}`}>
+                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
                   Payment Structure
                 </h4>
                 {data.paymentType === 'hourly' ? (
@@ -239,7 +243,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
               {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && (
                 <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
+                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-4 ${data.paymentBold ? 'font-bold' : ''}`}>
                     Payment Schedule
                   </h4>
                   <div className="border rounded-lg p-4 bg-gray-50">
@@ -250,7 +254,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
               {data.lateFeeEnabled && data.lateFeeAmount && (
                 <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-2 ${data.paymentBold ? 'font-bold' : ''}`}>
+                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
                     Late Payment Terms
                   </h4>
                   <p>Late Fee: ₹{data.lateFeeAmount} per day for payments made after the due date.</p>
@@ -261,11 +265,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* Project Timeline */}
           {(data.startDate || data.endDate) && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+            <section className="page-break-inside-avoid">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Project Timeline
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
                 {data.startDate && <p><strong>Start Date:</strong> {new Date(data.startDate).toLocaleDateString()}</p>}
                 {data.endDate && <p><strong>End Date:</strong> {new Date(data.endDate).toLocaleDateString()}</p>}
               </div>
@@ -274,11 +278,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* Ongoing Work & Retainer */}
           {data.isRetainer && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+            <section className="page-break-inside-avoid">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Retainer Agreement
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
                 {data.retainerAmount && <p><strong>Retainer Amount:</strong> ₹{data.retainerAmount.toLocaleString()}</p>}
                 {data.renewalCycle && <p><strong>Renewal Cycle:</strong> {data.renewalCycle}</p>}
                 <p><strong>Auto-Renewal:</strong> {data.autoRenew ? 'Yes' : 'No'}</p>
@@ -287,11 +291,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Service Level Agreement */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+          <section className="page-break-inside-avoid">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Service Level Agreement
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
+            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
               <p><strong>Response Time:</strong> {data.responseTime}</p>
               <p><strong>Revision Limit:</strong> {data.revisionLimit} revisions included</p>
               {data.uptimeRequirement && <p><strong>Uptime Requirement:</strong> {data.uptimeRequirement}</p>}
@@ -300,12 +304,12 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* Confidentiality */}
           {data.includeNDA && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+            <section className="page-break-inside-avoid">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Confidentiality Agreement
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
-                <p>Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.</p>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
+                <p className="leading-relaxed">Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.</p>
                 {data.confidentialityScope && <p><strong>Scope:</strong> {data.confidentialityScope}</p>}
                 {data.confidentialityDuration && <p><strong>Duration:</strong> {data.confidentialityDuration}</p>}
                 {data.breachPenalty && <p><strong>Breach Penalty:</strong> ₹{data.breachPenalty.toLocaleString()}</p>}
@@ -314,11 +318,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Intellectual Property */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+          <section className="page-break-inside-avoid">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Intellectual Property Rights
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
+            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
               <p><strong>Ownership:</strong> {data.ipOwnership === 'client' ? 'Client owns all work product' : 
                                                   data.ipOwnership === 'freelancer' ? 'Service Provider retains ownership' : 
                                                   'Joint ownership as specified'}</p>
@@ -327,11 +331,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </section>
 
           {/* Termination & Dispute Resolution */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
+          <section className="page-break-inside-avoid">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Termination & Dispute Resolution
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2 ${data.termsBold ? 'font-bold' : ''}`}>
+            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3 ${data.termsBold ? 'font-bold' : ''}`}>
               <p><strong>Termination Conditions:</strong> {data.terminationConditions}</p>
               <p><strong>Notice Period:</strong> {data.noticePeriod}</p>
               <p><strong>Governing Jurisdiction:</strong> {data.jurisdiction}</p>
@@ -340,30 +344,30 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </section>
 
           {/* Signature Section */}
-          <section className="border-t-2 border-gray-200 pt-8 mt-12">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
+          <section className="border-t-2 border-gray-200 pt-12 mt-16 page-break-inside-avoid">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-8`} style={{ color: data.primaryColor }}>
               Signatures
             </h3>
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-12">
               <div>
-                <div className="border-b border-gray-300 mb-2" style={{ minHeight: '60px' }}>
+                <div className="border-b border-gray-300 mb-4" style={{ minHeight: '80px' }}>
                   {data.freelancerSignature && (
-                    <img src={data.freelancerSignature} alt="Service Provider Signature" className="h-12 object-contain" />
+                    <img src={data.freelancerSignature} alt="Service Provider Signature" className="h-16 object-contain" />
                   )}
                 </div>
-                <p className={`${getFontSizeClass(data.bodyFontSize)} text-center`}>
+                <p className={`${getFontSizeClass(data.bodyFontSize)} text-center leading-relaxed`}>
                   <strong>Service Provider</strong><br />
                   {data.freelancerName}<br />
                   Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}
                 </p>
               </div>
               <div>
-                <div className="border-b border-gray-300 mb-2" style={{ minHeight: '60px' }}>
+                <div className="border-b border-gray-300 mb-4" style={{ minHeight: '80px' }}>
                   {data.clientSignature && (
-                    <img src={data.clientSignature} alt="Client Signature" className="h-12 object-contain" />
+                    <img src={data.clientSignature} alt="Client Signature" className="h-16 object-contain" />
                   )}
                 </div>
-                <p className={`${getFontSizeClass(data.bodyFontSize)} text-center`}>
+                <p className={`${getFontSizeClass(data.bodyFontSize)} text-center leading-relaxed`}>
                   <strong>Client</strong><br />
                   {data.clientName}<br />
                   Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}

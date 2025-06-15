@@ -28,53 +28,93 @@ const ContractEdit = () => {
   const handleDownloadPDF = async () => {
     try {
       const contractContent = document.querySelector('.contract-preview');
-      if (contractContent) {
-        toast({
-          title: "Generating PDF",
-          description: "Please wait while we generate your PDF..."
-        });
-
-        // Create canvas from the contract content
-        const canvas = await html2canvas(contractContent as HTMLElement, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Calculate PDF dimensions
-        const imgWidth = 210; // A4 width in mm
-        const pageHeight = 295; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-
-        // Create PDF
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        let position = 0;
-
-        // Add first page
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // Add additional pages if content is longer than one page
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-
-        // Download the PDF
-        const fileName = `contract-${Date.now()}.pdf`;
-        pdf.save(fileName);
-
-        toast({
-          title: "PDF Downloaded",
-          description: "Contract has been downloaded as PDF successfully."
-        });
+      if (!contractContent) {
+        throw new Error('Contract preview not found');
       }
+
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your PDF..."
+      });
+
+      // Create a temporary container with A4 dimensions for better rendering
+      const tempContainer = document.createElement('div');
+      tempContainer.style.width = '794px'; // A4 width at 96 DPI
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.backgroundColor = '#ffffff';
+      tempContainer.style.padding = '40px';
+      
+      // Clone the contract content
+      const clonedContent = contractContent.cloneNode(true) as HTMLElement;
+      clonedContent.style.maxWidth = '100%';
+      clonedContent.style.width = '100%';
+      clonedContent.style.margin = '0';
+      clonedContent.style.padding = '0';
+      
+      tempContainer.appendChild(clonedContent);
+      document.body.appendChild(tempContainer);
+
+      // Create canvas from the temporary container
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794
+      });
+
+      // Remove temporary container
+      document.body.removeChild(tempContainer);
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      // A4 dimensions in mm
+      const a4Width = 210;
+      const a4Height = 297;
+      const margin = 20; // 20mm margin on all sides
+      const contentWidth = a4Width - (margin * 2);
+      const contentHeight = a4Height - (margin * 2);
+
+      // Calculate image dimensions to fit A4 with margins
+      const imgAspectRatio = canvas.height / canvas.width;
+      const scaledWidth = contentWidth;
+      const scaledHeight = scaledWidth * imgAspectRatio;
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate how many pages we need
+      const pagesNeeded = Math.ceil(scaledHeight / contentHeight);
+      
+      for (let page = 0; page < pagesNeeded; page++) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate the portion of the image for this page
+        const yOffset = -(page * contentHeight * (canvas.width / scaledWidth));
+        
+        pdf.addImage(
+          imgData, 
+          'PNG', 
+          margin, 
+          margin + yOffset, 
+          scaledWidth, 
+          scaledHeight
+        );
+      }
+
+      // Download the PDF
+      const fileName = `contract-${Date.now()}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF Downloaded",
+        description: "Contract has been downloaded as PDF successfully."
+      });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
