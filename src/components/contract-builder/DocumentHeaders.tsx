@@ -73,13 +73,13 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
             <h4 className="font-medium mb-2">Preview</h4>
             <div 
               className="border border-border rounded p-4 bg-background"
-              style={{ textAlign: data.documentHeaderAlignment || data.headerAlignment }}
             >
               <h1 
                 className="text-lg font-bold uppercase tracking-wider mb-1"
                 style={{
                   color: data.documentHeaderColor || data.primaryColor,
                   fontSize: data.documentHeaderFontSize ? `${data.documentHeaderFontSize}px` : (data.headerFontSize ? `${data.headerFontSize}px` : undefined),
+                  textAlign: data.documentHeaderAlignment || 'center',
                 }}
               >
                 {data.documentTitle || 'SERVICE AGREEMENT'}
@@ -89,6 +89,7 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
                 style={{
                   color: data.documentSubtitleColor || data.contentColor,
                   fontSize: data.documentSubtitleFontSize ? `${data.documentSubtitleFontSize}px` : (data.subHeaderFontSize ? `${data.subHeaderFontSize}px` : undefined),
+                  textAlign: data.documentSubtitleAlignment || 'center',
                 }}
               >
                 {data.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'}

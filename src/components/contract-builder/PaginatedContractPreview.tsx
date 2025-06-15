@@ -25,12 +25,26 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const CONTENT_HEIGHT = PAGE_HEIGHT - PAGE_MARGIN * 2;
 
   useEffect(() => {
-    console.log('[PaginatedContractPreview] data.freelancerSignature:', !!data.freelancerSignature, data.freelancerSignature?.slice ? data.freelancerSignature.slice(0, 50) : data.freelancerSignature, '...');
-    console.log('[PaginatedContractPreview] data.signedDate:', data.signedDate);
     setSignatureUpdateKey(prev => prev + 1);
   }, [data.freelancerSignature, data.clientSignature, data.signedDate]);
 
   const getHeaderStyle = (level: 'document' | 'section' | 'sub', sectionId?: string): React.CSSProperties => {
+    if (level === 'document') {
+        return {
+            color: data.documentHeaderColor || data.primaryColor || '#3B82F6',
+            textAlign: data.documentHeaderAlignment || 'center',
+            fontSize: `${data.documentHeaderFontSize || data.headerFontSize || 32}px`,
+        };
+    }
+
+    if (level === 'sub' && !sectionId) { // For document subtitle
+        return {
+            color: data.documentSubtitleColor || data.contentColor || '#6B7280',
+            textAlign: data.documentSubtitleAlignment || 'center',
+            fontSize: `${data.documentSubtitleFontSize || data.subHeaderFontSize || 16}px`
+        }
+    }
+
     if (level === 'section' && sectionId) {
         const sectionStyle = data.sectionStyles?.[sectionId];
         const useGlobal = data.applyGlobalStyles || !sectionStyle;
@@ -42,11 +56,11 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         };
     }
 
+    // Fallback for other headers (e.g. section sub-headers)
     const style: React.CSSProperties = {
       color: data.primaryColor || '#3B82F6',
       textAlign: data.headerAlignment || 'left',
     };
-    if (level === 'document') style.fontSize = `${data.headerFontSize || 32}px`;
     if (level === 'section') style.fontSize = `${data.sectionHeaderFontSize || 20}px`;
     if (level === 'sub') style.fontSize = `${data.subHeaderFontSize || 16}px`;
     return style;
@@ -194,7 +208,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
             <h1 className="font-bold mb-2 tracking-tight" style={getHeaderStyle('document')}>
               {data.documentTitle || 'SERVICE AGREEMENT'}
             </h1>
-            <h2 className="font-medium" style={{ ...getHeaderStyle('sub'), color: data.contentColor || '#6B7280' }}>
+            <h2 className="font-medium" style={getHeaderStyle('sub')}>
               {data.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'}
             </h2>
           </div>

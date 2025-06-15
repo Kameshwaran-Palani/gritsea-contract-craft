@@ -25,7 +25,11 @@ import Confidentiality from '@/components/contract-builder/Confidentiality';
 import IntellectualProperty from '@/components/contract-builder/IntellectualProperty';
 import TerminationDispute from '@/components/contract-builder/TerminationDispute';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
-import DesignCustomization from '@/components/contract-builder/DesignCustomization';
+import GlobalStyling from '@/components/contract-builder/design-settings/GlobalStyling';
+import GlobalTypography from '@/components/contract-builder/design-settings/GlobalTypography';
+import GlobalFontSizes from '@/components/contract-builder/design-settings/GlobalFontSizes';
+import DocumentHeaderStyling from '@/components/contract-builder/design-settings/DocumentHeaderStyling';
+import SectionSpecificStyling from '@/components/contract-builder/design-settings/SectionSpecificStyling';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 import { format } from 'date-fns';
 import html2canvas from 'html2canvas';
@@ -79,6 +83,7 @@ export interface ContractData {
   documentHeaderFontSize?: number;
   documentSubtitleColor?: string;
   documentSubtitleFontSize?: number;
+  documentSubtitleAlignment?: 'left' | 'center' | 'right';
 
   // Section-specific styles
   applyGlobalStyles: boolean;
@@ -172,7 +177,11 @@ const ContractBuilder = () => {
   ];
 
   const DESIGN_STEPS = [
-    { id: 'design', title: 'Design & Branding', component: DesignCustomization },
+    { id: 'global-styles', title: 'Global Colors & Brand', component: GlobalStyling },
+    { id: 'document-header-styles', title: 'Document Header Styles', component: DocumentHeaderStyling },
+    { id: 'global-typography', title: 'Global Typography & Layout', component: GlobalTypography },
+    { id: 'global-font-sizes', title: 'Global Font Sizes', component: GlobalFontSizes },
+    { id: 'section-specific-styles', title: 'Section-Specific Overrides', component: SectionSpecificStyling },
   ];
   
   const [activeTab, setActiveTab] = useState('edit');
@@ -193,6 +202,8 @@ const ContractBuilder = () => {
     sectionHeaderFontSize: 20,
     subHeaderFontSize: 16,
     bodyFontSize: 12,
+    documentHeaderAlignment: 'center',
+    documentSubtitleAlignment: 'center',
     applyGlobalStyles: true,
     sectionStyles: {},
     freelancerName: '',
@@ -359,6 +370,8 @@ const ContractBuilder = () => {
           sectionHeaderFontSize: loadedData.sectionHeaderFontSize || 20,
           subHeaderFontSize: loadedData.subHeaderFontSize || 16,
           bodyFontSize: loadedData.bodyFontSize || 12,
+          documentHeaderAlignment: loadedData.documentHeaderAlignment || 'center',
+          documentSubtitleAlignment: loadedData.documentSubtitleAlignment || 'center',
           applyGlobalStyles: loadedData.applyGlobalStyles !== false, // default to true
           sectionStyles: loadedData.sectionStyles || {},
         });
@@ -952,7 +965,7 @@ const ContractBuilder = () => {
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
                               activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                             }`}>
-                              {index + 1}
+                              <Sparkles className="h-4 w-4" />
                             </div>
                             <span className="font-medium text-sm">{step.title}</span>
                             {isLocked && <Lock className="h-3 w-3 ml-auto" />}
@@ -962,10 +975,6 @@ const ContractBuilder = () => {
                           <Component
                             data={contractData}
                             updateData={updateContractData}
-                            onNext={() => {}}
-                            onPrev={() => {}}
-                            isFirst={index === 0}
-                            isLast={index === DESIGN_STEPS.length - 1}
                           />
                         </AccordionContent>
                       </AccordionItem>
