@@ -138,7 +138,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
       {
         id: 'client_esign',
         title: 'Client eSign',
-        description: 'Client has received the signing link',
+        description: '',
         status: ['sent_for_signature', 'signed', 'revision_requested'].includes(status) ? 'completed' : 'pending',
         icon: Mail
       },
@@ -146,7 +146,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
         id: 'approved_rejected',
         title: 'Client Decision',
         description: status === 'signed' ? 'Contract approved and signed' : 
-                    status === 'revision_requested' ? 'Changes requested' : 'Awaiting client decision',
+                    status === 'revision_requested' ? 'Changes requested' : '',
         status: status === 'signed' ? 'completed' : 
                 status === 'revision_requested' ? 'rejected' : 
                 ['sent_for_signature'].includes(status) ? 'in_progress' : 'pending',
