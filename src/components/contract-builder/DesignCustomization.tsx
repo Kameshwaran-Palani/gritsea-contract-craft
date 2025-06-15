@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -58,11 +57,12 @@ interface SectionControlsProps {
 }
 
 const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, updateData }) => {
-    const isDisabled = data.applyGlobalStyles;
+    // Section-specific styles are always editable.
+    // Making a change will automatically disable "Apply Global Styles".
     const sectionStyle = data.sectionStyles?.[sectionId] || {};
 
     const handleUpdate = (updates: Partial<SectionDesign>) => {
-        updateData({
+        const updatePayload: Partial<ContractData> = {
             sectionStyles: {
                 ...data.sectionStyles,
                 [sectionId]: {
@@ -70,12 +70,19 @@ const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, upda
                     ...updates,
                 },
             },
-        });
+        };
+        
+        // If global styles were on, turn them off because a specific change is being made.
+        if (data.applyGlobalStyles) {
+            updatePayload.applyGlobalStyles = false;
+        }
+
+        updateData(updatePayload);
     };
 
     return (
-        <div className={`space-y-4 ${isDisabled ? 'opacity-50' : ''}`}>
-            <fieldset disabled={isDisabled}>
+        <div className="space-y-4">
+            <fieldset>
                 <h4 className="font-medium text-sm mb-2">Header Styles</h4>
                 <div className="space-y-3 p-3 border rounded-md">
                     <div>
@@ -107,7 +114,7 @@ const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, upda
                     </div>
                     <div>
                         <Label htmlFor={`shfs-${sectionId}`}>Font Size (px)</Label>
-                        <Input id={`shfs-${sectionId}`} type="number" placeholder="e.g. 20" value={sectionStyle.headerFontSize || ''} onChange={(e) => handleUpdate({ headerFontSize: Number(e.target.value) })} />
+                        <Input id={`shfs-${sectionId}`} type="number" placeholder="e.g. 20" value={sectionStyle.headerFontSize ?? data.sectionHeaderFontSize ?? ''} onChange={(e) => handleUpdate({ headerFontSize: Number(e.target.value) })} />
                     </div>
                 </div>
 
@@ -142,7 +149,7 @@ const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, upda
                     </div>
                     <div>
                         <Label htmlFor={`scfs-${sectionId}`}>Font Size (px)</Label>
-                        <Input id={`scfs-${sectionId}`} type="number" placeholder="e.g. 12" value={sectionStyle.contentFontSize || ''} onChange={(e) => handleUpdate({ contentFontSize: Number(e.target.value) })} />
+                        <Input id={`scfs-${sectionId}`} type="number" placeholder="e.g. 12" value={sectionStyle.contentFontSize ?? data.bodyFontSize ?? ''} onChange={(e) => handleUpdate({ contentFontSize: Number(e.target.value) })} />
                     </div>
                 </div>
             </fieldset>
