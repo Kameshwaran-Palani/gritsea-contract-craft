@@ -1,6 +1,5 @@
-
 import React, { useRef, useEffect, useState } from 'react';
-import { ContractData } from '@/pages/ContractBuilder';
+import { ContractData, SectionDesignSettings } from '@/pages/ContractBuilder';
 
 interface PaginatedContractPreviewProps {
   data: ContractData & { clientSignedDate?: string | null }; // Allow clientSignedDate
@@ -67,6 +66,32 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     };
     return sizes[size as keyof typeof sizes] || sizes.medium;
   };
+
+  // --- Design Helpers ---
+  const useGlobalTheme = data.designSettings?.applyToAll ?? true;
+
+  const getSectionDesign = (sectionKey: keyof NonNullable<ContractData['designSettings']>) => {
+    if (useGlobalTheme) {
+      return {}; // Use global defaults when theme is applied to all
+    }
+    return data.designSettings?.[sectionKey] || {};
+  };
+
+  const getHeaderStyle = (design: SectionDesignSettings) => ({
+    color: design.headerColor || data.primaryColor,
+    textAlign: design.headerAlignment || data.textAlignment || 'left',
+  } as React.CSSProperties);
+
+  const getHeaderClass = (design: SectionDesignSettings) => {
+    return getSectionHeaderFontSizeClass(design.headerFontSize || data.sectionHeaderFontSize);
+  };
+
+  const getContentStyle = (design: SectionDesignSettings) => ({
+    color: design.contentColor,
+    textAlign: design.contentAlignment || data.textAlignment || 'left',
+  } as React.CSSProperties);
+
+  const getBodyClass = () => getFontSizeClass(data.bodyFontSize);
 
   // Helper functions to check if sections have content
   const hasPartiesInfo = () => data.freelancerName || data.clientName;
@@ -179,10 +204,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasAgreementIntro() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-4 text-gray-900`}>
+              <h3 
+                className={`${getHeaderClass(getSectionDesign('introduction'))} font-bold mb-4 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('introduction'))}
+              >
                 AGREEMENT INTRODUCTION
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-4`}>
+              <div 
+                className={`${getBodyClass()} text-gray-700 space-y-4`}
+                style={getContentStyle(getSectionDesign('introduction'))}
+              >
                 <p className="leading-relaxed">{data.agreementIntroText}</p>
                 {data.effectiveDate && (
                   <p className="font-semibold text-gray-900">
@@ -199,16 +230,22 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasPartiesInfo() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+               <h3 
+                className={`${getHeaderClass(getSectionDesign('parties'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('parties'))}
+              >
                 PARTIES TO THE AGREEMENT
               </h3>
-              <div className="grid grid-cols-2 gap-8">
+              <div 
+                className="grid grid-cols-2 gap-8"
+                style={getContentStyle(getSectionDesign('parties'))}
+              >
                 {data.freelancerName && (
                   <div>
                     <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
                       SERVICE PROVIDER
                     </h4>
-                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1 text-gray-700`}>
+                    <div className={`${getBodyClass()} space-y-1 text-gray-700`}>
                       <p><span className="font-semibold">Name:</span> {data.freelancerName}</p>
                       {data.freelancerBusinessName && <p><span className="font-semibold">Business:</span> {data.freelancerBusinessName}</p>}
                       {data.freelancerAddress && <p><span className="font-semibold">Address:</span> {data.freelancerAddress}</p>}
@@ -222,7 +259,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                     <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
                       CLIENT
                     </h4>
-                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1 text-gray-700`}>
+                    <div className={`${getBodyClass()} space-y-1 text-gray-700`}>
                       <p><span className="font-semibold">Name:</span> {data.clientName}</p>
                       {data.clientCompany && <p><span className="font-semibold">Company:</span> {data.clientCompany}</p>}
                       {data.clientEmail && <p><span className="font-semibold">Email:</span> {data.clientEmail}</p>}
@@ -240,10 +277,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasScopeOfWork() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3 
+                className={`${getHeaderClass(getSectionDesign('scope'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('scope'))}
+              >
                 SCOPE OF WORK
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6 text-gray-700`}>
+              <div 
+                className={`${getBodyClass()} space-y-6 text-gray-700`}
+                style={getContentStyle(getSectionDesign('scope'))}
+              >
                 {data.services && data.services.trim() && (
                   <div>
                     <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
@@ -287,10 +330,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasPaymentTerms() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3
+                className={`${getHeaderClass(getSectionDesign('payment'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('payment'))}
+              >
                 PAYMENT TERMS
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
+              <div 
+                className={`${getBodyClass()} space-y-6`}
+                style={getContentStyle(getSectionDesign('payment'))}
+              >
                 <div>
                   <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
                     PAYMENT STRUCTURE
@@ -331,10 +380,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasProjectTimeline() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3 
+                className={`${getHeaderClass(getSectionDesign('timeline'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('timeline'))}
+              >
                 PROJECT TIMELINE
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
+              <div 
+                className={`${getBodyClass()} space-y-3`}
+                style={getContentStyle(getSectionDesign('timeline'))}
+              >
                 {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
                 {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
               </div>
@@ -347,10 +402,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasSLA() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3
+                className={`${getHeaderClass(getSectionDesign('sla'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('sla'))}
+              >
                 SERVICE LEVEL AGREEMENT
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-2`}>
+              <div 
+                className={`${getBodyClass()} text-gray-700 space-y-2`}
+                style={getContentStyle(getSectionDesign('sla'))}
+              >
                 {data.responseTime && <p><span className="font-bold">Response Time:</span> {data.responseTime}</p>}
               </div>
             </section>
@@ -362,10 +423,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasIP() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3 
+                className={`${getHeaderClass(getSectionDesign('ip'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('ip'))}
+              >
                 INTELLECTUAL PROPERTY
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+              <div 
+                className={`${getBodyClass()} text-gray-700`}
+                style={getContentStyle(getSectionDesign('ip'))}
+              >
                 <p><span className="font-bold">IP Ownership:</span> {data.ipOwnership}</p>
               </div>
             </section>
@@ -377,10 +444,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasConfidentialityInfo() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3
+                className={`${getHeaderClass(getSectionDesign('nda'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('nda'))}
+              >
                 CONFIDENTIALITY
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+              <div
+                className={`${getBodyClass()} text-gray-700`}
+                style={getContentStyle(getSectionDesign('nda'))}
+              >
                 <p>Both parties agree to maintain confidentiality of all proprietary and sensitive information shared during the course of this agreement.</p>
               </div>
             </section>
@@ -392,10 +465,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasTermination() && (
           <>
             <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+              <h3 
+                className={`${getHeaderClass(getSectionDesign('termination'))} font-bold mb-6 text-gray-900`}
+                style={getHeaderStyle(getSectionDesign('termination'))}
+              >
                 TERMINATION
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+              <div 
+                className={`${getBodyClass()} text-gray-700`}
+                style={getContentStyle(getSectionDesign('termination'))}
+              >
                 <p>Either party may terminate this agreement with 30 days written notice. Upon termination, all outstanding payments for completed work shall be made within 15 days.</p>
               </div>
             </section>
@@ -405,10 +484,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
         {/* Signature Section - Both Parties */}
         <section className="border-t-2 border-gray-300 pt-12 mt-16">
-          <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-8 text-gray-900`}>
+          <h3 
+            className={`${getHeaderClass(getSectionDesign('signature'))} font-bold mb-8 text-gray-900`}
+            style={getHeaderStyle(getSectionDesign('signature'))}
+          >
             DIGITAL SIGNATURES
           </h3>
-          <div className="grid grid-cols-2 gap-8">
+          <div 
+            className="grid grid-cols-2 gap-8"
+            style={getContentStyle(getSectionDesign('signature'))}
+          >
             {/* Service Provider Signature */}
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
@@ -429,7 +514,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   <span className="text-xs text-gray-400">[DEBUG] No freelancerSignature present</span>
                 )}
               </div>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+              <div className={`${getBodyClass()} space-y-1`}>
                 <p className="font-bold text-gray-900">SERVICE PROVIDER</p>
                 <p className="text-gray-700">{data.freelancerName || <span className="text-gray-400">[DEBUG] No freelancerName</span>}</p>
                 <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
@@ -450,7 +535,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   />
                 )}
               </div>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+              <div className={`${getBodyClass()} space-y-1`}>
                 <p className="font-bold text-gray-900">CLIENT</p>
                 <p className="text-gray-700">{data.clientName}</p>
                 <p className="text-gray-600">Date: {data.clientSignedDate ? new Date(data.clientSignedDate).toLocaleDateString() : '_____________'}</p>

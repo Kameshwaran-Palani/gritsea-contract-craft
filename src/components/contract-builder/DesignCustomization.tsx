@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { ContractData } from '@/pages/ContractBuilder';
-import { Palette, Type, Bold, List, Settings } from 'lucide-react';
+import { ContractData, SectionDesignSettings } from '@/pages/ContractBuilder';
+import { Palette, Type, Bold, List, Settings, Text, AlignLeft, AlignCenter, AlignJustify } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Switch } from '@/components/ui/switch';
 
 interface DesignCustomizationProps {
   data: ContractData;
@@ -29,9 +30,7 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
     '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
     '#F97316', '#14B8A6', '#8B5A2B', '#DC2626',
     '#7C3AED', '#059669', '#0EA5E9', '#D97706',
-    '#BE185D', '#0D9488', '#7C2D12', '#991B1B',
-    '#6B21A8', '#047857', '#0284C7', '#92400E',
-    '#BE123C', '#065F46', '#1E40AF', '#78350F',
+    '#BE185D', '#065F46', '#1E40AF', '#78350F',
     '#A21CAF', '#064E3B', '#1E3A8A', '#451A03',
     '#000000', '#374151', '#6B7280', '#9CA3AF',
     '#D1D5DB', '#E5E7EB', '#F3F4F6', '#FFFFFF'
@@ -51,6 +50,32 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
     { value: 'xlarge', label: 'Extra Large' }
   ];
 
+  const sectionDesigns: { id: keyof NonNullable<ContractData['designSettings']>, title: string }[] = [
+    { id: 'introduction', title: 'Agreement Introduction' },
+    { id: 'parties', title: 'Parties Information' },
+    { id: 'scope', title: 'Scope of Work' },
+    { id: 'payment', title: 'Payment Terms' },
+    { id: 'timeline', title: 'Project Timeline' },
+    { id: 'ongoing', title: 'Ongoing Work' },
+    { id: 'sla', title: 'Service Level Agreement' },
+    { id: 'nda', title: 'Confidentiality' },
+    { id: 'ip', title: 'Intellectual Property' },
+    { id: 'termination', title: 'Termination & Dispute' },
+    { id: 'signature', title: 'Signature' },
+  ];
+
+  const updateSectionDesign = (sectionId: keyof NonNullable<ContractData['designSettings']>, updates: Partial<SectionDesignSettings>) => {
+    updateData({
+      designSettings: {
+        ...data.designSettings,
+        [sectionId]: {
+          ...data.designSettings?.[sectionId],
+          ...updates
+        }
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -66,12 +91,12 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            Colors
+            Global Colors & Theme
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Primary Color</Label>
+            <Label>Primary Color (Default for Headers)</Label>
             <div className="mt-2 space-y-3">
               <div className="grid grid-cols-8 gap-2">
                 {predefinedColors.map((color) => (
@@ -99,6 +124,17 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
               </div>
             </div>
           </div>
+          <div className="flex items-center space-x-2 pt-4">
+            <Switch
+              id="apply-theme"
+              checked={data.designSettings?.applyToAll}
+              onCheckedChange={(checked) => updateData({ designSettings: { ...data.designSettings, applyToAll: checked } })}
+            />
+            <Label htmlFor="apply-theme">Apply global theme to all sections</Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            When enabled, all sections will use the global styles. Disable to use section-specific settings below.
+          </p>
         </CardContent>
       </Card>
 
@@ -249,180 +285,93 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
         </CardContent>
       </Card>
 
-      {/* Section Formatting */}
+      {/* Section-Specific Design Controls */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bold className="h-5 w-5" />
-            Section Formatting
+            <Settings className="h-5 w-5" />
+            Section-Specific Design
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Heading Style</Label>
-              <Select value={data.headingStyle || 'bold'} onValueChange={(value) => updateData({ headingStyle: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="bold">Bold</SelectItem>
-                  <SelectItem value="semibold">Semi Bold</SelectItem>
-                  <SelectItem value="extrabold">Extra Bold</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <CardContent>
+          <Accordion type="multiple" className="w-full space-y-2">
+            {sectionDesigns.map(section => (
+              <AccordionItem key={section.id} value={section.id} className="border rounded-lg px-4 bg-muted/50">
+                <AccordionTrigger className="text-left hover:no-underline py-3 font-medium text-sm">
+                  {section.title}
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-4 space-y-4">
+                  <fieldset disabled={data.designSettings?.applyToAll}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Header Controls */}
+                      <div className="space-y-3 p-3 border rounded-md">
+                        <h4 className="font-semibold text-xs text-muted-foreground">HEADER</h4>
+                        <div>
+                          <Label className="text-xs">Color</Label>
+                          <Input
+                            type="color"
+                            value={data.designSettings?.[section.id]?.headerColor || data.primaryColor}
+                            onChange={(e) => updateSectionDesign(section.id, { headerColor: e.target.value })}
+                            className="w-full h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Font Size</Label>
+                          <Select 
+                            value={data.designSettings?.[section.id]?.headerFontSize || 'large'}
+                            onValueChange={(value: 'small' | 'medium' | 'large' | 'xlarge') => updateSectionDesign(section.id, { headerFontSize: value })}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {fontSizeOptions.map(size => <SelectItem key={size.value} value={size.value}>{size.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Alignment</Label>
+                          <RadioGroup
+                            value={data.designSettings?.[section.id]?.headerAlignment || 'left'}
+                            onValueChange={(value: 'left' | 'center' | 'right') => updateSectionDesign(section.id, { headerAlignment: value })}
+                            className="flex gap-2 mt-1"
+                          >
+                            <Button size="icon" variant={data.designSettings?.[section.id]?.headerAlignment === 'left' ? 'default' : 'outline'} onClick={() => updateSectionDesign(section.id, { headerAlignment: 'left' })}><AlignLeft className="h-4 w-4" /></Button>
+                            <Button size="icon" variant={data.designSettings?.[section.id]?.headerAlignment === 'center' ? 'default' : 'outline'} onClick={() => updateSectionDesign(section.id, { headerAlignment: 'center' })}><AlignCenter className="h-4 w-4" /></Button>
+                            <Button size="icon" variant={data.designSettings?.[section.id]?.headerAlignment === 'right' ? 'default' : 'outline'} onClick={() => updateSectionDesign(section.id, { headerAlignment: 'right' })}><AlignJustify className="h-4 w-4" /></Button>
+                          </RadioGroup>
+                        </div>
+                      </div>
 
-            <div>
-              <Label>List Style</Label>
-              <Select value={data.listStyle || 'bullet'} onValueChange={(value) => updateData({ listStyle: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bullet">• Bullet Points</SelectItem>
-                  <SelectItem value="numbered">1. Numbered</SelectItem>
-                  <SelectItem value="dash">- Dash</SelectItem>
-                  <SelectItem value="none">No Style</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <Label>Text Alignment</Label>
-            <RadioGroup
-              value={data.textAlignment || 'left'}
-              onValueChange={(value) => updateData({ textAlignment: value })}
-              className="flex gap-4 mt-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="left" id="left" />
-                <Label htmlFor="left">Left</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="center" id="center" />
-                <Label htmlFor="center">Center</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="justify" id="justify" />
-                <Label htmlFor="justify">Justify</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label>Paragraph Spacing</Label>
-            <div className="mt-2">
-              <Slider
-                value={[data.paragraphSpacing || 1]}
-                onValueChange={(value) => updateData({ paragraphSpacing: value[0] })}
-                min={0.5}
-                max={3}
-                step={0.1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Tight (0.5)</span>
-                <span>Current: {(data.paragraphSpacing || 1).toFixed(1)}</span>
-                <span>Wide (3.0)</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section-Specific Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <List className="h-5 w-5" />
-            Section Controls
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Parties Section</Label>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  variant={data.partiesBold ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ partiesBold: !data.partiesBold })}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={data.partiesBullets ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ partiesBullets: !data.partiesBullets })}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label>Scope Section</Label>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  variant={data.scopeBold ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ scopeBold: !data.scopeBold })}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={data.scopeBullets ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ scopeBullets: !data.scopeBullets })}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label>Payment Section</Label>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  variant={data.paymentBold ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ paymentBold: !data.paymentBold })}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={data.paymentBullets ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ paymentBullets: !data.paymentBullets })}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label>Terms Section</Label>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  variant={data.termsBold ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ termsBold: !data.termsBold })}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={data.termsBullets ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateData({ termsBullets: !data.termsBullets })}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+                      {/* Content Controls */}
+                      <div className="space-y-3 p-3 border rounded-md">
+                        <h4 className="font-semibold text-xs text-muted-foreground">CONTENT</h4>
+                        <div>
+                          <Label className="text-xs">Color</Label>
+                          <Input
+                            type="color"
+                            value={data.designSettings?.[section.id]?.contentColor || '#374151'}
+                            onChange={(e) => updateSectionDesign(section.id, { contentColor: e.target.value })}
+                            className="w-full h-8"
+                          />
+                        </div>
+                        <div>
+                           <Label className="text-xs">Alignment</Label>
+                          <RadioGroup
+                            value={data.designSettings?.[section.id]?.contentAlignment || 'left'}
+                            onValueChange={(value: 'left' | 'center' | 'justify') => updateSectionDesign(section.id, { contentAlignment: value })}
+                            className="flex gap-2 mt-1"
+                          >
+                            <Button size="icon" variant={data.designSettings?.[section.id]?.contentAlignment === 'left' ? 'default' : 'outline'} onClick={() => updateSectionDesign(section.id, { contentAlignment: 'left' })}><AlignLeft className="h-4 w-4" /></Button>
+                            <Button size="icon" variant={data.designSettings?.[section.id]?.contentAlignment === 'center' ? 'default' : 'outline'} onClick={() => updateSectionDesign(section.id, { contentAlignment: 'center' })}><AlignCenter className="h-4 w-4" /></Button>
+                            <Button size="icon" variant={data.designSettings?.[section.id]?.contentAlignment === 'justify' ? 'default' : 'outline'} onClick={() => updateSectionDesign(section.id, { contentAlignment: 'justify' })}><AlignJustify className="h-4 w-4" /></Button>
+                          </RadioGroup>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </CardContent>
       </Card>
     </div>

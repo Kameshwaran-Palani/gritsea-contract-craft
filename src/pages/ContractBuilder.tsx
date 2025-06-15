@@ -30,6 +30,14 @@ import ContractPreview from '@/components/contract-builder/ContractPreview';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+export interface SectionDesignSettings {
+  headerColor?: string;
+  headerFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  headerAlignment?: 'left' | 'center' | 'right';
+  contentColor?: string;
+  contentAlignment?: 'left' | 'center' | 'justify';
+}
+
 export interface ContractData {
   // Template
   templateId?: string;
@@ -54,15 +62,21 @@ export interface ContractData {
   textAlignment?: string;
   paragraphSpacing?: number;
   
-  // Section-specific formatting
-  partiesBold?: boolean;
-  partiesBullets?: boolean;
-  scopeBold?: boolean;
-  scopeBullets?: boolean;
-  paymentBold?: boolean;
-  paymentBullets?: boolean;
-  termsBold?: boolean;
-  termsBullets?: boolean;
+  // Section-specific design
+  designSettings?: {
+    applyToAll: boolean;
+    introduction?: SectionDesignSettings;
+    parties?: SectionDesignSettings;
+    scope?: SectionDesignSettings;
+    payment?: SectionDesignSettings;
+    timeline?: SectionDesignSettings;
+    ongoing?: SectionDesignSettings;
+    sla?: SectionDesignSettings;
+    nda?: SectionDesignSettings;
+    ip?: SectionDesignSettings;
+    termination?: SectionDesignSettings;
+    signature?: SectionDesignSettings;
+  };
   
   // Parties
   freelancerName: string;
@@ -183,14 +197,20 @@ const ContractBuilder = () => {
     listStyle: 'ul',
     textAlignment: 'left',
     paragraphSpacing: 1.5,
-    partiesBold: false,
-    partiesBullets: false,
-    scopeBold: false,
-    scopeBullets: false,
-    paymentBold: false,
-    paymentBullets: false,
-    termsBold: false,
-    termsBullets: false,
+    designSettings: {
+      applyToAll: true,
+      introduction: {},
+      parties: {},
+      scope: {},
+      payment: {},
+      timeline: {},
+      ongoing: {},
+      sla: {},
+      nda: {},
+      ip: {},
+      termination: {},
+      signature: {},
+    },
     freelancerName: '',
     freelancerAddress: '',
     freelancerEmail: '',
@@ -343,14 +363,7 @@ const ContractBuilder = () => {
           listStyle: loadedData.listStyle || 'ul',
           textAlignment: loadedData.textAlignment || 'left',
           paragraphSpacing: loadedData.paragraphSpacing || 1.5,
-          partiesBold: loadedData.partiesBold || false,
-          partiesBullets: loadedData.partiesBullets || false,
-          scopeBold: loadedData.scopeBold || false,
-          scopeBullets: loadedData.scopeBullets || false,
-          paymentBold: loadedData.paymentBold || false,
-          paymentBullets: loadedData.paymentBullets || false,
-          termsBold: loadedData.termsBold || false,
-          termsBullets: loadedData.termsBullets || false
+          designSettings: loadedData.designSettings || { applyToAll: true }
         });
         setContractId(data.id);
         setContractStatus(data.status || 'draft');
