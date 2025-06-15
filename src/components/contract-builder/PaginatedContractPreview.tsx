@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ContractData, SectionDesignSettings } from '@/pages/ContractBuilder';
+import { ContractData } from '@/pages/ContractBuilder';
 
 interface PaginatedContractPreviewProps {
-  data: ContractData & { clientSignedDate?: string | null }; // Allow clientSignedDate
+  data: ContractData & { clientSignedDate?: string | null };
 }
 
 const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
@@ -13,101 +13,61 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const [signatureUpdateKey, setSignatureUpdateKey] = useState(0);
 
   // A4 dimensions in pixels (at 96 DPI)
-  const PAGE_WIDTH = 794; // 210mm
-  const PAGE_HEIGHT = 1123; // 297mm
-  const PAGE_MARGIN = 60; // ~20mm
+  const PAGE_WIDTH = 794;
+  const PAGE_HEIGHT = 1123;
+  const PAGE_MARGIN = 60;
   const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
   const CONTENT_HEIGHT = PAGE_HEIGHT - PAGE_MARGIN * 2;
 
-  // Force update when signature data changes
   useEffect(() => {
-    // Show full visibility into incoming signature data
     console.log('[PaginatedContractPreview] data.freelancerSignature:', !!data.freelancerSignature, data.freelancerSignature?.slice ? data.freelancerSignature.slice(0, 50) : data.freelancerSignature, '...');
     console.log('[PaginatedContractPreview] data.signedDate:', data.signedDate);
     setSignatureUpdateKey(prev => prev + 1);
   }, [data.freelancerSignature, data.clientSignature, data.signedDate]);
 
-  const getFontSizeClass = (size: string = 'medium') => {
-    const sizes = {
-      small: 'text-sm',
-      medium: 'text-base',
-      large: 'text-lg',
-      xlarge: 'text-xl'
+  const getHeaderStyle = (level: 'document' | 'section' | 'sub'): React.CSSProperties => {
+    const style: React.CSSProperties = {
+      color: data.primaryColor || '#3B82F6',
+      textAlign: data.headerAlignment || 'left',
     };
-    return sizes[size as keyof typeof sizes] || sizes.medium;
+    if (level === 'document') style.fontSize = `${data.headerFontSize || 32}px`;
+    if (level === 'section') style.fontSize = `${data.sectionHeaderFontSize || 20}px`;
+    if (level === 'sub') style.fontSize = `${data.subHeaderFontSize || 16}px`;
+    return style;
   };
 
-  const getHeaderFontSizeClass = (size: string = 'xlarge') => {
-    const sizes = {
-      small: 'text-xl',
-      medium: 'text-2xl',
-      large: 'text-3xl',
-      xlarge: 'text-4xl'
-    };
-    return sizes[size as keyof typeof sizes] || sizes.xlarge;
-  };
+  const getContentStyle = (): React.CSSProperties => ({
+    color: data.contentColor || '#374151',
+    textAlign: data.contentAlignment || 'left',
+    fontSize: `${data.bodyFontSize || 12}px`,
+  });
+  
+  const getBodyStyle = (): React.CSSProperties => ({
+    fontSize: `${data.bodyFontSize || 12}px`,
+  });
 
-  const getSectionHeaderFontSizeClass = (size: string = 'large') => {
-    const sizes = {
-      small: 'text-lg',
-      medium: 'text-xl',
-      large: 'text-2xl',
-      xlarge: 'text-3xl'
-    };
-    return sizes[size as keyof typeof sizes] || sizes.large;
-  };
-
-  const getSubHeaderFontSizeClass = (size: string = 'medium') => {
-    const sizes = {
-      small: 'text-base',
-      medium: 'text-lg',
-      large: 'text-xl',
-      xlarge: 'text-2xl'
-    };
-    return sizes[size as keyof typeof sizes] || sizes.medium;
-  };
-
-  // --- Design Helpers ---
-  const useGlobalTheme = data.designSettings?.applyToAll ?? true;
-
-  const getSectionDesign = (sectionKey: keyof NonNullable<ContractData['designSettings']>) => {
-    if (useGlobalTheme) {
-      return {}; // Use global defaults when theme is applied to all
-    }
-    return data.designSettings?.[sectionKey] || {};
-  };
-
-  const getHeaderStyle = (design: SectionDesignSettings) => ({
-    color: design.headerColor || data.primaryColor,
-    textAlign: design.headerAlignment || data.textAlignment || 'left',
-  } as React.CSSProperties);
-
-  const getHeaderClass = (design: SectionDesignSettings) => {
-    return getSectionHeaderFontSizeClass(design.headerFontSize || data.sectionHeaderFontSize);
-  };
-
-  const getContentStyle = (design: SectionDesignSettings) => ({
-    color: design.contentColor,
-    textAlign: design.contentAlignment || data.textAlignment || 'left',
-  } as React.CSSProperties);
-
-  const getBodyClass = () => getFontSizeClass(data.bodyFontSize);
-
-  // Helper functions to check if sections have content
   const hasPartiesInfo = () => data.freelancerName || data.clientName;
+
   const hasScopeOfWork = () => {
     return data.services && data.services.trim() || data.deliverables && data.deliverables.trim() || data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim());
   };
+
   const hasPaymentTerms = () => data.rate > 0 || data.totalAmount > 0 || data.paymentSchedule && data.paymentSchedule.length > 0;
+
   const hasProjectTimeline = () => data.startDate || data.endDate;
+
   const hasRetainerInfo = () => data.isRetainer && data.retainerAmount && data.retainerAmount > 0;
+
   const hasConfidentialityInfo = () => data.includeNDA;
+
   const hasAgreementIntro = () => data.agreementIntroText && data.agreementIntroText.trim();
+
   const hasSLA = () => data.responseTime;
+
   const hasIP = () => data.ipOwnership;
+
   const hasTermination = () => true; // Always show termination clause
 
-  // Helper function to format payment schedule
   const formatPaymentSchedule = () => {
     if (!data.paymentSchedule || data.paymentSchedule.length === 0) return null;
     return data.paymentSchedule.map((payment, index) => {
@@ -127,7 +87,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     });
   };
 
-  // Paginate content function
   const paginateContent = () => {
     if (!contentRef.current) return;
     const container = contentRef.current;
@@ -183,40 +142,31 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
   return (
     <div className="contract-preview h-full overflow-x-auto bg-gray-100 p-8">
-      {/* Hidden content for measurement */}
       <div ref={contentRef} className="hidden" style={{
         width: `${CONTENT_WIDTH}px`,
-        fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
+        fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'serif' ? 'Times, serif' : data.fontFamily === 'sans' ? 'Arial, sans-serif' : data.fontFamily === 'mono' ? 'Courier, monospace' : 'Inter, sans-serif',
         lineHeight: data.lineSpacing || 1.6,
-        color: '#1f2937'
+        color: data.contentColor || '#1f2937'
       }}>
-        {/* Document Header */}
         <div className="text-center mb-8 pb-6">
-          <h1 className={`${getHeaderFontSizeClass(data.headerFontSize)} font-bold mb-2 text-gray-900 tracking-tight`}>
+          <h1 className="font-bold mb-2 tracking-tight" style={getHeaderStyle('document')}>
             {data.documentTitle || 'SERVICE AGREEMENT'}
           </h1>
-          <h2 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} text-gray-600 font-medium`}>
+          <h2 className="font-medium" style={{ ...getHeaderStyle('sub'), color: data.contentColor || '#6B7280' }}>
             {data.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'}
           </h2>
         </div>
 
-        {/* Agreement Introduction */}
         {hasAgreementIntro() && (
           <>
             <section className="mb-8">
-              <h3 
-                className={`${getHeaderClass(getSectionDesign('introduction'))} font-bold mb-4 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('introduction'))}
-              >
+              <h3 className="font-bold mb-4" style={getHeaderStyle('section')}>
                 AGREEMENT INTRODUCTION
               </h3>
-              <div 
-                className={`${getBodyClass()} text-gray-700 space-y-4`}
-                style={getContentStyle(getSectionDesign('introduction'))}
-              >
+              <div className="space-y-4" style={getContentStyle()}>
                 <p className="leading-relaxed">{data.agreementIntroText}</p>
                 {data.effectiveDate && (
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold" style={{ color: data.primaryColor }}>
                     Effective Date: {new Date(data.effectiveDate).toLocaleDateString()}
                   </p>
                 )}
@@ -226,26 +176,19 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Parties Information */}
         {hasPartiesInfo() && (
           <>
             <section className="mb-8">
-               <h3 
-                className={`${getHeaderClass(getSectionDesign('parties'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('parties'))}
-              >
+               <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 PARTIES TO THE AGREEMENT
               </h3>
-              <div 
-                className="grid grid-cols-2 gap-8"
-                style={getContentStyle(getSectionDesign('parties'))}
-              >
+              <div className="grid grid-cols-2 gap-8" style={getContentStyle()}>
                 {data.freelancerName && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                    <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       SERVICE PROVIDER
                     </h4>
-                    <div className={`${getBodyClass()} space-y-1 text-gray-700`}>
+                    <div className="space-y-1" style={getBodyStyle()}>
                       <p><span className="font-semibold">Name:</span> {data.freelancerName}</p>
                       {data.freelancerBusinessName && <p><span className="font-semibold">Business:</span> {data.freelancerBusinessName}</p>}
                       {data.freelancerAddress && <p><span className="font-semibold">Address:</span> {data.freelancerAddress}</p>}
@@ -256,10 +199,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 )}
                 {data.clientName && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                    <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       CLIENT
                     </h4>
-                    <div className={`${getBodyClass()} space-y-1 text-gray-700`}>
+                    <div className="space-y-1" style={getBodyStyle()}>
                       <p><span className="font-semibold">Name:</span> {data.clientName}</p>
                       {data.clientCompany && <p><span className="font-semibold">Company:</span> {data.clientCompany}</p>}
                       {data.clientEmail && <p><span className="font-semibold">Email:</span> {data.clientEmail}</p>}
@@ -273,23 +216,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Scope of Work */}
         {hasScopeOfWork() && (
           <>
             <section className="mb-8">
-              <h3 
-                className={`${getHeaderClass(getSectionDesign('scope'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('scope'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 SCOPE OF WORK
               </h3>
-              <div 
-                className={`${getBodyClass()} space-y-6 text-gray-700`}
-                style={getContentStyle(getSectionDesign('scope'))}
-              >
+              <div className="space-y-6" style={getContentStyle()}>
                 {data.services && data.services.trim() && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                    <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       SERVICES
                     </h4>
                     <p className="leading-relaxed">{data.services}</p>
@@ -297,7 +233,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 )}
                 {data.deliverables && data.deliverables.trim() && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                    <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       DELIVERABLES
                     </h4>
                     <p className="leading-relaxed">{data.deliverables}</p>
@@ -305,16 +241,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 )}
                 {data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim()) && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900`}>
+                    <h4 className="font-bold mb-4" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       MILESTONES
                     </h4>
                     <div className="space-y-3">
                       {data.milestones.filter(m => m.title && m.title.trim()).map((milestone, index) => (
-                        <div key={index} className="border-l-4 border-gray-300 pl-4">
-                          <p className="font-semibold text-gray-900">{milestone.title}</p>
-                          {milestone.description && <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>}
-                          {milestone.dueDate && <p className="text-sm text-gray-600 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
-                          {milestone.amount && <p className="text-sm font-semibold text-gray-900 mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
+                        <div key={index} className="border-l-4 border-gray-300 pl-4" style={getBodyStyle()}>
+                          <p className="font-semibold" style={{ color: data.primaryColor }}>{milestone.title}</p>
+                          {milestone.description && <p className="mt-1">{milestone.description}</p>}
+                          {milestone.dueDate && <p className="mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
+                          {milestone.amount && <p className="font-semibold mt-1" style={{ color: data.primaryColor }}>Amount: ₹{milestone.amount.toLocaleString()}</p>}
                         </div>
                       ))}
                     </div>
@@ -326,37 +262,30 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Payment Terms */}
         {hasPaymentTerms() && (
           <>
             <section className="mb-8">
-              <h3
-                className={`${getHeaderClass(getSectionDesign('payment'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('payment'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 PAYMENT TERMS
               </h3>
-              <div 
-                className={`${getBodyClass()} space-y-6`}
-                style={getContentStyle(getSectionDesign('payment'))}
-              >
+              <div className="space-y-6" style={getContentStyle()}>
                 <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                  <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                     PAYMENT STRUCTURE
                   </h4>
                   {data.paymentType === 'hourly' && data.rate > 0 ? (
-                    <p className="text-lg font-bold text-gray-900">Hourly Rate: ₹{data.rate?.toLocaleString()}/hour</p>
+                    <p className="font-bold" style={{...getBodyStyle(), fontSize: '1.1em'}}>Hourly Rate: ₹{data.rate?.toLocaleString()}/hour</p>
                   ) : data.totalAmount && data.totalAmount > 0 ? (
-                    <p className="text-lg font-bold text-gray-900">Total Project Amount: ₹{data.totalAmount?.toLocaleString()}</p>
+                    <p className="font-bold" style={{...getBodyStyle(), fontSize: '1.1em'}}>Total Project Amount: ₹{data.totalAmount?.toLocaleString()}</p>
                   ) : null}
                 </div>
 
                 {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && data.totalAmount && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900`}>
+                    <h4 className="font-bold mb-4" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       PAYMENT SCHEDULE
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-2" style={getBodyStyle()}>
                       {formatPaymentSchedule()}
                     </div>
                   </div>
@@ -364,10 +293,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
                 {hasRetainerInfo() && (
                   <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                    <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                       RETAINER
                     </h4>
-                    <p>Retainer Amount: ₹{data.retainerAmount?.toLocaleString()}</p>
+                    <p style={getBodyStyle()}>Retainer Amount: ₹{data.retainerAmount?.toLocaleString()}</p>
                   </div>
                 )}
               </div>
@@ -376,20 +305,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Project Timeline */}
         {hasProjectTimeline() && (
           <>
             <section className="mb-8">
-              <h3 
-                className={`${getHeaderClass(getSectionDesign('timeline'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('timeline'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 PROJECT TIMELINE
               </h3>
-              <div 
-                className={`${getBodyClass()} space-y-3`}
-                style={getContentStyle(getSectionDesign('timeline'))}
-              >
+              <div className="space-y-3" style={getContentStyle()}>
                 {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
                 {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
               </div>
@@ -398,20 +320,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Service Level Agreement */}
         {hasSLA() && (
           <>
             <section className="mb-8">
-              <h3
-                className={`${getHeaderClass(getSectionDesign('sla'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('sla'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 SERVICE LEVEL AGREEMENT
               </h3>
-              <div 
-                className={`${getBodyClass()} text-gray-700 space-y-2`}
-                style={getContentStyle(getSectionDesign('sla'))}
-              >
+              <div className="space-y-2" style={getContentStyle()}>
                 {data.responseTime && <p><span className="font-bold">Response Time:</span> {data.responseTime}</p>}
               </div>
             </section>
@@ -419,20 +334,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Intellectual Property */}
         {hasIP() && (
           <>
             <section className="mb-8">
-              <h3 
-                className={`${getHeaderClass(getSectionDesign('ip'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('ip'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 INTELLECTUAL PROPERTY
               </h3>
-              <div 
-                className={`${getBodyClass()} text-gray-700`}
-                style={getContentStyle(getSectionDesign('ip'))}
-              >
+              <div style={getContentStyle()}>
                 <p><span className="font-bold">IP Ownership:</span> {data.ipOwnership}</p>
               </div>
             </section>
@@ -440,20 +348,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Confidentiality */}
         {hasConfidentialityInfo() && (
           <>
             <section className="mb-8">
-              <h3
-                className={`${getHeaderClass(getSectionDesign('nda'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('nda'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 CONFIDENTIALITY
               </h3>
-              <div
-                className={`${getBodyClass()} text-gray-700`}
-                style={getContentStyle(getSectionDesign('nda'))}
-              >
+              <div style={getContentStyle()}>
                 <p>Both parties agree to maintain confidentiality of all proprietary and sensitive information shared during the course of this agreement.</p>
               </div>
             </section>
@@ -461,20 +362,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Termination */}
         {hasTermination() && (
           <>
             <section className="mb-8">
-              <h3 
-                className={`${getHeaderClass(getSectionDesign('termination'))} font-bold mb-6 text-gray-900`}
-                style={getHeaderStyle(getSectionDesign('termination'))}
-              >
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
                 TERMINATION
               </h3>
-              <div 
-                className={`${getBodyClass()} text-gray-700`}
-                style={getContentStyle(getSectionDesign('termination'))}
-              >
+              <div style={getContentStyle()}>
                 <p>Either party may terminate this agreement with 30 days written notice. Upon termination, all outstanding payments for completed work shall be made within 15 days.</p>
               </div>
             </section>
@@ -482,19 +376,11 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </>
         )}
 
-        {/* Signature Section - Both Parties */}
         <section className="border-t-2 border-gray-300 pt-12 mt-16">
-          <h3 
-            className={`${getHeaderClass(getSectionDesign('signature'))} font-bold mb-8 text-gray-900`}
-            style={getHeaderStyle(getSectionDesign('signature'))}
-          >
+          <h3 className="font-bold mb-8" style={getHeaderStyle('section')}>
             DIGITAL SIGNATURES
           </h3>
-          <div 
-            className="grid grid-cols-2 gap-8"
-            style={getContentStyle(getSectionDesign('signature'))}
-          >
-            {/* Service Provider Signature */}
+          <div className="grid grid-cols-2 gap-8" style={getContentStyle()}>
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.freelancerSignature ? (
@@ -503,25 +389,20 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                     alt="Service Provider Signature"
                     className="h-16 object-contain"
                     key={`freelancer-sig-${signatureUpdateKey}`}
-                    onLoad={() => {
-                      console.log('[PaginatedContractPreview] Freelancer signature rendered in preview (right panel)');
-                    }}
-                    onError={() => {
-                      console.error('[PaginatedContractPreview] Error loading freelancer signature in preview');
-                    }}
+                    onLoad={() => console.log('[PaginatedContractPreview] Freelancer signature rendered in preview (right panel)')}
+                    onError={() => console.error('[PaginatedContractPreview] Error loading freelancer signature in preview')}
                   />
                 ) : (
                   <span className="text-xs text-gray-400">[DEBUG] No freelancerSignature present</span>
                 )}
               </div>
-              <div className={`${getBodyClass()} space-y-1`}>
-                <p className="font-bold text-gray-900">SERVICE PROVIDER</p>
-                <p className="text-gray-700">{data.freelancerName || <span className="text-gray-400">[DEBUG] No freelancerName</span>}</p>
-                <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
+              <div className="space-y-1" style={getBodyStyle()}>
+                <p className="font-bold" style={{ color: data.primaryColor }}>SERVICE PROVIDER</p>
+                <p>{data.freelancerName || <span className="text-gray-400">[DEBUG] No freelancerName</span>}</p>
+                <p>Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
               </div>
             </div>
 
-            {/* Client Signature */}
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.clientSignature && (
@@ -535,17 +416,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   />
                 )}
               </div>
-              <div className={`${getBodyClass()} space-y-1`}>
-                <p className="font-bold text-gray-900">CLIENT</p>
-                <p className="text-gray-700">{data.clientName}</p>
-                <p className="text-gray-600">Date: {data.clientSignedDate ? new Date(data.clientSignedDate).toLocaleDateString() : '_____________'}</p>
+              <div className="space-y-1" style={getBodyStyle()}>
+                <p className="font-bold" style={{ color: data.primaryColor }}>CLIENT</p>
+                <p>{data.clientName}</p>
+                <p>Date: {data.clientSignedDate ? new Date(data.clientSignedDate).toLocaleDateString() : '_____________'}</p>
               </div>
             </div>
           </div>
         </section>
       </div>
 
-      {/* Horizontally Scrollable Paginated Display */}
       <div className="flex space-x-8 overflow-x-auto pb-4">
         {pages.map((page, index) => (
           <div 
@@ -555,9 +435,9 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
               width: `${PAGE_WIDTH}px`,
               minHeight: `${PAGE_HEIGHT}px`,
               padding: `${PAGE_MARGIN}px`,
-              fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
+              fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'serif' ? 'Times, serif' : data.fontFamily === 'sans' ? 'Arial, sans-serif' : data.fontFamily === 'mono' ? 'Courier, monospace' : 'Inter, sans-serif',
               lineHeight: data.lineSpacing || 1.6,
-              color: '#1f2937',
+              color: data.contentColor || '#1f2937',
               pageBreakAfter: 'always'
             }} 
             dangerouslySetInnerHTML={{

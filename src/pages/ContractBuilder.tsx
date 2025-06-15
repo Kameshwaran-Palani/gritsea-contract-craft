@@ -30,14 +30,6 @@ import ContractPreview from '@/components/contract-builder/ContractPreview';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-export interface SectionDesignSettings {
-  headerColor?: string;
-  headerFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  headerAlignment?: 'left' | 'center' | 'right';
-  contentColor?: string;
-  contentAlignment?: 'left' | 'center' | 'justify';
-}
-
 export interface ContractData {
   // Template
   templateId?: string;
@@ -53,30 +45,12 @@ export interface ContractData {
   logoStyle: 'round' | 'rectangle';
   
   // Design
-  primaryColor: string;
+  primaryColor: string; // Header Color
+  contentColor: string;
   fontFamily: string;
-  fontSize: 'small' | 'medium' | 'large' | 'xlarge';
   lineSpacing?: number;
-  headingStyle?: string;
-  listStyle?: string;
-  textAlignment?: string;
-  paragraphSpacing?: number;
-  
-  // Section-specific design
-  designSettings?: {
-    applyToAll: boolean;
-    introduction?: SectionDesignSettings;
-    parties?: SectionDesignSettings;
-    scope?: SectionDesignSettings;
-    payment?: SectionDesignSettings;
-    timeline?: SectionDesignSettings;
-    ongoing?: SectionDesignSettings;
-    sla?: SectionDesignSettings;
-    nda?: SectionDesignSettings;
-    ip?: SectionDesignSettings;
-    termination?: SectionDesignSettings;
-    signature?: SectionDesignSettings;
-  };
+  headerAlignment?: 'left' | 'center' | 'right';
+  contentAlignment?: 'left' | 'center' | 'justify';
   
   // Parties
   freelancerName: string;
@@ -146,10 +120,10 @@ export interface ContractData {
   introductionClauses?: string[];
   
   // Font size controls
-  headerFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  sectionHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  subHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  bodyFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  headerFontSize?: number;
+  sectionHeaderFontSize?: number;
+  subHeaderFontSize?: number;
+  bodyFontSize?: number;
 }
 
 const ContractBuilder = () => {
@@ -190,27 +164,15 @@ const ContractBuilder = () => {
     effectiveDate: '',
     logoStyle: 'round',
     primaryColor: '#3B82F6',
+    contentColor: '#374151',
     fontFamily: 'inter',
-    fontSize: 'medium',
     lineSpacing: 1.5,
-    headingStyle: 'h1',
-    listStyle: 'ul',
-    textAlignment: 'left',
-    paragraphSpacing: 1.5,
-    designSettings: {
-      applyToAll: true,
-      introduction: {},
-      parties: {},
-      scope: {},
-      payment: {},
-      timeline: {},
-      ongoing: {},
-      sla: {},
-      nda: {},
-      ip: {},
-      termination: {},
-      signature: {},
-    },
+    headerAlignment: 'left',
+    contentAlignment: 'left',
+    headerFontSize: 32,
+    sectionHeaderFontSize: 20,
+    subHeaderFontSize: 16,
+    bodyFontSize: 12,
     freelancerName: '',
     freelancerAddress: '',
     freelancerEmail: '',
@@ -356,14 +318,15 @@ const ContractBuilder = () => {
           documentSubtitle: loadedData.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT',
           logoStyle: loadedData.logoStyle || 'round',
           primaryColor: loadedData.primaryColor || '#3B82F6',
+          contentColor: loadedData.contentColor || '#374151',
           fontFamily: loadedData.fontFamily || 'inter',
-          fontSize: loadedData.fontSize || 'medium',
           lineSpacing: loadedData.lineSpacing || 1.5,
-          headingStyle: loadedData.headingStyle || 'h1',
-          listStyle: loadedData.listStyle || 'ul',
-          textAlignment: loadedData.textAlignment || 'left',
-          paragraphSpacing: loadedData.paragraphSpacing || 1.5,
-          designSettings: loadedData.designSettings || { applyToAll: true }
+          headerAlignment: loadedData.headerAlignment || 'left',
+          contentAlignment: loadedData.contentAlignment || 'left',
+          headerFontSize: loadedData.headerFontSize || 32,
+          sectionHeaderFontSize: loadedData.sectionHeaderFontSize || 20,
+          subHeaderFontSize: loadedData.subHeaderFontSize || 16,
+          bodyFontSize: loadedData.bodyFontSize || 12,
         });
         setContractId(data.id);
         setContractStatus(data.status || 'draft');
