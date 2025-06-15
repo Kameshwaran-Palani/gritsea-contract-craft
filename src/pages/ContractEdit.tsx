@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,11 +38,11 @@ const ContractEdit = () => {
         throw new Error('Contract preview not found');
       }
 
-      // Create PDF using jsPDF directly to match preview exactly
+      // Create PDF using jsPDF with cleaner formatting
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
-      const margin = 25;
+      const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
       
       let yPosition = margin;
@@ -56,16 +57,25 @@ const ContractEdit = () => {
         return false;
       };
 
-      // Helper function to add text with word wrapping
-      const addText = (text: string, fontSize: number, fontStyle: string = 'normal') => {
+      // Helper function to add text with clean formatting
+      const addText = (text: string, fontSize: number, fontStyle: string = 'normal', color: string = '#000000') => {
         if (!text || !text.trim()) return 0;
         
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', fontStyle);
-        pdf.setTextColor(0, 0, 0);
+        
+        // Convert hex color to RGB
+        if (color.startsWith('#')) {
+          const r = parseInt(color.slice(1, 3), 16);
+          const g = parseInt(color.slice(3, 5), 16);
+          const b = parseInt(color.slice(5, 7), 16);
+          pdf.setTextColor(r, g, b);
+        } else {
+          pdf.setTextColor(0, 0, 0);
+        }
 
         const lines = pdf.splitTextToSize(text.trim(), contentWidth);
-        const lineHeight = fontSize * 0.4;
+        const lineHeight = fontSize * 0.35;
         
         checkNewPage(lines.length * lineHeight);
         
@@ -77,66 +87,131 @@ const ContractEdit = () => {
         return lines.length * lineHeight;
       };
 
-      // Extract text content from the preview sections that actually have content
+      // Helper function to add section divider
+      const addSectionDivider = () => {
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 8;
+      };
+
+      // Extract text content from the preview with clean structure
       const titleElement = contractContent.querySelector('h1');
       const subtitleElement = contractContent.querySelector('h2');
       
+      // Clean header
       if (titleElement && titleElement.textContent && titleElement.textContent.trim()) {
         pdf.setFontSize(24);
         pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(59, 130, 246); // Blue color
         pdf.text(titleElement.textContent.trim(), pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 10;
+        yPosition += 12;
       }
 
       if (subtitleElement && subtitleElement.textContent && subtitleElement.textContent.trim()) {
-        pdf.setFontSize(16);
+        pdf.setFontSize(14);
         pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(107, 114, 128); // Gray color
         pdf.text(subtitleElement.textContent.trim(), pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
       }
 
-      // Add separator line
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 10;
+      addSectionDivider();
 
-      // Extract and add content sections - only if they exist and have meaningful content
+      // Extract and add content sections with proper formatting
       const sections = contractContent.querySelectorAll('section');
       sections.forEach((section) => {
         const heading = section.querySelector('h3');
-        const paragraphs = section.querySelectorAll('p, div');
         
-        // Check if section has meaningful content beyond just the heading
-        const hasContent = Array.from(paragraphs).some(p => 
-          p.textContent && 
-          p.textContent.trim() && 
-          p.textContent.trim() !== heading?.textContent?.trim() &&
-          !p.textContent.includes('Page ') // Skip page indicators
-        );
-        
-        if (hasContent && heading && heading.textContent && heading.textContent.trim()) {
-          addText(heading.textContent.trim(), 16, 'bold');
-          yPosition += 5;
+        if (heading && heading.textContent && heading.textContent.trim()) {
+          // Section header with clean styling
+          checkNewPage(20);
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(59, 130, 246);
+          pdf.text(heading.textContent.trim(), margin, yPosition);
+          yPosition += 8;
+          
+          // Add underline
+          pdf.setDrawColor(59, 130, 246);
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPosition, margin + 60, yPosition);
+          yPosition += 8;
 
+          // Content paragraphs
+          const paragraphs = section.querySelectorAll('p, div');
           paragraphs.forEach((p) => {
             if (p.textContent && 
                 p.textContent.trim() && 
                 !p.textContent.includes('Page ') && 
                 p.textContent.trim() !== heading?.textContent?.trim()) {
               
-              // Check if this is a sub-heading (h4)
-              if (p.tagName === 'H4' || p.querySelector('strong')) {
-                addText(p.textContent.trim(), 14, 'bold');
-                yPosition += 2;
-              } else {
-                addText(p.textContent.trim(), 12);
+              // Clean text formatting
+              const text = p.textContent.trim();
+              if (text) {
+                pdf.setFontSize(11);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(55, 65, 81);
+                
+                const lines = pdf.splitTextToSize(text, contentWidth);
+                const lineHeight = 5;
+                
+                checkNewPage(lines.length * lineHeight);
+                
+                lines.forEach((line: string) => {
+                  pdf.text(line, margin, yPosition);
+                  yPosition += lineHeight;
+                });
                 yPosition += 3;
               }
             }
           });
-          yPosition += 8;
+          yPosition += 6;
         }
       });
+
+      // Clean signature section
+      checkNewPage(50);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(59, 130, 246);
+      pdf.text('SIGNATURES', margin, yPosition);
+      yPosition += 15;
+
+      // Service Provider signature area
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Service Provider:', margin, yPosition);
+      yPosition += 20;
+      
+      // Signature line
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(margin, yPosition, margin + 70, yPosition);
+      yPosition += 8;
+      
+      // Name and date
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Name: _________________________', margin, yPosition);
+      yPosition += 8;
+      pdf.text('Date: _________________________', margin, yPosition);
+      
+      // Client signature area
+      const clientX = pageWidth - margin - 80;
+      yPosition -= 36; // Reset to signature level
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Client:', clientX, yPosition);
+      yPosition += 20;
+      
+      // Signature line
+      pdf.line(clientX, yPosition, clientX + 70, yPosition);
+      yPosition += 8;
+      
+      // Name and date
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Name: ___________________', clientX, yPosition);
+      yPosition += 8;
+      pdf.text('Date: ___________________', clientX, yPosition);
 
       // Download the PDF
       const fileName = `contract-${Date.now()}.pdf`;
@@ -164,33 +239,33 @@ const ContractEdit = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Clean Header with Agrezy Branding */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      {/* Clean Header with Professional Design */}
+      <header className="border-b bg-white shadow-sm sticky top-0 z-50">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <Link to="/dashboard">
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
                 <ChevronLeft className="h-4 w-4" />
                 Dashboard
               </Button>
             </Link>
-            <div className="h-6 w-px bg-border" />
+            <div className="h-6 w-px bg-gray-300" />
             {/* Agrezy Branding */}
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">A</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="text-lg font-bold gradient-text">Agrezy</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Agrezy</span>
             </div>
-            <div className="h-6 w-px bg-border" />
-            <h1 className="text-lg font-semibold">Contract Editor</h1>
+            <div className="h-6 w-px bg-gray-300" />
+            <h1 className="text-lg font-semibold text-gray-900">Contract Editor</h1>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <Button
               variant="outline"
               onClick={handleDownloadPDF}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <Download className="h-4 w-4" />
               Download PDF
@@ -198,14 +273,14 @@ const ContractEdit = () => {
             
             <Button
               onClick={handleShareContract}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Send className="h-4 w-4" />
               Get E-Sign
             </Button>
             
             <Link to="/settings">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
                 <User className="h-4 w-4" />
               </Button>
             </Link>

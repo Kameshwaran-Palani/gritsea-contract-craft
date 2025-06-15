@@ -19,30 +19,30 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
   const getHeaderFontSizeClass = (size: string = 'xlarge') => {
     const sizes = {
-      small: 'text-lg',
-      medium: 'text-xl',
-      large: 'text-2xl',
-      xlarge: 'text-3xl'
+      small: 'text-xl',
+      medium: 'text-2xl',
+      large: 'text-3xl',
+      xlarge: 'text-4xl'
     };
     return sizes[size as keyof typeof sizes] || sizes.xlarge;
   };
 
   const getSectionHeaderFontSizeClass = (size: string = 'large') => {
     const sizes = {
-      small: 'text-base',
-      medium: 'text-lg',
-      large: 'text-xl',
-      xlarge: 'text-2xl'
+      small: 'text-lg',
+      medium: 'text-xl',
+      large: 'text-2xl',
+      xlarge: 'text-3xl'
     };
     return sizes[size as keyof typeof sizes] || sizes.large;
   };
 
   const getSubHeaderFontSizeClass = (size: string = 'medium') => {
     const sizes = {
-      small: 'text-sm',
-      medium: 'text-base',
-      large: 'text-lg',
-      xlarge: 'text-xl'
+      small: 'text-base',
+      medium: 'text-lg',
+      large: 'text-xl',
+      xlarge: 'text-2xl'
     };
     return sizes[size as keyof typeof sizes] || sizes.medium;
   };
@@ -55,19 +55,19 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
     return data.paymentSchedule.map((payment, index) => {
       const amount = data.totalAmount ? (data.totalAmount * payment.percentage) / 100 : 0;
       return (
-        <div key={index} className="mb-3">
+        <div key={index} className="mb-3 border-b border-gray-100 pb-2">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <p className={`font-medium ${data.paymentBold ? 'font-bold' : ''}`}>
+              <p className={`font-medium text-gray-800 ${data.paymentBold ? 'font-bold' : ''}`}>
                 {payment.description || `Payment ${index + 1}`}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mt-1">
                 {payment.percentage}% of total amount
-                {payment.dueDate && ` - Due: ${new Date(payment.dueDate).toLocaleDateString()}`}
+                {payment.dueDate && ` • Due: ${new Date(payment.dueDate).toLocaleDateString()}`}
               </p>
             </div>
             <div className="text-right">
-              <p className="font-semibold">₹{amount.toLocaleString()}</p>
+              <p className="font-semibold text-gray-900">₹{amount.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -108,9 +108,9 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   };
 
   return (
-    <div className="contract-preview h-full overflow-auto bg-gray-100 p-6">
+    <div className="contract-preview h-full overflow-auto bg-gray-50 p-4">
       <div 
-        className="mx-auto bg-white shadow-lg"
+        className="mx-auto bg-white shadow-sm border border-gray-200"
         style={{
           width: '210mm',
           minHeight: '297mm',
@@ -118,12 +118,12 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                      data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
                      data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
           lineHeight: data.lineSpacing || 1.6,
-          color: '#1a1a1a',
-          padding: '25mm'
+          color: '#1f2937',
+          padding: '20mm'
         }}
       >
-        {/* Header Section */}
-        <div className="border-b-2 border-gray-200 pb-6 mb-8">
+        {/* Clean Header Section */}
+        <div className="border-b border-gray-300 pb-8 mb-8">
           <div className="flex justify-between items-start mb-6">
             {/* Left Logo */}
             {data.leftLogo && (
@@ -131,7 +131,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 <img 
                   src={data.leftLogo} 
                   alt="Company Logo" 
-                  className={`h-16 w-auto object-contain ${data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'}`}
+                  className={`h-12 w-auto object-contain ${data.logoStyle === 'round' ? 'rounded-full' : 'rounded-md'}`}
                 />
               </div>
             )}
@@ -139,12 +139,12 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             {/* Center Title */}
             <div className="flex-1 text-center mx-4">
               <h1 
-                className={`${getHeaderFontSizeClass(data.headerFontSize)} font-bold mb-2`}
+                className={`${getHeaderFontSizeClass(data.headerFontSize)} font-bold mb-2 text-gray-900 tracking-tight`}
                 style={{ color: data.primaryColor }}
               >
                 {data.documentTitle}
               </h1>
-              <h2 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} text-gray-600`}>
+              <h2 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} text-gray-600 font-medium`}>
                 {data.documentSubtitle}
               </h2>
             </div>
@@ -155,7 +155,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 <img 
                   src={data.rightLogo} 
                   alt="Client Logo" 
-                  className={`h-16 w-auto object-contain ${data.logoStyle === 'round' ? 'rounded-full' : 'rounded-lg'}`}
+                  className={`h-12 w-auto object-contain ${data.logoStyle === 'round' ? 'rounded-full' : 'rounded-md'}`}
                 />
               </div>
             )}
@@ -163,54 +163,58 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
         </div>
 
         <div className="space-y-8">
-          {/* Agreement Introduction - Only show if has content */}
+          {/* Agreement Introduction */}
           {hasAgreementIntro() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
-                Agreement Introduction
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-4 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                AGREEMENT INTRODUCTION
               </h3>
-              <p className={`${getFontSizeClass(data.bodyFontSize)} mb-4 leading-relaxed`}>
-                {data.agreementIntroText}
-              </p>
-              {data.effectiveDate && (
-                <p className={`${getFontSizeClass(data.bodyFontSize)} mb-4`}>
-                  <strong>Effective Date:</strong> {new Date(data.effectiveDate).toLocaleDateString()}
-                </p>
-              )}
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-4`}>
+                <p className="leading-relaxed">{data.agreementIntroText}</p>
+                {data.effectiveDate && (
+                  <div className="bg-gray-50 p-3 rounded-md border-l-4 border-blue-500">
+                    <p className="font-semibold text-gray-900">
+                      Effective Date: {new Date(data.effectiveDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
             </section>
           )}
 
-          {/* Parties Information - Only show if has content */}
+          {/* Parties Information */}
           {hasPartiesInfo() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Parties to the Agreement
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                PARTIES TO THE AGREEMENT
               </h3>
               <div className="grid md:grid-cols-2 gap-8">
                 {data.freelancerName && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
-                      Service Provider
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900 ${data.partiesBold ? 'font-bold' : ''}`}>
+                      SERVICE PROVIDER
                     </h4>
-                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
-                      <p><strong>Name:</strong> {data.freelancerName}</p>
-                      {data.freelancerBusinessName && <p><strong>Business:</strong> {data.freelancerBusinessName}</p>}
-                      {data.freelancerAddress && <p><strong>Address:</strong> {data.freelancerAddress}</p>}
-                      {data.freelancerEmail && <p><strong>Email:</strong> {data.freelancerEmail}</p>}
-                      {data.freelancerPhone && <p><strong>Phone:</strong> {data.freelancerPhone}</p>}
+                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2 text-gray-700`}>
+                      <p><span className="font-semibold text-gray-900">Name:</span> {data.freelancerName}</p>
+                      {data.freelancerBusinessName && <p><span className="font-semibold text-gray-900">Business:</span> {data.freelancerBusinessName}</p>}
+                      {data.freelancerAddress && <p><span className="font-semibold text-gray-900">Address:</span> {data.freelancerAddress}</p>}
+                      {data.freelancerEmail && <p><span className="font-semibold text-gray-900">Email:</span> {data.freelancerEmail}</p>}
+                      {data.freelancerPhone && <p><span className="font-semibold text-gray-900">Phone:</span> {data.freelancerPhone}</p>}
                     </div>
                   </div>
                 )}
                 {data.clientName && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
-                      Client
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900 ${data.partiesBold ? 'font-bold' : ''}`}>
+                      CLIENT
                     </h4>
-                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
-                      <p><strong>Name:</strong> {data.clientName}</p>
-                      {data.clientCompany && <p><strong>Company:</strong> {data.clientCompany}</p>}
-                      {data.clientEmail && <p><strong>Email:</strong> {data.clientEmail}</p>}
-                      {data.clientPhone && <p><strong>Phone:</strong> {data.clientPhone}</p>}
+                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2 text-gray-700`}>
+                      <p><span className="font-semibold text-gray-900">Name:</span> {data.clientName}</p>
+                      {data.clientCompany && <p><span className="font-semibold text-gray-900">Company:</span> {data.clientCompany}</p>}
+                      {data.clientEmail && <p><span className="font-semibold text-gray-900">Email:</span> {data.clientEmail}</p>}
+                      {data.clientPhone && <p><span className="font-semibold text-gray-900">Phone:</span> {data.clientPhone}</p>}
                     </div>
                   </div>
                 )}
@@ -218,41 +222,42 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </section>
           )}
 
-          {/* Scope of Work - Only show if has content */}
+          {/* Scope of Work */}
           {hasScopeOfWork() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Scope of Work
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                SCOPE OF WORK
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6 text-gray-700`}>
                 {data.services && data.services.trim() && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
-                      Services
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900 ${data.scopeBold ? 'font-bold' : ''}`}>
+                      SERVICES
                     </h4>
                     <p className="leading-relaxed">{data.services}</p>
                   </div>
                 )}
                 {data.deliverables && data.deliverables.trim() && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
-                      Deliverables
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900 ${data.scopeBold ? 'font-bold' : ''}`}>
+                      DELIVERABLES
                     </h4>
                     <p className="leading-relaxed">{data.deliverables}</p>
                   </div>
                 )}
                 {data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim()) && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
-                      Milestones
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900 ${data.scopeBold ? 'font-bold' : ''}`}>
+                      MILESTONES
                     </h4>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {data.milestones.filter(m => m.title && m.title.trim()).map((milestone, index) => (
-                        <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
-                          <p className="font-medium">{milestone.title}</p>
+                        <div key={index} className="border-l-4 border-blue-400 bg-blue-50 pl-4 py-3 rounded-r-md">
+                          <p className="font-semibold text-gray-900">{milestone.title}</p>
                           {milestone.description && <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>}
-                          {milestone.dueDate && <p className="text-sm text-gray-500 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
-                          {milestone.amount && <p className="text-sm font-medium mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
+                          {milestone.dueDate && <p className="text-sm text-blue-600 mt-1 font-medium">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
+                          {milestone.amount && <p className="text-sm font-semibold text-green-600 mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
                         </div>
                       ))}
                     </div>
@@ -262,156 +267,164 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </section>
           )}
 
-          {/* Payment Terms - Only show if has content */}
+          {/* Payment Terms */}
           {hasPaymentTerms() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Payment Terms
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                PAYMENT TERMS
               </h3>
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
-                    Payment Structure
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900 ${data.paymentBold ? 'font-bold' : ''}`}>
+                    PAYMENT STRUCTURE
                   </h4>
                   {data.paymentType === 'hourly' && data.rate > 0 ? (
-                    <p>Hourly Rate: <strong>₹{data.rate?.toLocaleString()}</strong> per hour</p>
+                    <p className="text-lg font-bold text-green-700">Hourly Rate: ₹{data.rate?.toLocaleString()}/hour</p>
                   ) : data.totalAmount && data.totalAmount > 0 ? (
-                    <p>Total Project Amount: <strong>₹{data.totalAmount?.toLocaleString()}</strong></p>
+                    <p className="text-lg font-bold text-green-700">Total Project Amount: ₹{data.totalAmount?.toLocaleString()}</p>
                   ) : null}
                 </div>
 
                 {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && data.totalAmount && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-4 ${data.paymentBold ? 'font-bold' : ''}`}>
-                      Payment Schedule
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900 ${data.paymentBold ? 'font-bold' : ''}`}>
+                      PAYMENT SCHEDULE
                     </h4>
-                    <div className="border rounded-lg p-4 bg-gray-50">
+                    <div className="space-y-1">
                       {formatPaymentSchedule()}
                     </div>
                   </div>
                 )}
 
                 {data.lateFeeEnabled && data.lateFeeAmount && data.lateFeeAmount > 0 && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
-                      Late Payment Terms
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-2 text-red-900 ${data.paymentBold ? 'font-bold' : ''}`}>
+                      LATE PAYMENT TERMS
                     </h4>
-                    <p>Late Fee: ₹{data.lateFeeAmount} per day for payments made after the due date.</p>
+                    <p className="text-red-700">Late Fee: ₹{data.lateFeeAmount} per day for payments made after the due date.</p>
                   </div>
                 )}
               </div>
             </section>
           )}
 
-          {/* Project Timeline - Only show if has content */}
+          {/* Project Timeline */}
           {hasProjectTimeline() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Project Timeline
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                PROJECT TIMELINE
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-                {data.startDate && <p><strong>Start Date:</strong> {new Date(data.startDate).toLocaleDateString()}</p>}
-                {data.endDate && <p><strong>End Date:</strong> {new Date(data.endDate).toLocaleDateString()}</p>}
+              <div className={`${getFontSizeClass(data.bodyFontSize)} bg-blue-50 p-6 rounded-lg border border-blue-200 space-y-3`}>
+                {data.startDate && <p className="text-gray-900"><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
+                {data.endDate && <p className="text-gray-900"><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
               </div>
             </section>
           )}
 
-          {/* Ongoing Work & Retainer - Only show if has content */}
+          {/* Ongoing Work & Retainer */}
           {hasRetainerInfo() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Retainer Agreement
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                RETAINER AGREEMENT
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-                <p><strong>Retainer Amount:</strong> ₹{data.retainerAmount.toLocaleString()}</p>
-                {data.renewalCycle && <p><strong>Renewal Cycle:</strong> {data.renewalCycle}</p>}
-                <p><strong>Auto-Renewal:</strong> {data.autoRenew ? 'Yes' : 'No'}</p>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} bg-purple-50 p-6 rounded-lg border border-purple-200 space-y-3`}>
+                <p className="text-gray-900"><span className="font-bold">Retainer Amount:</span> ₹{data.retainerAmount.toLocaleString()}</p>
+                {data.renewalCycle && <p className="text-gray-900"><span className="font-bold">Renewal Cycle:</span> {data.renewalCycle}</p>}
+                <p className="text-gray-900"><span className="font-bold">Auto-Renewal:</span> {data.autoRenew ? 'Yes' : 'No'}</p>
               </div>
             </section>
           )}
 
           {/* Service Level Agreement */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-              Service Level Agreement
+          <section className="mb-8">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                style={{ color: data.primaryColor }}>
+              SERVICE LEVEL AGREEMENT
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-              <p><strong>Response Time:</strong> {data.responseTime}</p>
-              <p><strong>Revision Limit:</strong> {data.revisionLimit} revisions included</p>
-              {data.uptimeRequirement && <p><strong>Uptime Requirement:</strong> {data.uptimeRequirement}</p>}
+            <div className={`${getFontSizeClass(data.bodyFontSize)} bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-3`}>
+              <p className="text-gray-900"><span className="font-bold">Response Time:</span> {data.responseTime}</p>
+              <p className="text-gray-900"><span className="font-bold">Revision Limit:</span> {data.revisionLimit} revisions included</p>
+              {data.uptimeRequirement && <p className="text-gray-900"><span className="font-bold">Uptime Requirement:</span> {data.uptimeRequirement}</p>}
             </div>
           </section>
 
-          {/* Confidentiality - Only show if has content */}
+          {/* Confidentiality */}
           {hasConfidentialityInfo() && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Confidentiality Agreement
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                  style={{ color: data.primaryColor }}>
+                CONFIDENTIALITY AGREEMENT
               </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-                <p className="leading-relaxed">Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.</p>
-                {data.confidentialityScope && <p><strong>Scope:</strong> {data.confidentialityScope}</p>}
-                {data.confidentialityDuration && <p><strong>Duration:</strong> {data.confidentialityDuration}</p>}
-                {data.breachPenalty && data.breachPenalty > 0 && <p><strong>Breach Penalty:</strong> ₹{data.breachPenalty.toLocaleString()}</p>}
+              <div className={`${getFontSizeClass(data.bodyFontSize)} bg-yellow-50 p-6 rounded-lg border border-yellow-200 space-y-3`}>
+                <p className="leading-relaxed text-gray-700">Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.</p>
+                {data.confidentialityScope && <p className="text-gray-900"><span className="font-bold">Scope:</span> {data.confidentialityScope}</p>}
+                {data.confidentialityDuration && <p className="text-gray-900"><span className="font-bold">Duration:</span> {data.confidentialityDuration}</p>}
+                {data.breachPenalty && data.breachPenalty > 0 && <p className="text-gray-900"><span className="font-bold">Breach Penalty:</span> ₹{data.breachPenalty.toLocaleString()}</p>}
               </div>
             </section>
           )}
 
           {/* Intellectual Property */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-              Intellectual Property Rights
+          <section className="mb-8">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                style={{ color: data.primaryColor }}>
+              INTELLECTUAL PROPERTY RIGHTS
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-              <p><strong>Ownership:</strong> {data.ipOwnership === 'client' ? 'Client owns all work product' : 
-                                                  data.ipOwnership === 'freelancer' ? 'Service Provider retains ownership' : 
-                                                  'Joint ownership as specified'}</p>
-              <p><strong>Usage Rights:</strong> {data.usageRights === 'full' ? 'Full usage rights granted' : 'Limited usage rights as specified'}</p>
+            <div className={`${getFontSizeClass(data.bodyFontSize)} bg-indigo-50 p-6 rounded-lg border border-indigo-200 space-y-3`}>
+              <p className="text-gray-900"><span className="font-bold">Ownership:</span> {data.ipOwnership === 'client' ? 'Client owns all work product' : 
+                                                data.ipOwnership === 'freelancer' ? 'Service Provider retains ownership' : 
+                                                'Joint ownership as specified'}</p>
+              <p className="text-gray-900"><span className="font-bold">Usage Rights:</span> {data.usageRights === 'full' ? 'Full usage rights granted' : 'Limited usage rights as specified'}</p>
             </div>
           </section>
 
           {/* Termination & Dispute Resolution */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-              Termination & Dispute Resolution
+          <section className="mb-8">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900 border-b-2 border-gray-200 pb-2`} 
+                style={{ color: data.primaryColor }}>
+              TERMINATION & DISPUTE RESOLUTION
             </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3 ${data.termsBold ? 'font-bold' : ''}`}>
-              <p><strong>Termination Conditions:</strong> {data.terminationConditions}</p>
-              <p><strong>Notice Period:</strong> {data.noticePeriod}</p>
-              <p><strong>Governing Jurisdiction:</strong> {data.jurisdiction}</p>
-              <p><strong>Arbitration:</strong> {data.arbitrationClause ? 'Disputes subject to arbitration' : 'Standard legal proceedings apply'}</p>
+            <div className={`${getFontSizeClass(data.bodyFontSize)} bg-red-50 p-6 rounded-lg border border-red-200 space-y-3 ${data.termsBold ? 'font-bold' : ''}`}>
+              <p className="text-gray-900"><span className="font-bold">Termination Conditions:</span> {data.terminationConditions}</p>
+              <p className="text-gray-900"><span className="font-bold">Notice Period:</span> {data.noticePeriod}</p>
+              <p className="text-gray-900"><span className="font-bold">Governing Jurisdiction:</span> {data.jurisdiction}</p>
+              <p className="text-gray-900"><span className="font-bold">Arbitration:</span> {data.arbitrationClause ? 'Disputes subject to arbitration' : 'Standard legal proceedings apply'}</p>
             </div>
           </section>
 
           {/* Signature Section */}
-          <section className="border-t-2 border-gray-200 pt-12 mt-16">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-8`} style={{ color: data.primaryColor }}>
-              Signatures
+          <section className="border-t-2 border-gray-300 pt-12 mt-16">
+            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-8 text-gray-900`} 
+                style={{ color: data.primaryColor }}>
+              SIGNATURES
             </h3>
             <div className="grid md:grid-cols-2 gap-12">
-              <div>
-                <div className="border-b border-gray-300 mb-4" style={{ minHeight: '80px' }}>
+              <div className="text-center">
+                <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                   {data.freelancerSignature && (
                     <img src={data.freelancerSignature} alt="Service Provider Signature" className="h-16 object-contain" />
                   )}
                 </div>
-                <p className={`${getFontSizeClass(data.bodyFontSize)} text-center leading-relaxed`}>
-                  <strong>Service Provider</strong><br />
-                  {data.freelancerName}<br />
-                  Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}
-                </p>
+                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+                  <p className="font-bold text-gray-900">SERVICE PROVIDER</p>
+                  <p className="text-gray-700">{data.freelancerName}</p>
+                  <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
+                </div>
               </div>
-              <div>
-                <div className="border-b border-gray-300 mb-4" style={{ minHeight: '80px' }}>
+              <div className="text-center">
+                <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                   {data.clientSignature && (
                     <img src={data.clientSignature} alt="Client Signature" className="h-16 object-contain" />
                   )}
                 </div>
-                <p className={`${getFontSizeClass(data.bodyFontSize)} text-center leading-relaxed`}>
-                  <strong>Client</strong><br />
-                  {data.clientName}<br />
-                  Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}
-                </p>
+                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+                  <p className="font-bold text-gray-900">CLIENT</p>
+                  <p className="text-gray-700">{data.clientName}</p>
+                  <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
+                </div>
               </div>
             </div>
           </section>
