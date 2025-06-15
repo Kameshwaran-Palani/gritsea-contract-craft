@@ -46,6 +46,10 @@ const DashboardLayout = ({
     href: '/ai-assistant',
     icon: Bot
   }, {
+    name: 'Billing',
+    href: '/billing',
+    icon: CreditCard
+  }, {
     name: 'Settings',
     href: '/settings',
     icon: Settings
