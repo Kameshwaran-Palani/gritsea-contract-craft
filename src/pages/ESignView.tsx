@@ -311,6 +311,22 @@ const ESignView = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  {authMethod === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                  {authMethod === 'email' ? 'Email Address' : 'Phone Number'}
+                </Label>
+                <Input
+                  type={authMethod === 'email' ? 'email' : 'tel'}
+                  value={authMethod === 'email' ? credentials.email : credentials.phone}
+                  onChange={(e) => setCredentials(prev => ({ 
+                    ...prev, 
+                    [authMethod as string]: e.target.value 
+                  }))}
+                  placeholder={authMethod === 'email' ? 'your@email.com' : '+1234567890'}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="secretKey" className="flex items-center gap-2">
                   <KeyRound className="h-4 w-4" />
                   Secret Key
@@ -321,22 +337,6 @@ const ESignView = () => {
                   onChange={(e) => setCredentials(prev => ({ ...prev, secretKey: e.target.value.toUpperCase() }))}
                   placeholder="Enter the secret key provided to you"
                   className="font-mono"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  {authMethod === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-                  {authMethod === 'email' ? 'Email Address' : 'Phone Number'}
-                </Label>
-                <Input
-                  type={authMethod === 'email' ? 'email' : 'tel'}
-                  value={authMethod === 'email' ? credentials.email : credentials.phone}
-                  onChange={(e) => setCredentials(prev => ({ 
-                    ...prev, 
-                    [authMethod]: e.target.value 
-                  }))}
-                  placeholder={authMethod === 'email' ? 'your@email.com' : '+1234567890'}
                 />
               </div>
 
