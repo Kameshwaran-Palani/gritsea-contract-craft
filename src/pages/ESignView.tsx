@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -113,25 +114,36 @@ const ESignView = () => {
           signer_name: contractData.clientName,
           signer_email: contractData.clientEmail,
           signature_image_url: signatureData,
-          ip_address: 'client-ip'
+          ip_address: 'client-ip' // Placeholder for IP address
         });
 
       if (signatureError) throw signatureError;
 
-      // Update contract status to signed with client signature
-      const { error: statusError } = await supabase
+      const signedAtDate = new Date().toISOString();
+      const updatedContractData: ContractData = {
+        ...contractData,
+        clientSignature: signatureData,
+        signedDate: signedAtDate,
+      };
+
+      // Update contract status, add client signature, and update clauses_json
+      const { data: updatedContract, error: statusError } = await supabase
         .from('contracts')
         .update({ 
           status: 'signed',
           client_signature_url: signatureData,
-          signed_at: new Date().toISOString(),
-          signed_by_name: contractData.clientName
+          signed_at: signedAtDate,
+          signed_by_name: contractData.clientName,
+          clauses_json: updatedContractData,
         })
-        .eq('id', contract.id);
+        .eq('id', contract.id)
+        .select()
+        .single();
 
       if (statusError) throw statusError;
 
-      setContract(prev => ({ ...prev, status: 'signed', client_signature_url: signatureData }));
+      setContract(updatedContract);
+      setContractData(updatedContractData);
       setClientSignature(signatureData);
       
       toast({
