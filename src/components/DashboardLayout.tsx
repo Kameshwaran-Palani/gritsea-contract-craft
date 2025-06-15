@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +35,7 @@ const DashboardLayout = ({
     icon: Bookmark
   }, {
     name: 'AI Prompt',
-    href: '/prompt',
+    href: '/ai-prompt',
     icon: Zap
   }, {
     name: 'Community',
