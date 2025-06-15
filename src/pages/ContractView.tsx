@@ -132,7 +132,7 @@ const ContractView = () => {
       
       toast({
         title: "Revision Resolved",
-        description: "Contract has been unlocked. You can now continue editing."
+        description: "Contract has been unlocked and is ready for editing."
       });
     } catch (error) {
       console.error('Error resolving revision:', error);
@@ -206,8 +206,30 @@ const ContractView = () => {
   };
 
   const handleRevisionRequested = () => {
-    setContract(prev => ({ ...prev, status: 'revision_requested' }));
+    // Immediately unlock the contract when revision is requested
+    setContract(prev => ({ 
+      ...prev, 
+      status: 'revision_requested',
+      is_locked: false,
+      locked_at: null
+    }));
+    
     if (contract?.id) {
+      // Update database to unlock the contract
+      supabase
+        .from('contracts')
+        .update({ 
+          status: 'revision_requested',
+          is_locked: false,
+          locked_at: null
+        })
+        .eq('id', contract.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error unlocking contract:', error);
+          }
+        });
+      
       loadRevisionRequests(contract.id);
     }
   };

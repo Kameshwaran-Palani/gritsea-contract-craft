@@ -351,8 +351,9 @@ const ContractBuilder = () => {
         });
         setContractId(data.id);
         setContractStatus(data.status || 'draft');
-        setIsLocked(data.is_locked || false);
-        setLockedAt(data.locked_at);
+        
+        // Only lock if status is 'sent_for_signature' and no revision is requested
+        setIsLocked(data.status === 'sent_for_signature' && data.is_locked);
       }
     } catch (error) {
       console.error('Error loading contract:', error);
@@ -555,49 +556,20 @@ const ContractBuilder = () => {
                     <h3 className="font-medium">Revision Requested</h3>
                   </div>
                   <p className="text-sm text-orange-700 mt-1">
-                    Client has requested changes. View details in Contract View.
+                    Client has requested changes. Contract is now unlocked for editing.
                   </p>
                 </div>
               )}
 
-              {contractStatus === 'sent_for_signature' && (
+              {contractStatus === 'sent_for_signature' && isLocked && (
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2 text-blue-800">
                     <Send className="h-5 w-5" />
                     <h3 className="font-medium">eSign Sent</h3>
                   </div>
                   <p className="text-sm text-blue-700 mt-1">
-                    Contract shared with client for signature.
+                    Contract shared with client for signature. Editing is locked.
                   </p>
-                </div>
-              )}
-
-              {isLocked && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-red-800 mb-2">
-                    <Lock className="h-5 w-5" />
-                    <h3 className="font-medium">Contract Locked</h3>
-                  </div>
-                  <p className="text-sm text-red-700 mb-2">
-                    This contract is locked for editing because an eSign link has been generated.
-                  </p>
-                  <div className="flex items-center gap-2 text-sm text-red-600">
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {lockedAt && (() => {
-                        const lockTime = new Date(lockedAt).getTime();
-                        const now = new Date().getTime();
-                        const hoursPassed = (now - lockTime) / (1000 * 60 * 60);
-                        const hoursRemaining = Math.max(0, 24 - hoursPassed);
-                        
-                        if (hoursRemaining > 0) {
-                          return `Unlocks in ${Math.ceil(hoursRemaining)} hours`;
-                        } else {
-                          return "Contract can be unlocked now";
-                        }
-                      })()}
-                    </span>
-                  </div>
                 </div>
               )}
             </div>
