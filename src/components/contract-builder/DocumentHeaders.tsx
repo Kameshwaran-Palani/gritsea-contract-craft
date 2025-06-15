@@ -71,11 +71,26 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
 
           <div className="bg-muted p-4 rounded-lg">
             <h4 className="font-medium mb-2">Preview</h4>
-            <div className="text-center border border-border rounded p-4 bg-background">
-              <h1 className="text-lg font-bold uppercase tracking-wider mb-1">
+            <div 
+              className="border border-border rounded p-4 bg-background"
+              style={{ textAlign: data.documentHeaderAlignment || data.headerAlignment }}
+            >
+              <h1 
+                className="text-lg font-bold uppercase tracking-wider mb-1"
+                style={{
+                  color: data.documentHeaderColor || data.primaryColor,
+                  fontSize: data.documentHeaderFontSize ? `${data.documentHeaderFontSize}px` : (data.headerFontSize ? `${data.headerFontSize}px` : undefined),
+                }}
+              >
                 {data.documentTitle || 'SERVICE AGREEMENT'}
               </h1>
-              <p className="text-sm text-muted-foreground uppercase tracking-wide">
+              <p 
+                className="text-sm text-muted-foreground uppercase tracking-wide"
+                style={{
+                  color: data.documentSubtitleColor || data.contentColor,
+                  fontSize: data.documentSubtitleFontSize ? `${data.documentSubtitleFontSize}px` : (data.subHeaderFontSize ? `${data.subHeaderFontSize}px` : undefined),
+                }}
+              >
                 {data.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'}
               </p>
             </div>

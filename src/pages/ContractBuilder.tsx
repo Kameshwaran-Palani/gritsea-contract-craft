@@ -73,6 +73,13 @@ export interface ContractData {
   subHeaderFontSize?: number;
   bodyFontSize?: number;
 
+  // Document Header Styles
+  documentHeaderColor?: string;
+  documentHeaderAlignment?: 'left' | 'center' | 'right';
+  documentHeaderFontSize?: number;
+  documentSubtitleColor?: string;
+  documentSubtitleFontSize?: number;
+
   // Section-specific styles
   applyGlobalStyles: boolean;
   sectionStyles: {
