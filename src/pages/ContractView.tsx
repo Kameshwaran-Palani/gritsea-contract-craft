@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,7 @@ import RevisionRequestModal from '@/components/contract-builder/RevisionRequestM
 import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ContractDecisionPanel from '@/components/contract-builder/ContractDecisionPanel';
 import ESignDialog from '@/components/contract-builder/ESignDialog';
+import ContractMilestone from '@/components/contract-builder/ContractMilestone';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -27,6 +27,12 @@ const ContractView = () => {
   const [showESignDialog, setShowESignDialog] = useState(false);
   const [clientApproved, setClientApproved] = useState(false);
   const [revisionRequests, setRevisionRequests] = useState<any[]>([]);
+  const [shareInfo, setShareInfo] = useState<{
+    link: string;
+    secretKey: string;
+    clientContact: string;
+    authMethod: string;
+  } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -223,7 +229,7 @@ const ContractView = () => {
   return (
     <>
       <SEOHead 
-        title={`${contractData.documentTitle} - Contract View`}
+        title={`${contractData?.documentTitle} - Contract View`}
         description="View and manage your service contract"
       />
       <div className="min-h-screen bg-background">
@@ -239,11 +245,11 @@ const ContractView = () => {
               </div>
               <div className="h-6 w-px bg-border" />
               <h1 className="text-lg font-semibold">Contract View</h1>
-              <ContractStatusBadge status={contract.status} />
+              <ContractStatusBadge status={contract?.status} />
             </div>
 
             <div className="flex items-center space-x-4">
-              {(contract.status === 'draft' || contract.status === 'revision_requested') && (
+              {(contract?.status === 'draft' || contract?.status === 'revision_requested') && (
                 <Button
                   onClick={handleEditContract}
                   variant="outline"
@@ -254,7 +260,7 @@ const ContractView = () => {
                 </Button>
               )}
 
-              {contract.status === 'draft' && (
+              {contract?.status === 'draft' && (
                 <Button
                   onClick={() => setShowESignDialog(true)}
                   className="flex items-center gap-2"
@@ -264,7 +270,7 @@ const ContractView = () => {
                 </Button>
               )}
               
-              {contract.status === 'revision_requested' && (
+              {contract?.status === 'revision_requested' && (
                 <Button
                   onClick={() => setShowESignDialog(true)}
                   variant="outline"
@@ -275,7 +281,7 @@ const ContractView = () => {
                 </Button>
               )}
 
-              {contract.status === 'signed' && (
+              {contract?.status === 'signed' && (
                 <div className="flex items-center gap-2 text-green-600">
                   <CheckCircle className="h-5 w-5" />
                   <span className="font-medium">Completed</span>
@@ -286,52 +292,63 @@ const ContractView = () => {
         </header>
 
         {/* Content */}
-        <div className="max-w-6xl mx-auto p-6">
-          {contract.status === 'revision_requested' && revisionRequests.length > 0 && (
-            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center gap-2 text-orange-800 mb-3">
-                <AlertCircle className="h-5 w-5" />
-                <h3 className="font-medium">Revision Requests</h3>
-              </div>
-              <div className="space-y-3">
-                {revisionRequests.map((request) => (
-                  <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="text-sm font-medium">{request.client_name}</div>
-                      <Button
-                        size="sm"
-                        onClick={() => markRevisionAsResolved(request.id)}
-                        className="text-xs"
-                      >
-                        Mark Resolved
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{request.message}</p>
-                    <div className="text-xs text-muted-foreground mt-2">
-                      {new Date(request.created_at).toLocaleDateString()}
-                    </div>
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Sidebar - Contract Milestones */}
+            <div className="lg:col-span-1">
+              <ContractMilestone 
+                contractId={contract?.id || ''} 
+                status={contract?.status || 'draft'}
+                shareInfo={shareInfo}
+              />
+            </div>
+
+            {/* Main Content - Contract Preview */}
+            <div className="lg:col-span-2">
+              {contract?.status === 'revision_requested' && revisionRequests.length > 0 && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-orange-800 mb-3">
+                    <AlertCircle className="h-5 w-5" />
+                    <h3 className="font-medium">Revision Requests</h3>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  <div className="space-y-3">
+                    {revisionRequests.map((request) => (
+                      <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="text-sm font-medium">{request.client_name}</div>
+                          <Button
+                            size="sm"
+                            onClick={() => markRevisionAsResolved(request.id)}
+                            className="text-xs"
+                          >
+                            Mark Resolved
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{request.message}</p>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          {new Date(request.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {contract.status === 'sent_for_signature' && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 text-blue-800">
-                <Send className="h-5 w-5" />
-                <h3 className="font-medium">Awaiting Client Signature</h3>
-              </div>
-              <p className="text-sm text-blue-700 mt-1">
-                Contract has been shared with client. Waiting for their review and signature.
-              </p>
-            </div>
-          )}
+              {contract?.status === 'sent_for_signature' && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <Send className="h-5 w-5" />
+                    <h3 className="font-medium">Awaiting Client Signature</h3>
+                  </div>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Contract has been shared with client. Waiting for their review and signature.
+                  </p>
+                </div>
+              )}
 
-          <div className="grid lg:grid-cols-1 gap-6">
-            {/* Contract Preview - Full width */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <ContractPreview data={contractData} />
+              <div className="bg-white rounded-lg shadow-sm border">
+                {contractData && <ContractPreview data={contractData} />}
+              </div>
             </div>
           </div>
         </div>
@@ -340,14 +357,14 @@ const ContractView = () => {
         <RevisionRequestModal
           isOpen={showRevisionModal}
           onClose={() => setShowRevisionModal(false)}
-          contractId={contract.id}
+          contractId={contract?.id}
           onRevisionRequested={handleRevisionRequested}
         />
 
         <ESignDialog
           isOpen={showESignDialog}
           onClose={() => setShowESignDialog(false)}
-          contractId={contract.id}
+          contractId={contract?.id}
           onSuccess={handleESignSuccess}
         />
       </div>
