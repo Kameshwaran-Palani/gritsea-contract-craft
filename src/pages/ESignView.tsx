@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -337,7 +336,7 @@ const ESignView = () => {
         </header>
 
         {/* Content */}
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-7xl mx-auto p-6">
           {contract?.status === 'revision_requested' && (
             <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
               <div className="flex items-center gap-2 text-orange-800">
@@ -350,9 +349,9 @@ const ESignView = () => {
             </div>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
             {/* Contract Preview */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-3 space-y-6">
               <div className="bg-white rounded-lg shadow-sm border" id="contract-preview">
                 <ContractPreview data={{ ...contractData!, clientSignedDate: contract?.status === 'signed' ? contract.signed_at : null } as any} />
               </div>

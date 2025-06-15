@@ -160,18 +160,17 @@ const ContractDecisionPanel: React.FC<ContractDecisionPanelProps> = ({
                 />
               </div>
               
-              <div className="flex gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setDecision('none')}
-                  className="flex-1"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleReject}
                   disabled={loading || !rejectionReason.trim()}
-                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                  className="bg-orange-600 hover:bg-orange-700"
                 >
                   {loading ? 'Sending...' : 'Submit Changes Request'}
                 </Button>
