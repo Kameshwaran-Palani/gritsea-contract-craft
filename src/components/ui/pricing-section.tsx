@@ -22,7 +22,7 @@ const plans = [
     },
     {
         name: 'Pro',
-        price: 499,
+        price: 199,
         description: 'For freelancers and small businesses.',
         isPopular: true,
         features: [
@@ -37,7 +37,7 @@ const plans = [
     },
     {
         name: 'Agency',
-        price: 999,
+        price: 399,
         description: 'For agencies and teams.',
         features: [
           'All Pro features',

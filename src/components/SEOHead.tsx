@@ -9,8 +9,8 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({ 
-  title = "Agrezy - Legal Service Agreements Made Simple",
-  description = "Craft Legal Service Agreements in Minutes with Agrezy. Fast, Freelance-Friendly & Fully Compliant Contracts with AI Assistance for Indian freelancers.",
+  title = "Agrezy - Service Agreements Made Simple",
+  description = "Craft Service Agreements in Minutes with Agrezy. Fast, Freelance-Friendly & Fully Compliant Contracts with AI Assistance for Indian freelancers.",
   image = "/placeholder.svg",
   url = "https://agrezy.com"
 }: SEOHeadProps) => {

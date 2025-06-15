@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const plans = [
   {
     name: 'pro',
-    price: 499,
+    price: 199,
     price_id: 'pro-monthly',
     features: [
       'Unlimited Contracts',
@@ -28,7 +28,7 @@ const plans = [
   },
   {
     name: 'agency',
-    price: 999,
+    price: 399,
     price_id: 'agency-monthly',
     features: [
       'All Pro features',

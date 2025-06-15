@@ -96,8 +96,8 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Craft Legal 
-            <span className="gradient-text"> Service Agreements</span>
+            Craft 
+            <span className="gradient-text"> Service Agreement</span>
             <br />
             in Minutes with Agrezy
           </motion.h1>
