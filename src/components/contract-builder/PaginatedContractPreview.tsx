@@ -25,7 +25,18 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     setSignatureUpdateKey(prev => prev + 1);
   }, [data.freelancerSignature, data.clientSignature, data.signedDate]);
 
-  const getHeaderStyle = (level: 'document' | 'section' | 'sub'): React.CSSProperties => {
+  const getHeaderStyle = (level: 'document' | 'section' | 'sub', sectionId?: string): React.CSSProperties => {
+    if (level === 'section' && sectionId) {
+        const sectionStyle = data.sectionStyles?.[sectionId];
+        const useGlobal = data.applyGlobalStyles || !sectionStyle;
+
+        return {
+            color: useGlobal ? data.primaryColor : sectionStyle?.headerColor || data.primaryColor,
+            textAlign: useGlobal ? (data.headerAlignment as any) : sectionStyle?.headerAlignment || data.headerAlignment,
+            fontSize: `${useGlobal ? data.sectionHeaderFontSize : sectionStyle?.headerFontSize || data.sectionHeaderFontSize}px`
+        };
+    }
+
     const style: React.CSSProperties = {
       color: data.primaryColor || '#3B82F6',
       textAlign: data.headerAlignment || 'left',
@@ -36,11 +47,24 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     return style;
   };
 
-  const getContentStyle = (): React.CSSProperties => ({
-    color: data.contentColor || '#374151',
-    textAlign: data.contentAlignment || 'left',
-    fontSize: `${data.bodyFontSize || 12}px`,
-  });
+  const getContentStyle = (sectionId?: string): React.CSSProperties => {
+    if (sectionId) {
+        const sectionStyle = data.sectionStyles?.[sectionId];
+        const useGlobal = data.applyGlobalStyles || !sectionStyle;
+
+        return {
+            color: useGlobal ? data.contentColor : sectionStyle?.contentColor || data.contentColor,
+            textAlign: useGlobal ? (data.contentAlignment as any) : sectionStyle?.contentAlignment || data.contentAlignment,
+            fontSize: `${useGlobal ? data.bodyFontSize : sectionStyle?.contentFontSize || data.bodyFontSize}px`,
+        };
+    }
+
+    return {
+        color: data.contentColor || '#374151',
+        textAlign: data.contentAlignment || 'left',
+        fontSize: `${data.bodyFontSize || 12}px`,
+    };
+  };
   
   const getBodyStyle = (): React.CSSProperties => ({
     fontSize: `${data.bodyFontSize || 12}px`,
@@ -160,10 +184,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasAgreementIntro() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-4" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-4" style={getHeaderStyle('section', 'introduction')}>
                 AGREEMENT INTRODUCTION
               </h3>
-              <div className="space-y-4" style={getContentStyle()}>
+              <div className="space-y-4" style={getContentStyle('introduction')}>
                 <p className="leading-relaxed">{data.agreementIntroText}</p>
                 {data.effectiveDate && (
                   <p className="font-semibold" style={{ color: data.primaryColor }}>
@@ -179,10 +203,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasPartiesInfo() && (
           <>
             <section className="mb-8">
-               <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+               <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'parties')}>
                 PARTIES TO THE AGREEMENT
               </h3>
-              <div className="grid grid-cols-2 gap-8" style={getContentStyle()}>
+              <div className="grid grid-cols-2 gap-8" style={getContentStyle('parties')}>
                 {data.freelancerName && (
                   <div>
                     <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
@@ -219,10 +243,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasScopeOfWork() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'scope')}>
                 SCOPE OF WORK
               </h3>
-              <div className="space-y-6" style={getContentStyle()}>
+              <div className="space-y-6" style={getContentStyle('scope')}>
                 {data.services && data.services.trim() && (
                   <div>
                     <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
@@ -265,10 +289,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasPaymentTerms() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'payment')}>
                 PAYMENT TERMS
               </h3>
-              <div className="space-y-6" style={getContentStyle()}>
+              <div className="space-y-6" style={getContentStyle('payment')}>
                 <div>
                   <h4 className="font-bold mb-3" style={{...getHeaderStyle('sub'), color: data.primaryColor }}>
                     PAYMENT STRUCTURE
@@ -308,10 +332,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasProjectTimeline() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'timeline')}>
                 PROJECT TIMELINE
               </h3>
-              <div className="space-y-3" style={getContentStyle()}>
+              <div className="space-y-3" style={getContentStyle('timeline')}>
                 {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
                 {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
               </div>
@@ -323,10 +347,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasSLA() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'sla')}>
                 SERVICE LEVEL AGREEMENT
               </h3>
-              <div className="space-y-2" style={getContentStyle()}>
+              <div className="space-y-2" style={getContentStyle('sla')}>
                 {data.responseTime && <p><span className="font-bold">Response Time:</span> {data.responseTime}</p>}
               </div>
             </section>
@@ -337,10 +361,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasIP() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'ip')}>
                 INTELLECTUAL PROPERTY
               </h3>
-              <div style={getContentStyle()}>
+              <div style={getContentStyle('ip')}>
                 <p><span className="font-bold">IP Ownership:</span> {data.ipOwnership}</p>
               </div>
             </section>
@@ -351,10 +375,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasConfidentialityInfo() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'nda')}>
                 CONFIDENTIALITY
               </h3>
-              <div style={getContentStyle()}>
+              <div style={getContentStyle('nda')}>
                 <p>Both parties agree to maintain confidentiality of all proprietary and sensitive information shared during the course of this agreement.</p>
               </div>
             </section>
@@ -365,10 +389,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         {hasTermination() && (
           <>
             <section className="mb-8">
-              <h3 className="font-bold mb-6" style={getHeaderStyle('section')}>
+              <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'termination')}>
                 TERMINATION
               </h3>
-              <div style={getContentStyle()}>
+              <div style={getContentStyle('termination')}>
                 <p>Either party may terminate this agreement with 30 days written notice. Upon termination, all outstanding payments for completed work shall be made within 15 days.</p>
               </div>
             </section>
@@ -377,10 +401,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         )}
 
         <section className="border-t-2 border-gray-300 pt-12 mt-16">
-          <h3 className="font-bold mb-8" style={getHeaderStyle('section')}>
+          <h3 className="font-bold mb-8" style={getHeaderStyle('section', 'signatures')}>
             DIGITAL SIGNATURES
           </h3>
-          <div className="grid grid-cols-2 gap-8" style={getContentStyle()}>
+          <div className="grid grid-cols-2 gap-8" style={getContentStyle('signatures')}>
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.freelancerSignature ? (

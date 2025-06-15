@@ -30,6 +30,15 @@ import ContractPreview from '@/components/contract-builder/ContractPreview';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+export interface SectionDesign {
+  headerColor?: string;
+  headerAlignment?: 'left' | 'center' | 'right';
+  headerFontSize?: number;
+  contentColor?: string;
+  contentAlignment?: 'left' | 'center' | 'justify';
+  contentFontSize?: number;
+}
+
 export interface ContractData {
   // Template
   templateId?: string;
@@ -52,68 +61,6 @@ export interface ContractData {
   headerAlignment?: 'left' | 'center' | 'right';
   contentAlignment?: 'left' | 'center' | 'justify';
   
-  // Parties
-  freelancerName: string;
-  freelancerBusinessName?: string;
-  freelancerAddress: string;
-  freelancerEmail: string;
-  freelancerPhone?: string;
-  clientName: string;
-  clientCompany?: string;
-  clientEmail: string;
-  clientPhone?: string;
-  startDate: string;
-  endDate?: string;
-  
-  // Scope
-  services: string;
-  deliverables: string;
-  milestones: Array<{ title: string; description: string; dueDate: string; amount?: number }>;
-  
-  // Payment
-  paymentType: 'fixed' | 'hourly';
-  rate: number;
-  totalAmount?: number;
-  paymentSchedule: Array<{ description: string; percentage: number; dueDate?: string }>;
-  lateFeeEnabled: boolean;
-  lateFeeAmount?: number;
-  
-  // Ongoing Work
-  isRetainer: boolean;
-  retainerAmount?: number;
-  renewalCycle?: 'monthly' | 'quarterly' | 'yearly';
-  autoRenew: boolean;
-  
-  // SLA
-  responseTime: string;
-  revisionLimit: number;
-  uptimeRequirement?: string;
-  
-  // NDA
-  includeNDA: boolean;
-  confidentialityScope?: string;
-  confidentialityDuration?: string;
-  breachPenalty?: number;
-  
-  // IP
-  ipOwnership: 'freelancer' | 'client' | 'joint';
-  usageRights: 'limited' | 'full';
-  
-  // Termination
-  terminationConditions: string;
-  noticePeriod: string;
-  jurisdiction: string;
-  arbitrationClause: boolean;
-  
-  // Signature
-  freelancerSignature?: string;
-  clientSignature?: string;
-  signedDate?: string;
-  clientSignedDate?: string | null;
-  
-  // Security
-  accessKey?: string;
-  
   // Agreement Introduction
   agreementIntroText: string;
   effectiveDate: string;
@@ -124,6 +71,12 @@ export interface ContractData {
   sectionHeaderFontSize?: number;
   subHeaderFontSize?: number;
   bodyFontSize?: number;
+
+  // Section-specific styles
+  applyGlobalStyles: boolean;
+  sectionStyles: {
+    [key: string]: SectionDesign;
+  };
 }
 
 const ContractBuilder = () => {
@@ -173,26 +126,36 @@ const ContractBuilder = () => {
     sectionHeaderFontSize: 20,
     subHeaderFontSize: 16,
     bodyFontSize: 12,
+    applyGlobalStyles: true,
+    sectionStyles: {},
     freelancerName: '',
     freelancerAddress: '',
+    freelancerBusinessName?: string;
     freelancerEmail: '',
+    freelancerPhone?: string;
     clientName: '',
+    clientCompany?: string;
     clientEmail: '',
+    clientPhone?: string;
     startDate: '',
+    endDate?: string,
     services: '',
     deliverables: '',
     milestones: [],
-    paymentType: 'fixed',
+    paymentType: 'fixed' | 'hourly',
     rate: 0,
     paymentSchedule: [{ description: 'Full payment', percentage: 100 }],
     lateFeeEnabled: false,
+    lateFeeAmount?: number,
     isRetainer: false,
+    retainerAmount?: number,
+    renewalCycle?: 'monthly' | 'quarterly' | 'yearly',
     autoRenew: false,
     responseTime: '24 hours',
     revisionLimit: 3,
     includeNDA: true,
-    ipOwnership: 'client',
-    usageRights: 'full',
+    ipOwnership: 'client' | 'freelancer' | 'joint',
+    usageRights: 'limited' | 'full',
     terminationConditions: 'Either party may terminate this agreement with written notice.',
     noticePeriod: '30 days',
     jurisdiction: 'India',
@@ -327,6 +290,8 @@ const ContractBuilder = () => {
           sectionHeaderFontSize: loadedData.sectionHeaderFontSize || 20,
           subHeaderFontSize: loadedData.subHeaderFontSize || 16,
           bodyFontSize: loadedData.bodyFontSize || 12,
+          applyGlobalStyles: loadedData.applyGlobalStyles !== false, // default to true
+          sectionStyles: loadedData.sectionStyles || {},
         });
         setContractId(data.id);
         setContractStatus(data.status || 'draft');

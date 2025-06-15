@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { ContractData } from '@/pages/ContractBuilder';
-import { Palette, Type, Settings, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
+import { ContractData, SectionDesign } from '@/pages/ContractBuilder';
+import { Palette, Type, Settings, AlignLeft, AlignCenter, AlignRight, AlignJustify, Brush } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Switch } from '@/components/ui/switch';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface DesignCustomizationProps {
   data: ContractData;
@@ -18,11 +20,7 @@ interface DesignCustomizationProps {
   isLast: boolean;
 }
 
-const DesignCustomization: React.FC<DesignCustomizationProps> = ({
-  data,
-  updateData
-}) => {
-  const predefinedColors = [
+const predefinedColors = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
     '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
     '#F97316', '#14B8A6', '#8B5A2B', '#DC2626',
@@ -31,14 +29,131 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
     '#A21CAF', '#064E3B', '#1E3A8A', '#451A03',
     '#000000', '#374151', '#6B7280', '#9CA3AF',
     '#D1D5DB', '#E5E7EB', '#F3F4F6', '#FFFFFF'
-  ];
+];
 
-  const fontOptions = [
+const fontOptions = [
     { value: 'inter', label: 'Inter (Modern)' },
     { value: 'serif', label: 'Times (Classic)' },
     { value: 'sans', label: 'Arial (Clean)' },
     { value: 'mono', label: 'Courier (Typewriter)' }
-  ];
+];
+
+const contentSections = [
+    { id: 'introduction', title: 'Agreement Introduction' },
+    { id: 'parties', title: 'Parties Information' },
+    { id: 'scope', title: 'Scope of Work' },
+    { id: 'payment', title: 'Payment Terms' },
+    { id: 'timeline', title: 'Project Timeline' },
+    { id: 'sla', title: 'Service Level Agreement' },
+    { id: 'ip', title: 'Intellectual Property' },
+    { id: 'nda', title: 'Confidentiality' },
+    { id: 'termination', title: 'Termination' },
+    { id: 'signatures', title: 'Digital Signatures' },
+];
+
+interface SectionControlsProps {
+    sectionId: string;
+    data: ContractData;
+    updateData: (updates: Partial<ContractData>) => void;
+}
+
+const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, updateData }) => {
+    const isDisabled = data.applyGlobalStyles;
+    const sectionStyle = data.sectionStyles?.[sectionId] || {};
+
+    const handleUpdate = (updates: Partial<SectionDesign>) => {
+        updateData({
+            sectionStyles: {
+                ...data.sectionStyles,
+                [sectionId]: {
+                    ...(data.sectionStyles?.[sectionId] || {}),
+                    ...updates,
+                },
+            },
+        });
+    };
+
+    return (
+        <div className={`space-y-4 ${isDisabled ? 'opacity-50' : ''}`}>
+            <fieldset disabled={isDisabled}>
+                <h4 className="font-medium text-sm mb-2">Header Styles</h4>
+                <div className="space-y-3 p-3 border rounded-md">
+                    <div>
+                        <Label>Color</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Input
+                                type="color"
+                                value={sectionStyle.headerColor || data.primaryColor}
+                                onChange={(e) => handleUpdate({ headerColor: e.target.value })}
+                                className="w-16 h-8"
+                            />
+                            <span>{sectionStyle.headerColor || data.primaryColor}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <Label>Alignment</Label>
+                        <ToggleGroup
+                            type="single"
+                            value={sectionStyle.headerAlignment || data.headerAlignment}
+                            onValueChange={(value: 'left' | 'center' | 'right') => {
+                                if (value) handleUpdate({ headerAlignment: value });
+                            }}
+                            className="w-full justify-start gap-2 mt-1"
+                        >
+                            <ToggleGroupItem value="left" aria-label="Align left"><AlignLeft className="h-4 w-4" /></ToggleGroupItem>
+                            <ToggleGroupItem value="center" aria-label="Align center"><AlignCenter className="h-4 w-4" /></ToggleGroupItem>
+                            <ToggleGroupItem value="right" aria-label="Align right"><AlignRight className="h-4 w-4" /></ToggleGroupItem>
+                        </ToggleGroup>
+                    </div>
+                    <div>
+                        <Label htmlFor={`shfs-${sectionId}`}>Font Size (px)</Label>
+                        <Input id={`shfs-${sectionId}`} type="number" placeholder="e.g. 20" value={sectionStyle.headerFontSize || ''} onChange={(e) => handleUpdate({ headerFontSize: Number(e.target.value) })} />
+                    </div>
+                </div>
+
+                <h4 className="font-medium text-sm mt-4 mb-2">Content Styles</h4>
+                <div className="space-y-3 p-3 border rounded-md">
+                    <div>
+                        <Label>Color</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Input
+                                type="color"
+                                value={sectionStyle.contentColor || data.contentColor}
+                                onChange={(e) => handleUpdate({ contentColor: e.target.value })}
+                                className="w-16 h-8"
+                            />
+                            <span>{sectionStyle.contentColor || data.contentColor}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <Label>Alignment</Label>
+                        <ToggleGroup
+                            type="single"
+                            value={sectionStyle.contentAlignment || data.contentAlignment}
+                            onValueChange={(value: 'left' | 'center' | 'justify') => {
+                                if (value) handleUpdate({ contentAlignment: value });
+                            }}
+                            className="w-full justify-start gap-2 mt-1"
+                        >
+                            <ToggleGroupItem value="left" aria-label="Align left"><AlignLeft className="h-4 w-4" /></ToggleGroupItem>
+                            <ToggleGroupItem value="center" aria-label="Align center"><AlignCenter className="h-4 w-4" /></ToggleGroupItem>
+                            <ToggleGroupItem value="justify" aria-label="Align justify"><AlignJustify className="h-4 w-4" /></ToggleGroupItem>
+                        </ToggleGroup>
+                    </div>
+                    <div>
+                        <Label htmlFor={`scfs-${sectionId}`}>Font Size (px)</Label>
+                        <Input id={`scfs-${sectionId}`} type="number" placeholder="e.g. 12" value={sectionStyle.contentFontSize || ''} onChange={(e) => handleUpdate({ contentFontSize: Number(e.target.value) })} />
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    );
+};
+
+const DesignCustomization: React.FC<DesignCustomizationProps> = ({
+  data,
+  updateData
+}) => {
 
   return (
     <div className="space-y-6">
@@ -52,9 +167,19 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            Global Colors
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Global Styles
+            </div>
+            <div className="flex items-center space-x-2">
+                <Label htmlFor="apply-global" className="text-sm font-medium">Apply to All Sections</Label>
+                <Switch
+                    id="apply-global"
+                    checked={data.applyGlobalStyles}
+                    onCheckedChange={(checked) => updateData({ applyGlobalStyles: checked })}
+                />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -107,7 +232,7 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Type className="h-5 w-5" />
-            Typography & Alignment
+            Global Typography & Alignment
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -184,7 +309,7 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Font Size Controls (in px)
+            Global Font Size Controls (in px)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -207,6 +332,31 @@ const DesignCustomization: React.FC<DesignCustomizationProps> = ({
             </div>
           </div>
         </CardContent>
+      </Card>
+
+      <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <Brush className="h-5 w-5" />
+                  Section-Specific Styles
+              </CardTitle>
+          </CardHeader>
+          <CardContent>
+              <Accordion type="multiple" className="w-full">
+                  {contentSections.map(section => (
+                      <AccordionItem key={section.id} value={section.id}>
+                          <AccordionTrigger>{section.title}</AccordionTrigger>
+                          <AccordionContent>
+                              <SectionControls
+                                  sectionId={section.id}
+                                  data={data}
+                                  updateData={updateData}
+                              />
+                          </AccordionContent>
+                      </AccordionItem>
+                  ))}
+              </Accordion>
+          </CardContent>
       </Card>
     </div>
   );
