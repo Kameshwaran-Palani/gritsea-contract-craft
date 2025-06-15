@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -219,7 +220,6 @@ const ContractBuilder = () => {
   const [saving, setSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [revisionRequests, setRevisionRequests] = useState<any[]>([]);
   const [showESignDialog, setShowESignDialog] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [lockedAt, setLockedAt] = useState<string | null>(null);
@@ -354,78 +354,12 @@ const ContractBuilder = () => {
         setContractStatus(data.status || 'draft');
         setIsLocked(data.is_locked || false);
         setLockedAt(data.locked_at);
-        
-        // Load revision requests if status is revision_requested
-        if (data.status === 'revision_requested') {
-          loadRevisionRequests(data.id);
-        }
       }
     } catch (error) {
       console.error('Error loading contract:', error);
       toast({
         title: "Error",
         description: "Failed to load contract",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const loadRevisionRequests = async (contractId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('revision_requests')
-        .select('*')
-        .eq('contract_id', contractId)
-        .eq('resolved', false)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setRevisionRequests(data || []);
-    } catch (error) {
-      console.error('Error loading revision requests:', error);
-    }
-  };
-
-  const markRevisionAsResolved = async (revisionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('revision_requests')
-        .update({ resolved: true })
-        .eq('id', revisionId);
-      
-      if (error) throw error;
-      
-      // Update contract status back to draft and unlock for editing
-      if (contractId) {
-        const { error: statusError } = await supabase
-          .from('contracts')
-          .update({ 
-            status: 'draft',
-            is_locked: false,
-            locked_at: null
-          })
-          .eq('id', contractId);
-        
-        if (statusError) throw statusError;
-        setContractStatus('draft');
-        setIsLocked(false);
-        setLockedAt(null);
-      }
-      
-      // Reload revision requests
-      if (contractId) {
-        loadRevisionRequests(contractId);
-      }
-      
-      toast({
-        title: "Revision Resolved",
-        description: "Contract has been unlocked. You can now continue editing."
-      });
-    } catch (error) {
-      console.error('Error resolving revision:', error);
-      toast({
-        title: "Error",
-        description: "Failed to resolve revision request",
         variant: "destructive"
       });
     }
@@ -614,76 +548,32 @@ const ContractBuilder = () => {
                 )}
               </div>
 
-              {isLocked && shareInfo && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-800 mb-3">
-                    <Send className="h-5 w-5" />
-                    <h3 className="font-medium">Contract Shared with Client</h3>
+              {/* Simple status indicators */}
+              {contractStatus === 'revision_requested' && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-orange-800">
+                    <AlertCircle className="h-5 w-5" />
+                    <h3 className="font-medium">Revision Requested</h3>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-blue-700">Contract Link</label>
-                      <div className="flex gap-2 mt-1">
-                        <input
-                          value={shareInfo.link}
-                          readOnly
-                          className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(shareInfo.link, 'Link')}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-blue-700">Secret Key</label>
-                      <div className="flex gap-2 mt-1">
-                        <input
-                          value={shareInfo.secretKey}
-                          readOnly
-                          className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded font-mono text-center"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(shareInfo.secretKey, 'Secret key')}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-blue-700">Client Contact</label>
-                      <div className="flex items-center gap-2 p-2 bg-white border border-blue-200 rounded mt-1">
-                        {shareInfo.authMethod === 'email' ? (
-                          <Mail className="h-4 w-4 text-blue-600" />
-                        ) : (
-                          <Phone className="h-4 w-4 text-blue-600" />
-                        )}
-                        <span className="text-sm">{shareInfo.clientContact}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-blue-100 border border-blue-200 rounded">
-                    <h4 className="font-medium text-blue-900 text-sm mb-2">Instructions for Client:</h4>
-                    <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
-                      <li>Click on the contract link</li>
-                      <li>Enter the secret key: <code className="bg-blue-200 px-1 rounded">{shareInfo.secretKey}</code></li>
-                      <li>Enter their {shareInfo.authMethod}: <code className="bg-blue-200 px-1 rounded">{shareInfo.clientContact}</code></li>
-                      <li>Review and sign the contract or request revisions</li>
-                    </ol>
-                  </div>
+                  <p className="text-sm text-orange-700 mt-1">
+                    Client has requested changes. View details in Contract View.
+                  </p>
                 </div>
               )}
 
-              {isLocked && !shareInfo && (
+              {contractStatus === 'sent_for_signature' && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <Send className="h-5 w-5" />
+                    <h3 className="font-medium">eSign Sent</h3>
+                  </div>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Contract shared with client for signature.
+                  </p>
+                </div>
+              )}
+
+              {isLocked && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2 text-red-800 mb-2">
                     <Lock className="h-5 w-5" />
@@ -708,32 +598,6 @@ const ContractBuilder = () => {
                         }
                       })()}
                     </span>
-                  </div>
-                </div>
-              )}
-
-              {contractStatus === 'revision_requested' && revisionRequests.length > 0 && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <h3 className="font-medium text-orange-900 mb-3">Revision Requests</h3>
-                  <div className="space-y-3">
-                    {revisionRequests.map((request) => (
-                      <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="text-sm font-medium">{request.client_name}</div>
-                          <Button
-                            size="sm"
-                            onClick={() => markRevisionAsResolved(request.id)}
-                            className="text-xs"
-                          >
-                            Mark Resolved
-                          </Button>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{request.message}</p>
-                        <div className="text-xs text-muted-foreground mt-2">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}
