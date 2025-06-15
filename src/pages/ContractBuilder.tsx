@@ -15,10 +15,10 @@ import {
   AlertCircle,
   Send
 } from 'lucide-react';
-import GeneralInformationStep from '@/components/contract-builder/GeneralInformationStep';
-import ScopeOfWorkStep from '@/components/contract-builder/ScopeOfWorkStep';
-import PaymentTermsStep from '@/components/contract-builder/PaymentTermsStep';
-import LegalTermsStep from '@/components/contract-builder/LegalTermsStep';
+import PartiesInformation from '@/components/contract-builder/PartiesInformation';
+import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
+import PaymentTerms from '@/components/contract-builder/PaymentTerms';
+import TerminationDispute from '@/components/contract-builder/TerminationDispute';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 import RevisionRequestModal from '@/components/contract-builder/RevisionRequestModal';
@@ -35,7 +35,11 @@ export interface ContractData {
   projectTitle: string;
   projectDescription: string;
   deliverables: string;
-  paymentSchedule: string;
+  paymentSchedule: Array<{
+    description: string;
+    percentage: number;
+    dueDate: string;
+  }>;
   paymentAmount: number;
   paymentCurrency: string;
   latePaymentTerms: string;
@@ -47,6 +51,11 @@ export interface ContractData {
   clientSignature: string;
   clientEmail: string;
   projectDeadline: string;
+  paymentType: 'fixed' | 'hourly';
+  rate: number;
+  totalAmount: number;
+  lateFeeEnabled: boolean;
+  lateFeeAmount: number;
   [key: string]: any;
 }
 
@@ -65,7 +74,7 @@ const ContractBuilder = () => {
     projectTitle: '',
     projectDescription: '',
     deliverables: '',
-    paymentSchedule: '',
+    paymentSchedule: [],
     paymentAmount: 0,
     paymentCurrency: 'USD',
     latePaymentTerms: '',
@@ -76,7 +85,12 @@ const ContractBuilder = () => {
     freelancerSignature: '',
     clientSignature: '',
     clientEmail: '',
-    projectDeadline: new Date().toISOString().split('T')[0]
+    projectDeadline: new Date().toISOString().split('T')[0],
+    paymentType: 'fixed',
+    rate: 0,
+    totalAmount: 0,
+    lateFeeEnabled: false,
+    lateFeeAmount: 0
   });
   const [contract, setContract] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -181,7 +195,7 @@ const ContractBuilder = () => {
         contract_amount: data.paymentAmount,
         clauses_json,
         user_id: user.id,
-        status: 'draft'
+        status: 'draft' as const
       };
 
       let result;
@@ -338,7 +352,7 @@ const ContractBuilder = () => {
     switch (currentStep) {
       case 0:
         return (
-          <GeneralInformationStep
+          <PartiesInformation
             data={data}
             updateData={updateData}
             onNext={nextStep}
@@ -348,7 +362,7 @@ const ContractBuilder = () => {
         );
       case 1:
         return (
-          <ScopeOfWorkStep
+          <ScopeOfWork
             data={data}
             updateData={updateData}
             onNext={nextStep}
@@ -359,7 +373,7 @@ const ContractBuilder = () => {
         );
       case 2:
         return (
-          <PaymentTermsStep
+          <PaymentTerms
             data={data}
             updateData={updateData}
             onNext={nextStep}
@@ -370,7 +384,7 @@ const ContractBuilder = () => {
         );
       case 3:
         return (
-          <LegalTermsStep
+          <TerminationDispute
             data={data}
             updateData={updateData}
             onNext={nextStep}

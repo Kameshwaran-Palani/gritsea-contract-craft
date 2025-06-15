@@ -59,6 +59,8 @@ const ReviewExport: React.FC<ReviewExportProps> = ({
   const { total, missing, missingFields } = getCompletionStatus();
   const isComplete = missing === 0;
 
+  const paymentSchedule = data.paymentSchedule || [];
+
   return (
     <div className="space-y-6">
       {/* Completion Status */}
@@ -179,11 +181,11 @@ const ReviewExport: React.FC<ReviewExportProps> = ({
                     </p>
                   )}
                   
-                  {data.paymentSchedule.length > 0 && (
+                  {Array.isArray(paymentSchedule) && paymentSchedule.length > 0 && (
                     <div>
                       <p className="font-medium">Payment Schedule:</p>
                       <ul className="list-disc list-inside ml-4">
-                        {data.paymentSchedule.map((payment, index) => (
+                        {paymentSchedule.map((payment, index) => (
                           <li key={index}>
                             {payment.description}: {payment.percentage}%
                           </li>

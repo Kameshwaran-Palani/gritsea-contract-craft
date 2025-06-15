@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -48,11 +47,12 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   };
 
   const formatPaymentSchedule = () => {
-    if (!data.paymentSchedule || data.paymentSchedule.length === 0) {
+    const paymentSchedule = data.paymentSchedule || [];
+    if (!Array.isArray(paymentSchedule) || paymentSchedule.length === 0) {
       return null;
     }
 
-    return data.paymentSchedule.map((payment, index) => {
+    return paymentSchedule.map((payment, index) => {
       const amount = data.totalAmount ? (data.totalAmount * payment.percentage) / 100 : 0;
       return (
         <div key={index} className="mb-3">
@@ -237,7 +237,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 )}
               </div>
 
-              {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && (
+              {data.paymentType === 'fixed' && data.paymentSchedule && Array.isArray(data.paymentSchedule) && data.paymentSchedule.length > 0 && (
                 <div>
                   <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
                     Payment Schedule
