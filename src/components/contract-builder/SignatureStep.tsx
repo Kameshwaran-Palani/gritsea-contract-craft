@@ -48,6 +48,29 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     }
   }, [data.freelancerName, signatureType, fontSignatureName]);
 
+  // Real-time signature update for drawing
+  const handleSignatureEnd = () => {
+    if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
+      const signatureData = freelancerSigRef.current.toDataURL();
+      console.log('Real-time signature update:', signatureData);
+      updateData('freelancerSignature', signatureData);
+      updateData('signedDate', new Date().toISOString());
+      setIsSignatureSaved(true);
+    }
+  };
+
+  // Real-time signature update for font
+  const handleFontSignatureChange = (name: string) => {
+    setFontSignatureName(name);
+    if (name.trim()) {
+      generateFontSignature(name);
+    } else {
+      updateData('freelancerSignature', '');
+      updateData('signedDate', '');
+      setIsSignatureSaved(false);
+    }
+  };
+
   const clearFreelancerSignature = () => {
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
@@ -168,7 +191,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               onChange={(e) => {
                 updateData('freelancerName', e.target.value);
                 if (signatureType === 'font') {
-                  setFontSignatureName(e.target.value);
+                  handleFontSignatureChange(e.target.value);
                 }
               }}
               placeholder="Enter your full name"
@@ -205,6 +228,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <div className="border rounded-lg p-4 bg-white">
                 <SignatureCanvas
                   ref={freelancerSigRef}
+                  onEnd={handleSignatureEnd}
                   canvasProps={{
                     width: 300,
                     height: 120,
@@ -241,7 +265,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <Input
                 id="fontSignatureName"
                 value={fontSignatureName}
-                onChange={(e) => setFontSignatureName(e.target.value)}
+                onChange={(e) => handleFontSignatureChange(e.target.value)}
                 placeholder="Enter name to create font signature"
                 style={{ fontFamily: '"Dancing Script", cursive, serif', fontSize: '18px' }}
               />
