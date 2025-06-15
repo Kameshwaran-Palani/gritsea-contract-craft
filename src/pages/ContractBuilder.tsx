@@ -1,22 +1,11 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send, Lock, Clock, Copy, Mail, Phone, KeyRound } from 'lucide-react';
-import SEOHead from '@/components/SEOHead';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
-import ESignDialog from '@/components/contract-builder/ESignDialog';
+import { AlertCircle, CheckCircle, Clock, Send } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import TemplateSelection from '@/components/contract-builder/TemplateSelection';
 import DocumentHeaders from '@/components/contract-builder/DocumentHeaders';
-import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
 import PartiesInformation from '@/components/contract-builder/PartiesInformation';
 import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
 import PaymentTerms from '@/components/contract-builder/PaymentTerms';
@@ -25,295 +14,200 @@ import ServiceLevelAgreement from '@/components/contract-builder/ServiceLevelAgr
 import Confidentiality from '@/components/contract-builder/Confidentiality';
 import IntellectualProperty from '@/components/contract-builder/IntellectualProperty';
 import TerminationDispute from '@/components/contract-builder/TerminationDispute';
-import SignatureStep from '@/components/contract-builder/SignatureStep';
 import DesignCustomization from '@/components/contract-builder/DesignCustomization';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
+import ReviewExport from '@/components/contract-builder/ReviewExport';
+import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
+import AIAssistantSidebar from '@/components/contract-builder/AIAssistantSidebar';
+
+export interface Milestone {
+  title: string;
+  description: string;
+  dueDate: string;
+  amount?: number;
+}
+
+export interface PaymentScheduleItem {
+  description: string;
+  percentage: number;
+  dueDate: string;
+}
 
 export interface ContractData {
-  // Template
-  templateId?: string;
-  templateName?: string;
-  
-  // Document Headers
+  template: string;
   documentTitle: string;
   documentSubtitle: string;
-  
-  // Brand Logos
-  leftLogo?: string;
-  rightLogo?: string;
-  logoStyle: 'round' | 'rectangle';
-  
-  // Design
-  primaryColor: string;
-  fontFamily: string;
-  fontSize: 'small' | 'medium' | 'large' | 'xlarge';
-  lineSpacing?: number;
-  headingStyle?: string;
-  listStyle?: string;
-  textAlignment?: string;
-  paragraphSpacing?: number;
-  
-  // Section-specific formatting
-  partiesBold?: boolean;
-  partiesBullets?: boolean;
-  scopeBold?: boolean;
-  scopeBullets?: boolean;
-  paymentBold?: boolean;
-  paymentBullets?: boolean;
-  termsBold?: boolean;
-  termsBullets?: boolean;
-  
-  // Parties
+  effectiveDate: string;
   freelancerName: string;
-  freelancerBusinessName?: string;
+  freelancerBusinessName: string;
   freelancerAddress: string;
   freelancerEmail: string;
-  freelancerPhone?: string;
+  freelancerPhone: string;
   clientName: string;
-  clientCompany?: string;
+  clientCompany: string;
   clientEmail: string;
-  clientPhone?: string;
-  startDate: string;
-  endDate?: string;
-  
-  // Scope
+  clientPhone: string;
+  agreementIntroText: string;
   services: string;
   deliverables: string;
-  milestones: Array<{ title: string; description: string; dueDate: string; amount?: number }>;
-  
-  // Payment
-  paymentType: 'fixed' | 'hourly';
+  milestones: Milestone[];
+  paymentType: string;
   rate: number;
-  totalAmount?: number;
-  paymentSchedule: Array<{ description: string; percentage: number; dueDate?: string }>;
+  totalAmount: number;
+  paymentSchedule: PaymentScheduleItem[];
   lateFeeEnabled: boolean;
-  lateFeeAmount?: number;
-  
-  // Ongoing Work
+  lateFeeAmount: number;
+  startDate: string;
+  endDate: string;
   isRetainer: boolean;
-  retainerAmount?: number;
-  renewalCycle?: 'monthly' | 'quarterly' | 'yearly';
+  retainerAmount: number;
+  renewalCycle: string;
   autoRenew: boolean;
-  
-  // SLA
   responseTime: string;
   revisionLimit: number;
-  uptimeRequirement?: string;
-  
-  // NDA
+  uptimeRequirement: string;
   includeNDA: boolean;
-  confidentialityScope?: string;
-  confidentialityDuration?: string;
-  breachPenalty?: number;
-  
-  // IP
-  ipOwnership: 'freelancer' | 'client' | 'joint';
-  usageRights: 'limited' | 'full';
-  
-  // Termination
+  confidentialityScope: string;
+  confidentialityDuration: string;
+  breachPenalty: number;
+  ipOwnership: string;
+  usageRights: string;
   terminationConditions: string;
   noticePeriod: string;
   jurisdiction: string;
   arbitrationClause: boolean;
-  
-  // Signature
-  freelancerSignature?: string;
-  clientSignature?: string;
-  signedDate?: string;
-  
-  // Security
-  accessKey?: string;
-  
-  // Agreement Introduction
-  agreementIntroText: string;
-  effectiveDate: string;
-  introductionClauses?: string[];
-  
-  // Font size controls
-  headerFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  sectionHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  subHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
-  bodyFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  primaryColor: string;
+  fontFamily: string;
+  fontSize: string;
+  headerFontSize: string;
+  subHeaderFontSize: string;
+  sectionHeaderFontSize: string;
+  bodyFontSize: string;
+  lineSpacing: number;
+  leftLogo: string;
+  rightLogo: string;
+  logoStyle: string;
+  termsBold: boolean;
+  scopeBold: boolean;
+  partiesBold: boolean;
+  paymentBold: boolean;
+  freelancerSignature: string;
+  clientSignature: string;
+  signedDate: string;
 }
 
 const ContractBuilder = () => {
-  const { user, loading } = useAuth();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { id } = useParams();
-  
-  // Determine if this is editing mode
-  const isEditMode = Boolean(id);
-  
-  // Filter steps based on edit mode - split into Edit and Design tabs
-  const EDIT_STEPS = [
-    ...(isEditMode ? [] : [{ id: 'template', title: 'Choose Template', component: TemplateSelection }]),
-    { id: 'headers', title: 'Document Headers', component: DocumentHeaders },
-    { id: 'introduction', title: 'Agreement Introduction', component: AgreementIntroduction },
-    { id: 'parties', title: 'Parties Information', component: PartiesInformation },
-    { id: 'scope', title: 'Scope of Work', component: ScopeOfWork },
-    { id: 'payment', title: 'Payment Terms', component: PaymentTerms },
-    { id: 'ongoing', title: 'Ongoing Work', component: OngoingWork },
-    { id: 'sla', title: 'Service Level Agreement', component: ServiceLevelAgreement },
-    { id: 'nda', title: 'Confidentiality', component: Confidentiality },
-    { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
-    { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
-    { id: 'signature', title: 'Signature', component: SignatureStep },
-  ];
 
-  const DESIGN_STEPS = [
-    { id: 'design', title: 'Design & Branding', component: DesignCustomization },
-  ];
-  
-  const [activeTab, setActiveTab] = useState('edit');
-  const [activeSection, setActiveSection] = useState<string | undefined>(isEditMode ? 'headers' : 'template');
+  const [activeSection, setActiveSection] = useState<string>('template');
   const [contractData, setContractData] = useState<ContractData>({
-    documentTitle: 'SERVICE AGREEMENT',
-    documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
-    agreementIntroText: 'This Service Agreement ("Agreement") is entered into between the parties identified below for the provision of professional services as outlined in this document.',
-    effectiveDate: '',
-    logoStyle: 'round',
-    primaryColor: '#3B82F6',
-    fontFamily: 'inter',
-    fontSize: 'medium',
-    lineSpacing: 1.5,
-    headingStyle: 'h1',
-    listStyle: 'ul',
-    textAlignment: 'left',
-    paragraphSpacing: 1.5,
-    partiesBold: false,
-    partiesBullets: false,
-    scopeBold: false,
-    scopeBullets: false,
-    paymentBold: false,
-    paymentBullets: false,
-    termsBold: false,
-    termsBullets: false,
+    template: '',
+    documentTitle: 'Service Agreement',
+    documentSubtitle: 'This Agreement contains the terms and conditions for services provided by [Service Provider] to [Client]',
+    effectiveDate: new Date().toISOString().split('T')[0],
     freelancerName: '',
+    freelancerBusinessName: '',
     freelancerAddress: '',
     freelancerEmail: '',
+    freelancerPhone: '',
     clientName: '',
+    clientCompany: '',
     clientEmail: '',
-    startDate: '',
+    clientPhone: '',
+    agreementIntroText: '',
     services: '',
     deliverables: '',
     milestones: [],
     paymentType: 'fixed',
     rate: 0,
-    paymentSchedule: [{ description: 'Full payment', percentage: 100 }],
+    totalAmount: 0,
+    paymentSchedule: [],
     lateFeeEnabled: false,
+    lateFeeAmount: 0,
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
     isRetainer: false,
-    autoRenew: false,
+    retainerAmount: 0,
+    renewalCycle: 'monthly',
+    autoRenew: true,
     responseTime: '24 hours',
     revisionLimit: 3,
-    includeNDA: true,
+    uptimeRequirement: '99.9%',
+    includeNDA: false,
+    confidentialityScope: '',
+    confidentialityDuration: '',
+    breachPenalty: 0,
     ipOwnership: 'client',
     usageRights: 'full',
-    terminationConditions: 'Either party may terminate this agreement with written notice.',
+    terminationConditions: '',
     noticePeriod: '30 days',
-    jurisdiction: 'India',
-    arbitrationClause: true
+    jurisdiction: 'Your Jurisdiction',
+    arbitrationClause: true,
+    primaryColor: '#4ade80',
+    fontFamily: 'inter',
+    fontSize: 'medium',
+    headerFontSize: 'xlarge',
+    subHeaderFontSize: 'medium',
+    sectionHeaderFontSize: 'large',
+    bodyFontSize: 'medium',
+    lineSpacing: 1.5,
+    leftLogo: '',
+    rightLogo: '',
+    logoStyle: 'square',
+    termsBold: false,
+    scopeBold: false,
+    partiesBold: false,
+    paymentBold: false,
+    freelancerSignature: '',
+    clientSignature: '',
+    signedDate: new Date().toISOString().split('T')[0],
   });
-  
-  const [contractId, setContractId] = useState<string | null>(id || null);
-  const [contractStatus, setContractStatus] = useState<'draft' | 'sent' | 'signed' | 'cancelled' | 'sent_for_signature' | 'revision_requested'>('draft');
-  const [saving, setSaving] = useState(false);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [showESignDialog, setShowESignDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+	const [contract, setContract] = useState<any>(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [lockedBy, setLockedBy] = useState<string | null>(null);
   const [lockedAt, setLockedAt] = useState<string | null>(null);
-  const [shareInfo, setShareInfo] = useState<{
-    link: string;
-    secretKey: string;
-    clientContact: string;
-    authMethod: string;
-  } | null>(null);
-
-  // Auto-save functionality with debounce
-  const debouncedSave = useCallback(
-    debounce(() => {
-      if (contractData && user && !isLocked) {
-        saveProgress();
-      }
-    }, 2000), // Save after 2 seconds of no changes
-    [contractData, user, isLocked]
-  );
-
-  // Debounce utility function
-  function debounce(func: Function, wait: number) {
-    let timeout: NodeJS.Timeout;
-    return function executedFunction(...args: any[]) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
 
   useEffect(() => {
-    if (user) {
-      setContractData(prev => ({
-        ...prev,
-        freelancerName: user.user_metadata?.full_name || '',
-        freelancerEmail: user.email || ''
-      }));
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (id && user) {
+    if (id) {
       loadContract(id);
+    } else {
+      // Set a default template when creating a new contract
+      setContractData(prev => ({ ...prev, template: 'basic-service-agreement' }));
     }
-  }, [id, user]);
 
-  // Auto-save when contract data changes
-  useEffect(() => {
-    if (contractId && user && !isLocked) {
-      debouncedSave();
-    }
-  }, [contractData, contractId, user, isLocked, debouncedSave]);
-
-  // Check if contract can be unlocked (24 hours passed)
-  useEffect(() => {
-    if (isLocked && lockedAt) {
-      const lockTime = new Date(lockedAt).getTime();
-      const now = new Date().getTime();
-      const hoursPassed = (now - lockTime) / (1000 * 60 * 60);
-      
-      if (hoursPassed >= 24) {
-        unlockContract();
+    // Check if contract is locked every 10 seconds
+    const intervalId = setInterval(() => {
+      if (id) {
+        checkContractLock(id);
       }
-    }
-  }, [isLocked, lockedAt]);
+    }, 10000);
 
-  const unlockContract = async () => {
-    if (!contractId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('contracts')
-        .update({ 
-          is_locked: false,
-          locked_at: null
-        })
-        .eq('id', contractId);
-      
-      if (error) throw error;
-      
-      setIsLocked(false);
-      setLockedAt(null);
-      
-      toast({
-        title: "Contract Unlocked",
-        description: "24 hours have passed. You can now edit the contract again."
-      });
-    } catch (error) {
-      console.error('Error unlocking contract:', error);
-    }
-  };
+    return () => clearInterval(intervalId);
+  }, [id]);
+
+  useEffect(() => {
+    // Listen for download PDF event
+    const handleDownloadPDF = () => {
+      handleSaveContract('download');
+    };
+
+    // Listen for share contract event
+    const handleShareContract = () => {
+      handleSaveContract('share');
+    };
+
+    window.addEventListener('downloadPDF', handleDownloadPDF);
+    window.addEventListener('shareContract', handleShareContract);
+
+    return () => {
+      window.removeEventListener('downloadPDF', handleDownloadPDF);
+      window.removeEventListener('shareContract', handleShareContract);
+    };
+  }, [contractData]);
 
   const loadContract = async (contractId: string) => {
     try {
@@ -321,40 +215,20 @@ const ContractBuilder = () => {
         .from('contracts')
         .select('*')
         .eq('id', contractId)
-        .eq('user_id', user?.id)
         .single();
       
-      if (error) throw error;
-      
-      if (data && data.clauses_json) {
-        const loadedData = data.clauses_json as unknown as ContractData;
-        setContractData({
-          ...loadedData,
-          documentTitle: loadedData.documentTitle || 'SERVICE AGREEMENT',
-          documentSubtitle: loadedData.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT',
-          logoStyle: loadedData.logoStyle || 'round',
-          primaryColor: loadedData.primaryColor || '#3B82F6',
-          fontFamily: loadedData.fontFamily || 'inter',
-          fontSize: loadedData.fontSize || 'medium',
-          lineSpacing: loadedData.lineSpacing || 1.5,
-          headingStyle: loadedData.headingStyle || 'h1',
-          listStyle: loadedData.listStyle || 'ul',
-          textAlignment: loadedData.textAlignment || 'left',
-          paragraphSpacing: loadedData.paragraphSpacing || 1.5,
-          partiesBold: loadedData.partiesBold || false,
-          partiesBullets: loadedData.partiesBullets || false,
-          scopeBold: loadedData.scopeBold || false,
-          scopeBullets: loadedData.scopeBullets || false,
-          paymentBold: loadedData.paymentBold || false,
-          paymentBullets: loadedData.paymentBullets || false,
-          termsBold: loadedData.termsBold || false,
-          termsBullets: loadedData.termsBullets || false
+      if (error || !data) {
+        toast({
+          title: "Error",
+          description: "Failed to load contract",
+          variant: "destructive"
         });
-        setContractId(data.id);
-        setContractStatus(data.status || 'draft');
-        setIsLocked(data.is_locked || false);
-        setLockedAt(data.locked_at);
+        return;
       }
+      
+      setContract(data);
+      setContractData(data.clauses_json as unknown as ContractData);
+      checkContractLock(contractId);
     } catch (error) {
       console.error('Error loading contract:', error);
       toast({
@@ -365,48 +239,191 @@ const ContractBuilder = () => {
     }
   };
 
-  const saveProgress = async () => {
-    if (!user || isLocked) return;
-    
-    setSaving(true);
+  const checkContractLock = async (contractId: string) => {
     try {
-      const contractPayload = {
-        user_id: user.id,
-        title: contractData.templateName || `Contract with ${contractData.clientName || 'Client'}`,
-        status: contractStatus,
-        client_name: contractData.clientName,
-        client_email: contractData.clientEmail,
-        client_phone: contractData.clientPhone,
-        scope_of_work: contractData.services,
-        payment_terms: JSON.stringify(contractData.paymentSchedule),
-        project_timeline: contractData.endDate,
-        contract_amount: contractData.totalAmount || contractData.rate,
-        clauses_json: contractData as any
-      };
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('is_locked, locked_by, locked_at')
+        .eq('id', contractId)
+        .single();
+      
+      if (error) throw error;
+      
+      setIsLocked(data?.is_locked || false);
+      setLockedBy(data?.locked_by || null);
+      setLockedAt(data?.locked_at || null);
+      
+      if (data?.is_locked && data?.locked_by !== supabase.auth.user()?.id) {
+        toast({
+          title: "Contract Locked",
+          description: `This contract is currently being edited by another user. You can view it, but you won't be able to make changes.`,
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error('Error checking contract lock:', error);
+    }
+  };
 
-      if (contractId) {
+  const lockContract = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .update({ 
+          is_locked: true,
+          locked_by: supabase.auth.user()?.id,
+          locked_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      setIsLocked(true);
+      setLockedBy(supabase.auth.user()?.id || null);
+      setLockedAt(new Date().toISOString());
+    } catch (error) {
+      console.error('Error locking contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to lock contract",
+        variant: "destructive"
+      });
+    }
+  }, [id]);
+
+  const unlockContract = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .update({ 
+          is_locked: false,
+          locked_by: null,
+          locked_at: null
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      setIsLocked(false);
+      setLockedBy(null);
+      setLockedAt(null);
+    } catch (error) {
+      console.error('Error unlocking contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to unlock contract",
+        variant: "destructive"
+      });
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      lockContract();
+
+      // Unlock contract when component unmounts
+      return () => {
+        unlockContract();
+      };
+    }
+  }, [id, lockContract, unlockContract]);
+
+  const updateContractData = (newData: Partial<ContractData>) => {
+    setContractData(prev => ({ ...prev, ...newData }));
+  };
+
+  const handleSaveContract = async (action: 'save' | 'publish' | 'download' | 'share' = 'save') => {
+    if (!contractData) {
+      toast({
+        title: "Error",
+        description: "No contract data to save.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    if (action === 'publish') setIsPublishing(true);
+
+    try {
+      const clausesJson = contractData as unknown as Record<string, any>;
+      const status = action === 'publish' ? 'shared' : 'draft';
+
+      if (id) {
+        // Update existing contract
         const { error } = await supabase
           .from('contracts')
-          .update(contractPayload)
-          .eq('id', contractId);
+          .update({ 
+            clauses_json: clausesJson,
+            status: status
+          })
+          .eq('id', id);
+
         if (error) throw error;
+        
+        toast({
+          title: "Contract Updated",
+          description: "Contract has been updated successfully."
+        });
       } else {
+        // Create new contract
         const { data, error } = await supabase
           .from('contracts')
-          .insert(contractPayload)
-          .select('id')
-          .single();
+          .insert([{ 
+            clauses_json: clausesJson,
+            user_id: supabase.auth.user()?.id,
+            status: status
+          }])
+          .select('*')
+
         if (error) throw error;
-        setContractId(data.id);
-        navigate(`/contract/edit/${data.id}`, { replace: true });
-      }
-      
-      if (!isLocked) {
+
         toast({
-          title: "Auto-saved",
-          description: "Your changes have been saved automatically.",
-          duration: 2000
+          title: "Contract Created",
+          description: "Contract has been created successfully."
         });
+        
+        // Redirect to edit page with new contract ID
+        if (data && data.length > 0) {
+          navigate(`/contract/edit/${data[0].id}`);
+        }
+      }
+
+      if (action === 'download') {
+        // Trigger PDF download
+        const previewContent = document.querySelector('.contract-preview');
+        if (previewContent) {
+          const { exportAsPdf } = await import('@/utils/pdfExporter');
+          exportAsPdf(previewContent, contractData.documentTitle || 'Contract');
+        } else {
+          toast({
+            title: "Error",
+            description: "Could not find contract preview to download.",
+            variant: "destructive"
+          });
+        }
+      }
+
+      if (action === 'share') {
+        // Trigger eSign flow
+        const { data, error } = await supabase
+          .from('contracts')
+          .update({ status: 'sent' })
+          .eq('id', id)
+          .select('*')
+
+        if (error) throw error;
+
+        toast({
+          title: "Contract Shared",
+          description: "Contract has been shared successfully."
+        });
+
+        if (data && data.length > 0) {
+          navigate(`/contract/view/${data[0].id}`);
+        }
       }
     } catch (error) {
       console.error('Error saving contract:', error);
@@ -416,284 +433,175 @@ const ContractBuilder = () => {
         variant: "destructive"
       });
     } finally {
-      setSaving(false);
+      setIsSaving(false);
+      setIsPublishing(false);
     }
   };
 
-  const updateContractData = (updates: Partial<ContractData>) => {
-    if (!isLocked) {
-      setContractData(prev => ({ ...prev, ...updates }));
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'template':
+        return <TemplateSelection updateContractData={updateContractData} contractData={contractData} />;
+      case 'documentHeaders':
+        return <DocumentHeaders updateContractData={updateContractData} contractData={contractData} />;
+      case 'agreementIntro':
+        return <AgreementIntroduction updateContractData={updateContractData} contractData={contractData} />;
+      case 'partiesInformation':
+        return <PartiesInformation updateContractData={updateContractData} contractData={contractData} />;
+      case 'scopeOfWork':
+        return <ScopeOfWork updateContractData={updateContractData} contractData={contractData} />;
+      case 'paymentTerms':
+        return <PaymentTerms updateContractData={updateContractData} contractData={contractData} />;
+      case 'ongoingWork':
+        return <OngoingWork updateContractData={updateContractData} contractData={contractData} />;
+      case 'serviceLevelAgreement':
+        return <ServiceLevelAgreement updateContractData={updateContractData} contractData={contractData} />;
+      case 'confidentiality':
+        return <Confidentiality updateContractData={updateContractData} contractData={contractData} />;
+      case 'intellectualProperty':
+        return <IntellectualProperty updateContractData={updateContractData} contractData={contractData} />;
+      case 'terminationDispute':
+        return <TerminationDispute updateContractData={updateContractData} contractData={contractData} />;
+      case 'designCustomization':
+        return <DesignCustomization updateContractData={updateContractData} contractData={contractData} />;
+      case 'reviewExport':
+        return <ReviewExport contractData={contractData} onSave={handleSaveContract} isSaving={isSaving} isPublishing={isPublishing} />;
+      default:
+        return <div>Select a section to start building your contract.</div>;
     }
   };
 
-  const handleSectionChange = (value: string | undefined) => {
-    setActiveSection(value);
-  };
-
-  const handleDownloadPDF = async () => {
-    setIsGeneratingPDF(true);
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      
-      const previewElement = document.querySelector('.contract-preview');
-      if (!previewElement) {
-        throw new Error('Contract preview not found');
-      }
-
-      const canvas = await html2canvas(previewElement as HTMLElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-
-      const link = document.createElement('a');
-      link.download = `${contractData.templateName || 'contract'}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-
-      toast({
-        title: "PDF Downloaded",
-        description: "Your contract has been downloaded successfully."
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
-  const handleShareLink = async () => {
-    if (isLocked) {
-      toast({
-        title: "Contract Locked",
-        description: "This contract is already locked and cannot generate new eSign links.",
-        variant: "destructive"
-      });
-      return;
-    }
-    setShowESignDialog(true);
-  };
-
-  const handleESignSuccess = (shareData: any) => {
-    setShareInfo(shareData);
-    setIsLocked(true);
-    setLockedAt(new Date().toISOString());
-    setContractStatus('sent_for_signature');
-    setShowESignDialog(false);
-  };
-
-  const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied",
-      description: `${type} copied to clipboard`
-    });
-  };
-
-  // Add event listeners for navbar actions
-  useEffect(() => {
-    const handleDownloadEvent = () => {
-      handleDownloadPDF();
-    };
-
-    const handleShareEvent = () => {
-      handleShareLink();
-    };
-
-    window.addEventListener('downloadPDF', handleDownloadEvent);
-    window.addEventListener('shareContract', handleShareEvent);
-
-    return () => {
-      window.removeEventListener('downloadPDF', handleDownloadEvent);
-      window.removeEventListener('shareContract', handleShareEvent);
-    };
-  }, [isLocked]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+  const isCurrentSection = (section: string) => activeSection === section;
 
   return (
-    <>
-      <SEOHead 
-        title="Contract Builder - Agrezy"
-        description="Create professional service contracts with our AI-powered step-by-step builder"
-      />
-      <div className="min-h-screen bg-background">
-        <div className="flex h-[calc(100vh-64px)]">
-          {/* Left Panel */}
-          <div className="w-2/5 border-r bg-card p-6 overflow-y-auto">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <ContractStatusBadge status={contractStatus} />
-                {saving && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    Saving...
-                  </div>
-                )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar */}
+          <aside className="col-span-1">
+            <nav className="space-y-1" aria-label="Sidebar">
+              <h3 className="px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                Contract Sections
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setActiveSection('template')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('template') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('template') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Template
+                </button>
+                <button
+                  onClick={() => setActiveSection('documentHeaders')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('documentHeaders') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('documentHeaders') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Document Headers
+                </button>
+                <button
+                  onClick={() => setActiveSection('agreementIntro')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('agreementIntro') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('agreementIntro') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Agreement Intro
+                </button>
+                <button
+                  onClick={() => setActiveSection('partiesInformation')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('partiesInformation') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('partiesInformation') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Parties Information
+                </button>
+                <button
+                  onClick={() => setActiveSection('scopeOfWork')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('scopeOfWork') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('scopeOfWork') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Scope of Work
+                </button>
+                <button
+                  onClick={() => setActiveSection('paymentTerms')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('paymentTerms') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('paymentTerms') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Payment Terms
+                </button>
+                <button
+                  onClick={() => setActiveSection('ongoingWork')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('ongoingWork') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('ongoingWork') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Ongoing Work & Retainer
+                </button>
+                <button
+                  onClick={() => setActiveSection('serviceLevelAgreement')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('serviceLevelAgreement') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('serviceLevelAgreement') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Service Level Agreement
+                </button>
+                <button
+                  onClick={() => setActiveSection('confidentiality')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('confidentiality') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('confidentiality') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Confidentiality
+                </button>
+                <button
+                  onClick={() => setActiveSection('intellectualProperty')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('intellectualProperty') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('intellectualProperty') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Intellectual Property
+                </button>
+                <button
+                  onClick={() => setActiveSection('terminationDispute')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('terminationDispute') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('terminationDispute') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Termination & Dispute
+                </button>
               </div>
+              <h3 className="px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider mt-6">
+                Design
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setActiveSection('designCustomization')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('designCustomization') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <CheckCircle className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('designCustomization') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Design Customization
+                </button>
+              </div>
+              <h3 className="px-3 text-sm font-semibold text-gray-500 uppercase tracking-wider mt-6">
+                Review & Export
+              </h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setActiveSection('reviewExport')}
+                  className={`bg-white text-gray-700 hover:bg-gray-50 group w-full flex items-center pl-3 pr-2 py-2 text-sm font-medium rounded-md ${isCurrentSection('reviewExport') ? 'bg-blue-50 text-blue-700' : ''}`}
+                >
+                  <Clock className={`mr-3 h-5 w-5 text-gray-400 ${isCurrentSection('reviewExport') ? 'text-blue-500' : ''}`} aria-hidden="true" />
+                  Review & Export
+                </button>
+              </div>
+            </nav>
+          </aside>
 
-              {/* Simple status indicators */}
-              {contractStatus === 'revision_requested' && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-orange-800">
-                    <AlertCircle className="h-5 w-5" />
-                    <h3 className="font-medium">Revision Requested</h3>
-                  </div>
-                  <p className="text-sm text-orange-700 mt-1">
-                    Client has requested changes. View details in Contract View.
-                  </p>
-                </div>
-              )}
+          {/* Main Content */}
+          <main className="col-span-1 lg:col-span-2 bg-white shadow-lg rounded-lg p-6">
+            {/* Section Content */}
+            {renderSectionContent()}
+          </main>
 
-              {contractStatus === 'sent_for_signature' && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-800">
-                    <Send className="h-5 w-5" />
-                    <h3 className="font-medium">eSign Sent</h3>
-                  </div>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Contract shared with client for signature.
-                  </p>
-                </div>
-              )}
-
-              {isLocked && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-red-800 mb-2">
-                    <Lock className="h-5 w-5" />
-                    <h3 className="font-medium">Contract Locked</h3>
-                  </div>
-                  <p className="text-sm text-red-700 mb-2">
-                    This contract is locked for editing because an eSign link has been generated.
-                  </p>
-                  <div className="flex items-center gap-2 text-sm text-red-600">
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {lockedAt && (() => {
-                        const lockTime = new Date(lockedAt).getTime();
-                        const now = new Date().getTime();
-                        const hoursPassed = (now - lockTime) / (1000 * 60 * 60);
-                        const hoursRemaining = Math.max(0, 24 - hoursPassed);
-                        
-                        if (hoursRemaining > 0) {
-                          return `Unlocks in ${Math.ceil(hoursRemaining)} hours`;
-                        } else {
-                          return "Contract can be unlocked now";
-                        }
-                      })()}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="edit" disabled={isLocked}>
-                  Edit Contract {isLocked && <Lock className="h-3 w-3 ml-1" />}
-                </TabsTrigger>
-                <TabsTrigger value="design" disabled={isLocked}>
-                  Design {isLocked && <Lock className="h-3 w-3 ml-1" />}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="edit" className="space-y-3">
-                <Accordion type="single" value={activeSection} onValueChange={handleSectionChange} collapsible className="space-y-3">
-                  {EDIT_STEPS.map((step, index) => {
-                    const Component = step.component;
-                    return (
-                      <AccordionItem key={step.id} value={step.id} className={`border rounded-lg px-4 ${isLocked ? 'opacity-50' : ''}`}>
-                        <AccordionTrigger className="text-left hover:no-underline py-4" disabled={isLocked}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
-                              activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
-                            }`}>
-                              {index + 1}
-                            </div>
-                            <span className="font-medium text-sm">{step.title}</span>
-                            {isLocked && <Lock className="h-3 w-3 ml-auto" />}
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-2 pb-4">
-                          <Component
-                            data={contractData}
-                            updateData={updateContractData}
-                            onNext={() => {}}
-                            onPrev={() => {}}
-                            isFirst={index === 0}
-                            isLast={index === EDIT_STEPS.length - 1}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
-              </TabsContent>
-
-              <TabsContent value="design" className="space-y-3">
-                <Accordion type="single" value={activeSection} onValueChange={handleSectionChange} collapsible className="space-y-3">
-                  {DESIGN_STEPS.map((step, index) => {
-                    const Component = step.component;
-                    return (
-                      <AccordionItem key={step.id} value={step.id} className={`border rounded-lg px-4 ${isLocked ? 'opacity-50' : ''}`}>
-                        <AccordionTrigger className="text-left hover:no-underline py-4" disabled={isLocked}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
-                              activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
-                            }`}>
-                              {index + 1}
-                            </div>
-                            <span className="font-medium text-sm">{step.title}</span>
-                            {isLocked && <Lock className="h-3 w-3 ml-auto" />}
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-2 pb-4">
-                          <Component
-                            data={contractData}
-                            updateData={updateContractData}
-                            onNext={() => {}}
-                            onPrev={() => {}}
-                            isFirst={index === 0}
-                            isLast={index === DESIGN_STEPS.length - 1}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Right Panel */}
-          <div className="w-3/5 bg-muted/20">
-            <ContractPreview data={contractData} />
-          </div>
+          {/* Right Sidebar - AI Assistant */}
+          <aside className="col-span-1 bg-white shadow-lg rounded-lg p-6">
+            <AIAssistantSidebar contractData={contractData} updateContractData={updateContractData} />
+          </aside>
         </div>
       </div>
-      <ESignDialog 
-        isOpen={showESignDialog} 
-        onClose={() => setShowESignDialog(false)} 
-        contractId={contractId}
-        onSuccess={handleESignSuccess}
-      />
-    </>
+    </div>
   );
 };
 
