@@ -133,6 +133,8 @@ export interface ContractData {
   arbitrationClause: boolean;
 
   // Signature
+  freelancerSignature?: string;
+  clientSignature?: string;
   signedDate?: string;
   clientSignedDate?: string;
 }
@@ -217,7 +219,9 @@ const ContractBuilder = () => {
     terminationConditions: 'Either party may terminate this agreement with written notice.',
     noticePeriod: '30 days',
     jurisdiction: 'India',
-    arbitrationClause: true
+    arbitrationClause: true,
+    freelancerSignature: '',
+    clientSignature: ''
   });
   
   const [contractId, setContractId] = useState<string | null>(id || null);
@@ -982,4 +986,3 @@ const ContractBuilder = () => {
 };
 
 export default ContractBuilder;
-
