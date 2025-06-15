@@ -121,6 +121,7 @@ export interface ContractData {
   freelancerSignature?: string;
   clientSignature?: string;
   signedDate?: string;
+  clientSignedDate?: string | null;
   
   // Security
   accessKey?: string;
@@ -759,7 +760,7 @@ const ContractBuilder = () => {
       if (contractData.clientName) {
         pdf.text(`${contractData.clientName}`, pageWidth - margin - 80, yPosition + 15);
       }
-      pdf.text(`Date: ${contractData.signedDate ? new Date(contractData.signedDate).toLocaleDateString() : '_____________'}`, pageWidth - margin - 80, yPosition + 25);
+      pdf.text(`Date: ${contractData.clientSignedDate ? new Date(contractData.clientSignedDate).toLocaleDateString() : '_____________'}`, pageWidth - margin - 80, yPosition + 25);
 
       // Download the PDF
       const fileName = `${contractData.templateName || 'contract'}.pdf`;

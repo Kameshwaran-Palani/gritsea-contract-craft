@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -82,9 +81,6 @@ const AgreementIntroduction: React.FC<AgreementIntroductionProps> = ({
                   />
                 </PopoverContent>
               </Popover>
-              <p className="text-xs text-muted-foreground mt-1">
-                The date when this agreement becomes effective
-              </p>
             </div>
 
             <div>
@@ -97,9 +93,6 @@ const AgreementIntroduction: React.FC<AgreementIntroductionProps> = ({
                 rows={4}
                 className="resize-none"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Customize the opening text that introduces your agreement
-              </p>
             </div>
 
             <div>
@@ -117,7 +110,7 @@ const AgreementIntroduction: React.FC<AgreementIntroductionProps> = ({
               </div>
               
               {(data.introductionClauses || []).map((clause, index) => (
-                <div key={index} className="flex gap-2 items-start">
+                <div key={index} className="flex gap-2 items-start mb-2">
                   <Textarea
                     value={clause}
                     onChange={(e) => updateClause(index, e.target.value)}
@@ -135,10 +128,6 @@ const AgreementIntroduction: React.FC<AgreementIntroductionProps> = ({
                   </Button>
                 </div>
               ))}
-              
-              <p className="text-xs text-muted-foreground">
-                Add any additional clauses or conditions for the agreement introduction
-              </p>
             </div>
           </CardContent>
         </Card>
