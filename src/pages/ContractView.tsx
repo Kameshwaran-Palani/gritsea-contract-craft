@@ -3,7 +3,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, AlertCircle, Eye, PenTool, Share2, Send, Edit } from 'lucide-react';
+import { CheckCircle, AlertCircle, Eye, PenTool, Share2, Send, Edit, Download } from 'lucide-react';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 import RevisionRequestModal from '@/components/contract-builder/RevisionRequestModal';
@@ -11,7 +11,6 @@ import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ContractDecisionPanel from '@/components/contract-builder/ContractDecisionPanel';
 import ESignDialog from '@/components/contract-builder/ESignDialog';
 import ContractMilestone from '@/components/contract-builder/ContractMilestone';
-import Navbar from '@/components/ui/navbar';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -258,6 +257,38 @@ const ContractView = () => {
     navigate(`/contract/edit/${id}`);
   };
 
+  const downloadPDF = async () => {
+    try {
+      // Simple implementation - in a real app, you'd generate actual PDF
+      const contractContent = document.querySelector('.contract-preview');
+      if (contractContent) {
+        // Create a simple download - in production, use proper PDF generation
+        const content = contractContent.innerHTML;
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${contractData?.documentTitle || 'contract'}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download Started",
+          description: "Contract is being downloaded as HTML file."
+        });
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download contract",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -277,11 +308,8 @@ const ContractView = () => {
         description="View and manage your service contract"
       />
       <div className="min-h-screen bg-background">
-        {/* Navbar */}
-        <Navbar />
-        
         {/* Header */}
-        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-16 z-40 mt-16">
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-40">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -296,6 +324,15 @@ const ContractView = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              <Button
+                onClick={downloadPDF}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+
               {(contract?.status === 'draft' || contract?.status === 'revision_requested') && (
                 <Button
                   onClick={handleEditContract}
