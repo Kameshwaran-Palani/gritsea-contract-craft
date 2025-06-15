@@ -404,9 +404,9 @@ const ContractView = () => {
 
         {/* Content */}
         <div className="max-w-7xl mx-auto p-6">
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left Sidebar - Contract Milestones */}
-            <div className="lg:col-span-1">
+          <div className="flex flex-col gap-6">
+            {/* Contract Milestones */}
+            <div>
               <ContractMilestone 
                 contractId={contract?.id || ''} 
                 status={contract?.status || 'draft'}
@@ -415,7 +415,7 @@ const ContractView = () => {
             </div>
 
             {/* Main Content - Contract Preview */}
-            <div className="lg:col-span-2">
+            <div>
               {contract?.status === 'revision_requested' && revisionRequests.length > 0 && (
                 <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <div className="flex items-center gap-2 text-orange-800 mb-3">

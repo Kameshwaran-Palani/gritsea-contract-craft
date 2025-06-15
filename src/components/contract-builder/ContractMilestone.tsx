@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -172,6 +171,9 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
 
   const milestones = getMilestones();
   const currentShareInfo = shareInfo || eSignDetails;
+  
+  const activeMilestoneIndex = milestones.map(m => m.status).findLastIndex(s => s !== 'pending');
+  const progress = activeMilestoneIndex >= 0 ? (activeMilestoneIndex / (milestones.length - 1)) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -183,40 +185,46 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
             Contract Progress
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {milestones.map((milestone, index) => {
-              const Icon = milestone.icon;
-              return (
-                <div key={milestone.id} className="flex items-start gap-4 relative">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                    milestone.status === 'completed' ? 'bg-green-100' :
-                    milestone.status === 'in_progress' ? 'bg-blue-100' :
-                    milestone.status === 'rejected' ? 'bg-red-100' : 'bg-gray-100'
-                  }`}>
-                    <Icon className={`h-4 w-4 ${
-                      milestone.status === 'completed' ? 'text-green-600' :
-                      milestone.status === 'in_progress' ? 'text-blue-600' :
-                      milestone.status === 'rejected' ? 'text-red-600' : 'text-gray-400'
-                    }`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{milestone.title}</h4>
-                      <Badge className={`text-xs ${getStatusColor(milestone.status)}`}>
-                        {milestone.status === 'completed' ? 'Completed' :
-                         milestone.status === 'in_progress' ? 'In Progress' :
-                         milestone.status === 'rejected' ? 'Revision Requested' : 'Pending'}
-                      </Badge>
+        <CardContent className="pt-8">
+          <div className="relative">
+            {/* Progress bar */}
+            <div className="absolute top-5 left-0 w-full h-1 bg-gray-200 rounded-full">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 gap-4 relative">
+              {milestones.map((milestone) => {
+                const Icon = milestone.icon;
+                const isCompleted = milestone.status === 'completed';
+                const isInProgress = milestone.status === 'in_progress';
+                const isRejected = milestone.status === 'rejected';
+                const isPending = milestone.status === 'pending';
+                const isActive = !isPending;
+
+                return (
+                  <div key={milestone.id} className="flex flex-col items-center text-center">
+                    {/* Icon on timeline */}
+                    <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                      isCompleted ? 'bg-green-500 border-green-600' :
+                      isInProgress ? 'bg-blue-500 border-blue-600 animate-pulse' :
+                      isRejected ? 'bg-red-500 border-red-600' :
+                      'bg-white border-gray-300'
+                    }`}>
+                      <Icon className={`h-5 w-5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                     </div>
-                    <p className="text-sm text-muted-foreground">{milestone.description}</p>
+
+                    {/* Milestone details */}
+                    <div className="mt-4">
+                      <h4 className="font-medium text-sm">{milestone.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-1 min-h-[40px]">{milestone.description}</p>
+                    </div>
                   </div>
-                  {index < milestones.length - 1 && (
-                    <div className="absolute left-4 top-8 w-px h-6 bg-gray-200" />
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </CardContent>
       </Card>
