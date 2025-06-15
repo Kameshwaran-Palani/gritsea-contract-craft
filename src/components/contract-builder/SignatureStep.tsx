@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,7 +83,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       const signatureData = sigCanvasRef.current.toDataURL();
       console.log(`[SignatureStep - ${signerType}] Real-time signature update:`, signatureData.slice(0, 50), '...');
       const updates = isClient
-        ? { clientSignature: signatureData, signedDate: new Date().toISOString() }
+        ? { clientSignature: signatureData }
         : { freelancerSignature: signatureData, signedDate: new Date().toISOString() };
       debugUpdateData(updates);
       setIsSignatureSaved(true);
@@ -100,7 +99,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       generateFontSignature(name);
     } else {
       const signatureClear = isClient
-        ? { clientSignature: '', signedDate: '' }
+        ? { clientSignature: '' }
         : { freelancerSignature: '', signedDate: '' };
       debugUpdateData(signatureClear);
       setIsSignatureSaved(false);
@@ -112,7 +111,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       sigCanvasRef.current.clear();
     }
     const signatureClear = isClient
-      ? { clientSignature: '', signedDate: '' }
+      ? { clientSignature: '' }
       : { freelancerSignature: '', signedDate: '' };
     debugUpdateData(signatureClear);
     setIsSignatureSaved(false);
@@ -130,7 +129,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
         const signatureData = sigCanvasRef.current.toDataURL();
         console.log(`[SignatureStep - ${signerType}] Saving drawn signature:`, signatureData.slice(0, 50), '...');
         const updates = isClient
-          ? { clientSignature: signatureData, signedDate: new Date().toISOString() }
+          ? { clientSignature: signatureData }
           : { freelancerSignature: signatureData, signedDate: new Date().toISOString() };
         debugUpdateData(updates);
         setIsSignatureSaved(true);
@@ -190,7 +189,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       const signatureData = canvas.toDataURL();
       console.log(`[SignatureStep - ${signerType}] Generating font signature:`, signatureData.slice(0, 50), '...');
       const updates = isClient
-        ? { clientSignature: signatureData, signedDate: new Date().toISOString() }
+        ? { clientSignature: signatureData }
         : { freelancerSignature: signatureData, signedDate: new Date().toISOString() };
       debugUpdateData(updates);
       setIsSignatureSaved(true);
@@ -201,7 +200,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     setSignatureType(type);
     // Clear existing signature when switching types
     const signatureClear = isClient
-      ? { clientSignature: '', signedDate: '' }
+      ? { clientSignature: '' }
       : { freelancerSignature: '', signedDate: '' };
     updateData(signatureClear);
     setIsSignatureSaved(false);
@@ -353,7 +352,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   }}
                 />
               </div>
-              {data.signedDate && (
+              {data.signedDate && !isClient && (
                 <p className="text-sm text-muted-foreground mt-2">
                   Signed on: {new Date(data.signedDate).toLocaleString()}
                 </p>

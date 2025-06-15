@@ -1,8 +1,9 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
 interface PaginatedContractPreviewProps {
-  data: ContractData;
+  data: ContractData & { clientSignedDate?: string | null }; // Allow clientSignedDate
 }
 
 const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
@@ -452,7 +453,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
                 <p className="font-bold text-gray-900">CLIENT</p>
                 <p className="text-gray-700">{data.clientName}</p>
-                <p className="text-gray-600">Date: _____________</p>
+                <p className="text-gray-600">Date: {data.clientSignedDate ? new Date(data.clientSignedDate).toLocaleDateString() : '_____________'}</p>
               </div>
             </div>
           </div>

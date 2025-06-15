@@ -31,6 +31,15 @@ const ESignView = () => {
     secretKey: ''
   });
 
+  useEffect(() => {
+    if (showSignature) {
+      const signatureElement = document.getElementById('signature-section');
+      if (signatureElement) {
+        signatureElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [showSignature]);
+
   const handleAccess = async () => {
     if (!credentials.secretKey) {
       toast({
@@ -123,7 +132,6 @@ const ESignView = () => {
       const updatedContractData: ContractData = {
         ...contractData,
         clientSignature: signatureData,
-        signedDate: signedAtDate,
       };
 
       // Update contract status, add client signature, and update clauses_json
@@ -134,7 +142,7 @@ const ESignView = () => {
           client_signature_url: signatureData,
           signed_at: signedAtDate,
           signed_by_name: contractData.clientName,
-          clauses_json: updatedContractData,
+          clauses_json: updatedContractData as any, // Fix for TS error
         })
         .eq('id', contract.id)
         .select()
@@ -344,9 +352,13 @@ const ESignView = () => {
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Contract Preview */}
-            <div className="lg:col-span-2">
-              {showSignature ? (
-                <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border" id="contract-preview">
+                <ContractPreview data={{ ...contractData!, clientSignedDate: contract?.status === 'signed' ? contract.signed_at : null } as any} />
+              </div>
+
+              {showSignature && (
+                <div className="bg-white rounded-lg shadow-sm border p-6" id="signature-section">
                   <h3 className="text-lg font-semibold mb-4">Sign Contract</h3>
                   <SignatureStep
                     data={contractData!}
@@ -383,10 +395,6 @@ const ESignView = () => {
                       Complete Signing
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg shadow-sm border" id="contract-preview">
-                  <ContractPreview data={contractData!} />
                 </div>
               )}
             </div>
