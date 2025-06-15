@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -447,17 +446,13 @@ const ContractBuilder = () => {
         description: "Please wait while we generate your PDF..."
       });
 
-      // Create a temporary container with A4 dimensions for better rendering
+      // Create a temporary container for better PDF rendering
       const tempContainer = document.createElement('div');
-      tempContainer.style.width = '794px'; // A4 width at 96 DPI
       tempContainer.style.position = 'absolute';
       tempContainer.style.top = '-9999px';
       tempContainer.style.left = '-9999px';
+      tempContainer.style.width = '794px'; // A4 width at 96 DPI
       tempContainer.style.backgroundColor = '#ffffff';
-      tempContainer.style.padding = '40px';
-      tempContainer.style.fontFamily = contractData.fontFamily === 'inter' ? 'Inter, sans-serif' : 
-                                       contractData.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
-                                       contractData.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif';
       
       // Clone the contract content
       const clonedContent = contractContent.cloneNode(true) as HTMLElement;
@@ -469,56 +464,40 @@ const ContractBuilder = () => {
       tempContainer.appendChild(clonedContent);
       document.body.appendChild(tempContainer);
 
-      // Create canvas from the temporary container
-      const canvas = await html2canvas(tempContainer, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: 794,
-        windowWidth: 794
-      });
+      // Get all pages from the cloned content
+      const pages = tempContainer.querySelectorAll('.mx-auto.bg-white.shadow-lg');
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const a4Width = 210;
+      const a4Height = 297;
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i] as HTMLElement;
+        
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Create canvas for this specific page
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: 794,
+          windowWidth: 794,
+          height: 1123 // A4 height at 96 DPI
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Add the page to PDF with exact A4 dimensions
+        pdf.addImage(imgData, 'PNG', 0, 0, a4Width, a4Height);
+      }
 
       // Remove temporary container
       document.body.removeChild(tempContainer);
-
-      const imgData = canvas.toDataURL('image/png');
-      
-      // A4 dimensions in mm
-      const a4Width = 210;
-      const a4Height = 297;
-      const margin = 20; // 20mm margin on all sides
-      const contentWidth = a4Width - (margin * 2);
-      const contentHeight = a4Height - (margin * 2);
-
-      // Calculate image dimensions to fit A4 with margins
-      const imgAspectRatio = canvas.height / canvas.width;
-      const scaledWidth = contentWidth;
-      const scaledHeight = scaledWidth * imgAspectRatio;
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Calculate how many pages we need
-      const pagesNeeded = Math.ceil(scaledHeight / contentHeight);
-      
-      for (let page = 0; page < pagesNeeded; page++) {
-        if (page > 0) {
-          pdf.addPage();
-        }
-        
-        // Calculate the portion of the image for this page
-        const yOffset = -(page * contentHeight * (canvas.width / scaledWidth));
-        
-        pdf.addImage(
-          imgData, 
-          'PNG', 
-          margin, 
-          margin + yOffset, 
-          scaledWidth, 
-          scaledHeight
-        );
-      }
 
       // Download the PDF
       const fileName = `${contractData.templateName || 'contract'}.pdf`;

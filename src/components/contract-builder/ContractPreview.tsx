@@ -76,23 +76,25 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   };
 
   return (
-    <div className="contract-preview h-full overflow-auto bg-gray-100 p-4">
-      {/* A4 sized container with proper margins and spacing */}
+    <div className="contract-preview h-full overflow-auto bg-gray-100 p-6">
+      {/* Page 1 */}
       <div 
-        className="max-w-4xl mx-auto bg-white shadow-lg min-h-[297mm]"
+        className="mx-auto bg-white shadow-lg mb-8 page-break-after"
         style={{
           width: '210mm',
           minHeight: '297mm',
+          maxHeight: '297mm',
           fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
                      data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
                      data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
-          lineHeight: data.lineSpacing || 1.5,
+          lineHeight: data.lineSpacing || 1.6,
           color: '#1a1a1a',
-          padding: '20mm'
+          padding: '25mm',
+          overflow: 'hidden'
         }}
       >
         {/* Header Section */}
-        <div className="border-b-2 border-gray-200 pb-8 mb-8">
+        <div className="border-b-2 border-gray-200 pb-6 mb-8">
           <div className="flex justify-between items-start mb-6">
             {/* Left Logo */}
             {data.leftLogo && (
@@ -131,11 +133,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Content Sections with proper spacing */}
-        <div className="space-y-10">
+        {/* Page 1 Content */}
+        <div className="space-y-8">
           {/* Agreement Introduction */}
           {data.agreementIntroText && (
-            <section className="page-break-inside-avoid">
+            <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
                 Agreement Introduction
               </h3>
@@ -151,7 +153,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Parties Information */}
-          <section className="page-break-inside-avoid">
+          <section>
             <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Parties to the Agreement
             </h3>
@@ -182,9 +184,9 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </div>
           </section>
 
-          {/* Scope of Work */}
+          {/* Scope of Work - First Part */}
           {data.services && (
-            <section className="page-break-inside-avoid">
+            <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Scope of Work
               </h3>
@@ -195,14 +197,47 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                   </h4>
                   <p className="leading-relaxed">{data.services}</p>
                 </div>
-                {data.deliverables && (
-                  <div>
-                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
-                      Deliverables
-                    </h4>
-                    <p className="leading-relaxed">{data.deliverables}</p>
-                  </div>
-                )}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Page Number */}
+        <div className="absolute bottom-8 right-8 text-sm text-gray-500">
+          Page 1
+        </div>
+      </div>
+
+      {/* Page 2 */}
+      <div 
+        className="mx-auto bg-white shadow-lg mb-8 page-break-after"
+        style={{
+          width: '210mm',
+          minHeight: '297mm',
+          maxHeight: '297mm',
+          fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
+                     data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
+                     data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
+          lineHeight: data.lineSpacing || 1.6,
+          color: '#1a1a1a',
+          padding: '25mm',
+          overflow: 'hidden'
+        }}
+      >
+        <div className="space-y-8">
+          {/* Scope of Work - Continued */}
+          {data.deliverables && (
+            <section>
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
+                Scope of Work (Continued)
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
+                <div>
+                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
+                    Deliverables
+                  </h4>
+                  <p className="leading-relaxed">{data.deliverables}</p>
+                </div>
                 {data.milestones && data.milestones.length > 0 && (
                   <div>
                     <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
@@ -225,7 +260,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Payment Terms */}
-          <section className="page-break-inside-avoid">
+          <section>
             <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Payment Terms
             </h3>
@@ -265,7 +300,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* Project Timeline */}
           {(data.startDate || data.endDate) && (
-            <section className="page-break-inside-avoid">
+            <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Project Timeline
               </h3>
@@ -275,10 +310,32 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
               </div>
             </section>
           )}
+        </div>
 
+        {/* Page Number */}
+        <div className="absolute bottom-8 right-8 text-sm text-gray-500">
+          Page 2
+        </div>
+      </div>
+
+      {/* Page 3 */}
+      <div 
+        className="mx-auto bg-white shadow-lg"
+        style={{
+          width: '210mm',
+          minHeight: '297mm',
+          fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
+                     data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
+                     data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
+          lineHeight: data.lineSpacing || 1.6,
+          color: '#1a1a1a',
+          padding: '25mm'
+        }}
+      >
+        <div className="space-y-8">
           {/* Ongoing Work & Retainer */}
           {data.isRetainer && (
-            <section className="page-break-inside-avoid">
+            <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Retainer Agreement
               </h3>
@@ -291,7 +348,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Service Level Agreement */}
-          <section className="page-break-inside-avoid">
+          <section>
             <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Service Level Agreement
             </h3>
@@ -304,7 +361,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
 
           {/* Confidentiality */}
           {data.includeNDA && (
-            <section className="page-break-inside-avoid">
+            <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Confidentiality Agreement
               </h3>
@@ -318,7 +375,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           )}
 
           {/* Intellectual Property */}
-          <section className="page-break-inside-avoid">
+          <section>
             <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Intellectual Property Rights
             </h3>
@@ -331,7 +388,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </section>
 
           {/* Termination & Dispute Resolution */}
-          <section className="page-break-inside-avoid">
+          <section>
             <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
               Termination & Dispute Resolution
             </h3>
@@ -344,7 +401,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </section>
 
           {/* Signature Section */}
-          <section className="border-t-2 border-gray-200 pt-12 mt-16 page-break-inside-avoid">
+          <section className="border-t-2 border-gray-200 pt-12 mt-16">
             <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-8`} style={{ color: data.primaryColor }}>
               Signatures
             </h3>
@@ -375,6 +432,11 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
               </div>
             </div>
           </section>
+        </div>
+
+        {/* Page Number */}
+        <div className="absolute bottom-8 right-8 text-sm text-gray-500">
+          Page 3
         </div>
       </div>
     </div>
