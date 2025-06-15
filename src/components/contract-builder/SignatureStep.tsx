@@ -31,15 +31,31 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   const [signatureType, setSignatureType] = useState<'draw' | 'font'>('draw');
   const [fontSignatureName, setFontSignatureName] = useState(data.freelancerName || '');
   const [isSignatureSaved, setIsSignatureSaved] = useState(!!data.freelancerSignature);
+  const [isCanvasLoaded, setIsCanvasLoaded] = useState(false);
   const { toast } = useToast();
 
+  // Load existing signature when component mounts or signature type changes
   useEffect(() => {
-    // Load existing signature if it exists
-    if (data.freelancerSignature && freelancerSigRef.current && signatureType === 'draw') {
-      freelancerSigRef.current.fromDataURL(data.freelancerSignature);
+    if (data.freelancerSignature && freelancerSigRef.current && signatureType === 'draw' && !isCanvasLoaded) {
+      // Delay loading to ensure canvas is ready
+      const timer = setTimeout(() => {
+        try {
+          freelancerSigRef.current?.fromDataURL(data.freelancerSignature);
+          setIsCanvasLoaded(true);
+          console.log('Loaded existing signature from data:', data.freelancerSignature);
+        } catch (error) {
+          console.error('Error loading signature:', error);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
     setIsSignatureSaved(!!data.freelancerSignature);
   }, [data.freelancerSignature, signatureType]);
+
+  // Reset canvas loaded state when signature type changes
+  useEffect(() => {
+    setIsCanvasLoaded(false);
+  }, [signatureType]);
 
   useEffect(() => {
     // Update font signature name when freelancer name changes
@@ -78,6 +94,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     updateData('freelancerSignature', '');
     updateData('signedDate', '');
     setIsSignatureSaved(false);
+    setIsCanvasLoaded(false);
     
     toast({
       title: "Signature Cleared",
@@ -160,6 +177,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     updateData('freelancerSignature', '');
     updateData('signedDate', '');
     setIsSignatureSaved(false);
+    setIsCanvasLoaded(false);
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
     }

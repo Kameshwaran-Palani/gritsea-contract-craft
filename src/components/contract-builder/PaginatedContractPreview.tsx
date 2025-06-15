@@ -11,7 +11,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<HTMLElement[]>([]);
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [signatureUpdateKey, setSignatureUpdateKey] = useState(0);
 
   // A4 dimensions in pixels (at 96 DPI)
   const PAGE_WIDTH = 794; // 210mm
@@ -20,9 +20,14 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
   const CONTENT_HEIGHT = PAGE_HEIGHT - PAGE_MARGIN * 2;
 
-  // Force update when signature changes
+  // Force update when signature data changes
   useEffect(() => {
-    setForceUpdate(prev => prev + 1);
+    console.log('Signature data changed:', {
+      freelancerSignature: data.freelancerSignature?.slice(0, 50) + '...',
+      clientSignature: data.clientSignature?.slice(0, 50) + '...',
+      signedDate: data.signedDate
+    });
+    setSignatureUpdateKey(prev => prev + 1);
   }, [data.freelancerSignature, data.clientSignature, data.signedDate]);
 
   const getFontSizeClass = (size: string = 'medium') => {
@@ -142,11 +147,8 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     }, 100);
     return () => clearTimeout(timer);
   }, [
-    data, 
-    forceUpdate, // Include forceUpdate to trigger re-pagination when signatures change
-    data.freelancerSignature, 
-    data.signedDate, 
-    data.clientSignature,
+    data,
+    signatureUpdateKey, // Force re-pagination when signatures change
     data.freelancerName,
     data.clientName,
     data.documentTitle,
@@ -154,7 +156,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     data.deliverables,
     data.totalAmount,
     data.rate
-  ]); // Added all signature and content dependencies
+  ]);
 
   return (
     <div className="contract-preview h-full overflow-x-auto bg-gray-100 p-8">
@@ -417,7 +419,9 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                     src={data.freelancerSignature} 
                     alt="Service Provider Signature" 
                     className="h-16 object-contain"
-                    key={`freelancer-sig-${forceUpdate}`}
+                    key={`freelancer-sig-${signatureUpdateKey}`}
+                    onLoad={() => console.log('Freelancer signature loaded in preview')}
+                    onError={() => console.error('Error loading freelancer signature')}
                   />
                 )}
               </div>
@@ -436,7 +440,9 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                     src={data.clientSignature} 
                     alt="Client Signature" 
                     className="h-16 object-contain"
-                    key={`client-sig-${forceUpdate}`}
+                    key={`client-sig-${signatureUpdateKey}`}
+                    onLoad={() => console.log('Client signature loaded in preview')}
+                    onError={() => console.error('Error loading client signature')}
                   />
                 )}
               </div>
@@ -453,17 +459,22 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
       {/* Horizontally Scrollable Paginated Display */}
       <div className="flex space-x-8 overflow-x-auto pb-4">
         {pages.map((page, index) => (
-          <div key={`page-${index}-${forceUpdate}-${data.freelancerSignature?.slice(-10) || 'nosig'}`} className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" style={{
-            width: `${PAGE_WIDTH}px`,
-            minHeight: `${PAGE_HEIGHT}px`,
-            padding: `${PAGE_MARGIN}px`,
-            fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
-            lineHeight: data.lineSpacing || 1.6,
-            color: '#1f2937',
-            pageBreakAfter: 'always'
-          }} dangerouslySetInnerHTML={{
-            __html: page.innerHTML
-          }} />
+          <div 
+            key={`page-${index}-${signatureUpdateKey}`} 
+            className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" 
+            style={{
+              width: `${PAGE_WIDTH}px`,
+              minHeight: `${PAGE_HEIGHT}px`,
+              padding: `${PAGE_MARGIN}px`,
+              fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
+              lineHeight: data.lineSpacing || 1.6,
+              color: '#1f2937',
+              pageBreakAfter: 'always'
+            }} 
+            dangerouslySetInnerHTML={{
+              __html: page.innerHTML
+            }} 
+          />
         ))}
       </div>
     </div>
