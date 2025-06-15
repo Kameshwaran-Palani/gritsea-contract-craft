@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -416,7 +417,7 @@ const ContractView = () => {
             <div className="flex flex-col lg:flex-row gap-6 items-start">
               {/* eSign Details Column */}
               {shareInfo && (
-                <div className="lg:w-[400px] w-full flex-shrink-0">
+                <div className="lg:w-[350px] w-full flex-shrink-0">
                   <ESignDetails
                     contractId={contract.id}
                     shareInfo={shareInfo}
