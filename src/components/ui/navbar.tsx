@@ -47,10 +47,12 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center space-x-2 justify-center"
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm font-heading">A</span>
-            </div>
-            <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-sm font-heading">A</span>
+              </div>
+              <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
+            </Link>
           </motion.div>
 
           {/* Right section */}
@@ -60,13 +62,7 @@ const Navbar = () => {
               animate={{ opacity: 1, x: 0 }}
               className="hidden md:flex items-center space-x-4"
             >
-              {user && (
-                <Link to="/dashboard">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
-                    Dashboard
-                  </Button>
-                </Link>
-              )}
+              {/* Dashboard button has been removed */}
             </motion.div>
           </div>
         </div>
@@ -91,13 +87,7 @@ const Navbar = () => {
                 </a>
               ))}
               <div className="pt-4 space-y-2">
-                {user && (
-                  <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
-                      Dashboard
-                    </Button>
-                  </Link>
-                )}
+                 {/* Dashboard button has been removed */}
               </div>
             </div>
           </motion.div>

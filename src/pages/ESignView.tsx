@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import ContractDecisionPanel from '@/components/contract-builder/ContractDecisio
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
 import Navbar from '@/components/ui/navbar';
+import Footer from '@/components/ui/footer';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const ESignView = () => {
@@ -263,13 +264,13 @@ const ESignView = () => {
 
   if (!hasAccess) {
     return (
-      <>
+      <div className="flex flex-col min-h-screen bg-background">
         <Navbar />
-        <SEOHead 
-          title="Contract Access - Secure eSign"
-          description="Secure contract access and digital signing portal"
-        />
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 pt-24">
+        <main className="flex-grow flex flex-col items-center justify-center p-6 pt-24">
+          <SEOHead 
+            title="Contract Access - Secure eSign"
+            description="Secure contract access and digital signing portal"
+          />
           {!creatorLoading && freelancerName && (
             <p className="text-center text-muted-foreground mb-4">
               {freelancerName} has shared this contract with you.
@@ -332,8 +333,9 @@ const ESignView = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
@@ -343,7 +345,7 @@ const ESignView = () => {
         title={`${contractData?.documentTitle || 'Contract'} - Contract Review`}
         description="Review and sign your service contract"
       />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         {/* Header */}
         <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="grid grid-cols-3 h-16 items-center px-6">
@@ -352,12 +354,12 @@ const ESignView = () => {
               <ContractStatusBadge status={contract?.status || 'sent_for_signature'} />
             </div>
 
-            <div className="flex items-center justify-center space-x-2">
+            <Link to="/" className="flex items-center justify-center space-x-2">
               <div className="w-6 h-6 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">A</span>
               </div>
               <span className="text-lg font-bold gradient-text">Agrezy</span>
-            </div>
+            </Link>
 
             <div className="flex items-center justify-end space-x-4">
               {contract?.status === 'signed' && (
@@ -381,81 +383,84 @@ const ESignView = () => {
         </header>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto p-6">
-          {contract?.status === 'revision_requested' && (
-            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center gap-2 text-orange-800">
-                <AlertCircle className="h-5 w-5" />
-                <h3 className="font-medium">Revision Requested</h3>
-              </div>
-              <p className="text-sm text-orange-700 mt-1">
-                This contract is currently under revision. The contract owner will address your feedback soon.
-              </p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Contract Preview */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border" id="contract-preview">
-                <ContractPreview data={{ ...contractData!, clientSignedDate: contract?.status === 'signed' ? contract.signed_at : null } as any} />
-              </div>
-
-              {showSignature && (
-                <div className="bg-white rounded-lg shadow-sm border p-6" id="signature-section">
-                  <h3 className="text-lg font-semibold mb-4">Sign Contract</h3>
-                  <SignatureStep
-                    data={contractData!}
-                    updateData={(updates) => {
-                      if (updates.clientSignature) {
-                        setClientSignature(updates.clientSignature);
-                      }
-                      // Update contract data to reflect changes in preview immediately
-                      setContractData(prev => prev ? { ...prev, ...updates } : null);
-                    }}
-                    onNext={() => {}}
-                    onPrev={() => setShowSignature(false)}
-                    isFirst={false}
-                    isLast={true}
-                    signerType="client"
-                  />
-                  <div className="flex gap-3 mt-6">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowSignature(false)}
-                      className="flex-1"
-                    >
-                      Back to Review
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        if (clientSignature) {
-                          handleSignContract(clientSignature);
-                        }
-                      }}
-                      disabled={!clientSignature}
-                      className="flex-1"
-                    >
-                      Complete Signing
-                    </Button>
-                  </div>
+        <main className="flex-grow w-full">
+          <div className="max-w-7xl mx-auto p-6">
+            {contract?.status === 'revision_requested' && (
+              <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center gap-2 text-orange-800">
+                  <AlertCircle className="h-5 w-5" />
+                  <h3 className="font-medium">Revision Requested</h3>
                 </div>
-              )}
-            </div>
+                <p className="text-sm text-orange-700 mt-1">
+                  This contract is currently under revision. The contract owner will address your feedback soon.
+                </p>
+              </div>
+            )}
 
-            {/* Decision Panel */}
-            <div className="lg:col-span-1">
-              {contract?.status === 'sent_for_signature' && !showSignature && (
-                <ContractDecisionPanel
-                  contractData={contract}
-                  onApprove={() => {}}
-                  onReject={() => setContract(prev => prev ? { ...prev, status: 'revision_requested' } : null)}
-                  onSign={() => setShowSignature(true)}
-                />
-              )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              {/* Contract Preview */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white rounded-lg shadow-sm border" id="contract-preview">
+                  <ContractPreview data={{ ...contractData!, clientSignedDate: contract?.status === 'signed' ? contract.signed_at : null } as any} />
+                </div>
+
+                {showSignature && (
+                  <div className="bg-white rounded-lg shadow-sm border p-6" id="signature-section">
+                    <h3 className="text-lg font-semibold mb-4">Sign Contract</h3>
+                    <SignatureStep
+                      data={contractData!}
+                      updateData={(updates) => {
+                        if (updates.clientSignature) {
+                          setClientSignature(updates.clientSignature);
+                        }
+                        // Update contract data to reflect changes in preview immediately
+                        setContractData(prev => prev ? { ...prev, ...updates } : null);
+                      }}
+                      onNext={() => {}}
+                      onPrev={() => setShowSignature(false)}
+                      isFirst={false}
+                      isLast={true}
+                      signerType="client"
+                    />
+                    <div className="flex gap-3 mt-6">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowSignature(false)}
+                        className="flex-1"
+                      >
+                        Back to Review
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          if (clientSignature) {
+                            handleSignContract(clientSignature);
+                          }
+                        }}
+                        disabled={!clientSignature}
+                        className="flex-1"
+                      >
+                        Complete Signing
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Decision Panel */}
+              <div className="lg:col-span-1">
+                {contract?.status === 'sent_for_signature' && !showSignature && (
+                  <ContractDecisionPanel
+                    contractData={contract}
+                    onApprove={() => {}}
+                    onReject={() => setContract(prev => prev ? { ...prev, status: 'revision_requested' } : null)}
+                    onSign={() => setShowSignature(true)}
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
         <DialogContent>
