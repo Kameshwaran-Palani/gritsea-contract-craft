@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 interface PaymentTermsProps {
   data: ContractData;
-  updateData: (field: keyof ContractData, value: any) => void;
+  updateData: (updates: Partial<ContractData>) => void;
   onNext: () => void;
   onPrev: () => void;
   isFirst: boolean;
@@ -28,15 +28,15 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
   updateData
 }) => {
   const handlePaymentTypeChange = (type: 'fixed' | 'hourly') => {
-    updateData('paymentType', type);
+    updateData({ paymentType: type });
   };
 
   const handleRateChange = (value: string) => {
-    updateData('rate', parseFloat(value) || 0);
+    updateData({ rate: parseFloat(value) || 0 });
   };
 
   const handleTotalAmountChange = (value: string) => {
-    updateData('totalAmount', parseFloat(value) || 0);
+    updateData({ totalAmount: parseFloat(value) || 0 });
   };
 
   const addPaymentSchedule = () => {
@@ -45,25 +45,24 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
       percentage: 0,
       dueDate: ''
     };
-    updateData('paymentSchedule', [...(data.paymentSchedule || []), newSchedule]);
+    updateData({
+      paymentSchedule: [...data.paymentSchedule, newSchedule]
+    });
   };
 
   const updatePaymentSchedule = (index: number, field: string, value: string | number) => {
-    const currentSchedule = data.paymentSchedule || [];
-    const updatedSchedule = currentSchedule.map((schedule, i) => 
+    const updatedSchedule = data.paymentSchedule.map((schedule, i) => 
       i === index ? { ...schedule, [field]: value } : schedule
     );
-    updateData('paymentSchedule', updatedSchedule);
+    updateData({ paymentSchedule: updatedSchedule });
   };
 
   const removePaymentSchedule = (index: number) => {
-    const currentSchedule = data.paymentSchedule || [];
-    const updatedSchedule = currentSchedule.filter((_, i) => i !== index);
-    updateData('paymentSchedule', updatedSchedule);
+    const updatedSchedule = data.paymentSchedule.filter((_, i) => i !== index);
+    updateData({ paymentSchedule: updatedSchedule });
   };
 
-  const paymentSchedule = data.paymentSchedule || [];
-  const totalPercentage = paymentSchedule.reduce((sum, schedule) => sum + schedule.percentage, 0);
+  const totalPercentage = data.paymentSchedule.reduce((sum, schedule) => sum + schedule.percentage, 0);
 
   return (
     <div className="space-y-6">
@@ -150,7 +149,7 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {paymentSchedule.map((schedule, index) => (
+                {data.paymentSchedule.map((schedule, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -160,7 +159,7 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-semibold text-base">Payment {index + 1}</h4>
-                      {paymentSchedule.length > 1 && (
+                      {data.paymentSchedule.length > 1 && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -275,7 +274,7 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
               </div>
               <Switch
                 checked={data.lateFeeEnabled}
-                onCheckedChange={(checked) => updateData('lateFeeEnabled', checked)}
+                onCheckedChange={(checked) => updateData({ lateFeeEnabled: checked })}
               />
             </div>
             
@@ -286,7 +285,7 @@ const PaymentTerms: React.FC<PaymentTermsProps> = ({
                   id="lateFeeAmount"
                   type="number"
                   value={data.lateFeeAmount || ''}
-                  onChange={(e) => updateData('lateFeeAmount', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => updateData({ lateFeeAmount: parseFloat(e.target.value) || 0 })}
                   placeholder="500"
                   className="mt-2"
                 />

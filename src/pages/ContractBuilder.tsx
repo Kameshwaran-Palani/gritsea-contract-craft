@@ -1,139 +1,318 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Save, 
-  Eye, 
-  Lock,
-  AlertCircle,
-  Send
-} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send, Lock, Clock, Copy, Mail, Phone, KeyRound, AlertCircle } from 'lucide-react';
+import SEOHead from '@/components/SEOHead';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
+import ESignDialog from '@/components/contract-builder/ESignDialog';
+import TemplateSelection from '@/components/contract-builder/TemplateSelection';
+import DocumentHeaders from '@/components/contract-builder/DocumentHeaders';
+import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
 import PartiesInformation from '@/components/contract-builder/PartiesInformation';
 import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
 import PaymentTerms from '@/components/contract-builder/PaymentTerms';
+import OngoingWork from '@/components/contract-builder/OngoingWork';
+import ServiceLevelAgreement from '@/components/contract-builder/ServiceLevelAgreement';
+import Confidentiality from '@/components/contract-builder/Confidentiality';
+import IntellectualProperty from '@/components/contract-builder/IntellectualProperty';
 import TerminationDispute from '@/components/contract-builder/TerminationDispute';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
+import DesignCustomization from '@/components/contract-builder/DesignCustomization';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
-import RevisionRequestModal from '@/components/contract-builder/RevisionRequestModal';
-import ESignDialog from '@/components/contract-builder/ESignDialog';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { Document } from '@react-pdf/renderer';
-import { saveAs } from 'file-saver';
 
 export interface ContractData {
+  // Template
+  templateId?: string;
+  templateName?: string;
+  
+  // Document Headers
   documentTitle: string;
+  documentSubtitle: string;
+  
+  // Brand Logos
+  leftLogo?: string;
+  rightLogo?: string;
+  logoStyle: 'round' | 'rectangle';
+  
+  // Design
+  primaryColor: string;
+  fontFamily: string;
+  fontSize: 'small' | 'medium' | 'large' | 'xlarge';
+  lineSpacing?: number;
+  headingStyle?: string;
+  listStyle?: string;
+  textAlignment?: string;
+  paragraphSpacing?: number;
+  
+  // Section-specific formatting
+  partiesBold?: boolean;
+  partiesBullets?: boolean;
+  scopeBold?: boolean;
+  scopeBullets?: boolean;
+  paymentBold?: boolean;
+  paymentBullets?: boolean;
+  termsBold?: boolean;
+  termsBullets?: boolean;
+  
+  // Parties
   freelancerName: string;
+  freelancerBusinessName?: string;
+  freelancerAddress: string;
+  freelancerEmail: string;
+  freelancerPhone?: string;
   clientName: string;
-  effectiveDate: string;
-  projectTitle: string;
-  projectDescription: string;
-  deliverables: string;
-  paymentSchedule: Array<{
-    description: string;
-    percentage: number;
-    dueDate: string;
-  }>;
-  paymentAmount: number;
-  paymentCurrency: string;
-  latePaymentTerms: string;
-  intellectualProperty: string;
-  confidentiality: string;
-  terminationClause: string;
-  governingLaw: string;
-  freelancerSignature: string;
-  clientSignature: string;
+  clientCompany?: string;
   clientEmail: string;
-  projectDeadline: string;
+  clientPhone?: string;
+  startDate: string;
+  endDate?: string;
+  
+  // Scope
+  services: string;
+  deliverables: string;
+  milestones: Array<{ title: string; description: string; dueDate: string; amount?: number }>;
+  
+  // Payment
   paymentType: 'fixed' | 'hourly';
   rate: number;
-  totalAmount: number;
+  totalAmount?: number;
+  paymentSchedule: Array<{ description: string; percentage: number; dueDate?: string }>;
   lateFeeEnabled: boolean;
-  lateFeeAmount: number;
-  [key: string]: any;
+  lateFeeAmount?: number;
+  
+  // Ongoing Work
+  isRetainer: boolean;
+  retainerAmount?: number;
+  renewalCycle?: 'monthly' | 'quarterly' | 'yearly';
+  autoRenew: boolean;
+  
+  // SLA
+  responseTime: string;
+  revisionLimit: number;
+  uptimeRequirement?: string;
+  
+  // NDA
+  includeNDA: boolean;
+  confidentialityScope?: string;
+  confidentialityDuration?: string;
+  breachPenalty?: number;
+  
+  // IP
+  ipOwnership: 'freelancer' | 'client' | 'joint';
+  usageRights: 'limited' | 'full';
+  
+  // Termination
+  terminationConditions: string;
+  noticePeriod: string;
+  jurisdiction: string;
+  arbitrationClause: boolean;
+  
+  // Signature
+  freelancerSignature?: string;
+  clientSignature?: string;
+  signedDate?: string;
+  
+  // Security
+  accessKey?: string;
+  
+  // Agreement Introduction
+  agreementIntroText: string;
+  effectiveDate: string;
+  introductionClauses?: string[];
+  
+  // Font size controls
+  headerFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  sectionHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  subHeaderFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  bodyFontSize?: 'small' | 'medium' | 'large' | 'xlarge';
 }
 
 const ContractBuilder = () => {
-  const { id } = useParams();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { toast } = useToast();
+  const { id } = useParams();
+  
+  // Determine if this is editing mode
+  const isEditMode = Boolean(id);
+  
+  // Filter steps based on edit mode - split into Edit and Design tabs
+  const EDIT_STEPS = [
+    ...(isEditMode ? [] : [{ id: 'template', title: 'Choose Template', component: TemplateSelection }]),
+    { id: 'headers', title: 'Document Headers', component: DocumentHeaders },
+    { id: 'introduction', title: 'Agreement Introduction', component: AgreementIntroduction },
+    { id: 'parties', title: 'Parties Information', component: PartiesInformation },
+    { id: 'scope', title: 'Scope of Work', component: ScopeOfWork },
+    { id: 'payment', title: 'Payment Terms', component: PaymentTerms },
+    { id: 'ongoing', title: 'Ongoing Work', component: OngoingWork },
+    { id: 'sla', title: 'Service Level Agreement', component: ServiceLevelAgreement },
+    { id: 'nda', title: 'Confidentiality', component: Confidentiality },
+    { id: 'ip', title: 'Intellectual Property', component: IntellectualProperty },
+    { id: 'termination', title: 'Termination & Dispute', component: TerminationDispute },
+    { id: 'signature', title: 'Signature', component: SignatureStep },
+  ];
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [data, setData] = useState<ContractData>({
-    documentTitle: 'Service Contract',
+  const DESIGN_STEPS = [
+    { id: 'design', title: 'Design & Branding', component: DesignCustomization },
+  ];
+  
+  const [activeTab, setActiveTab] = useState('edit');
+  const [activeSection, setActiveSection] = useState<string | undefined>(isEditMode ? 'headers' : 'template');
+  const [contractData, setContractData] = useState<ContractData>({
+    documentTitle: 'SERVICE AGREEMENT',
+    documentSubtitle: 'PROFESSIONAL SERVICE CONTRACT',
+    agreementIntroText: 'This Service Agreement ("Agreement") is entered into between the parties identified below for the provision of professional services as outlined in this document.',
+    effectiveDate: '',
+    logoStyle: 'round',
+    primaryColor: '#3B82F6',
+    fontFamily: 'inter',
+    fontSize: 'medium',
+    lineSpacing: 1.5,
+    headingStyle: 'h1',
+    listStyle: 'ul',
+    textAlignment: 'left',
+    paragraphSpacing: 1.5,
+    partiesBold: false,
+    partiesBullets: false,
+    scopeBold: false,
+    scopeBullets: false,
+    paymentBold: false,
+    paymentBullets: false,
+    termsBold: false,
+    termsBullets: false,
     freelancerName: '',
+    freelancerAddress: '',
+    freelancerEmail: '',
     clientName: '',
-    effectiveDate: new Date().toISOString().split('T')[0],
-    projectTitle: '',
-    projectDescription: '',
-    deliverables: '',
-    paymentSchedule: [],
-    paymentAmount: 0,
-    paymentCurrency: 'USD',
-    latePaymentTerms: '',
-    intellectualProperty: '',
-    confidentiality: '',
-    terminationClause: '',
-    governingLaw: '',
-    freelancerSignature: '',
-    clientSignature: '',
     clientEmail: '',
-    projectDeadline: new Date().toISOString().split('T')[0],
+    startDate: '',
+    services: '',
+    deliverables: '',
+    milestones: [],
     paymentType: 'fixed',
     rate: 0,
-    totalAmount: 0,
+    paymentSchedule: [{ description: 'Full payment', percentage: 100 }],
     lateFeeEnabled: false,
-    lateFeeAmount: 0
+    isRetainer: false,
+    autoRenew: false,
+    responseTime: '24 hours',
+    revisionLimit: 3,
+    includeNDA: true,
+    ipOwnership: 'client',
+    usageRights: 'full',
+    terminationConditions: 'Either party may terminate this agreement with written notice.',
+    noticePeriod: '30 days',
+    jurisdiction: 'India',
+    arbitrationClause: true
   });
-  const [contract, setContract] = useState<any>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  
+  const [contractId, setContractId] = useState<string | null>(id || null);
+  const [contractStatus, setContractStatus] = useState<'draft' | 'sent' | 'signed' | 'cancelled' | 'sent_for_signature' | 'revision_requested'>('draft');
+  const [saving, setSaving] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [showESignDialog, setShowESignDialog] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockedAt, setLockedAt] = useState<string | null>(null);
+  const [shareInfo, setShareInfo] = useState<{
+    link: string;
+    secretKey: string;
+    clientContact: string;
+    authMethod: string;
+  } | null>(null);
 
-  const totalSteps = 5;
+  // Auto-save functionality with debounce
+  const debouncedSave = useCallback(
+    debounce(() => {
+      if (contractData && user && !isLocked) {
+        saveProgress();
+      }
+    }, 2000), // Save after 2 seconds of no changes
+    [contractData, user, isLocked]
+  );
+
+  // Debounce utility function
+  function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
 
   useEffect(() => {
-    if (id) {
-      loadContract(id);
-    } else {
-      // Set default values for new contract
-      setData(prev => ({
+    if (user) {
+      setContractData(prev => ({
         ...prev,
-        freelancerName: user?.user_metadata?.name || '',
+        freelancerName: user.user_metadata?.full_name || '',
+        freelancerEmail: user.email || ''
       }));
     }
-
-    // Listen for download and share events
-    window.addEventListener('downloadPDF', handleDownloadPDF);
-    window.addEventListener('shareContract', handleShareContract);
-
-    return () => {
-      window.removeEventListener('downloadPDF', handleDownloadPDF);
-      window.removeEventListener('shareContract', handleShareContract);
-    };
-  }, [id, user]);
+  }, [user]);
 
   useEffect(() => {
-    // Lock contract on load if status is not draft or revision_requested
-    if (contract && !['draft', 'revision_requested'].includes(contract.status)) {
-      setIsLocked(true);
-    } else {
-      setIsLocked(contract?.is_locked || false);
+    if (id && user) {
+      loadContract(id);
     }
-  }, [contract]);
+  }, [id, user]);
 
-  useHotkeys('ctrl+s, command+s', (event) => {
-    event.preventDefault();
-    handleSave();
-  });
+  // Auto-save when contract data changes
+  useEffect(() => {
+    if (contractId && user && !isLocked) {
+      debouncedSave();
+    }
+  }, [contractData, contractId, user, isLocked, debouncedSave]);
+
+  // Check if contract can be unlocked (24 hours passed)
+  useEffect(() => {
+    if (isLocked && lockedAt) {
+      const lockTime = new Date(lockedAt).getTime();
+      const now = new Date().getTime();
+      const hoursPassed = (now - lockTime) / (1000 * 60 * 60);
+      
+      if (hoursPassed >= 24) {
+        unlockContract();
+      }
+    }
+  }, [isLocked, lockedAt]);
+
+  const unlockContract = async () => {
+    if (!contractId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .update({ 
+          is_locked: false,
+          locked_at: null
+        })
+        .eq('id', contractId);
+      
+      if (error) throw error;
+      
+      setIsLocked(false);
+      setLockedAt(null);
+      
+      toast({
+        title: "Contract Unlocked",
+        description: "24 hours have passed. You can now edit the contract again."
+      });
+    } catch (error) {
+      console.error('Error unlocking contract:', error);
+    }
+  };
 
   const loadContract = async (contractId: string) => {
     try {
@@ -141,13 +320,40 @@ const ContractBuilder = () => {
         .from('contracts')
         .select('*')
         .eq('id', contractId)
+        .eq('user_id', user?.id)
         .single();
       
       if (error) throw error;
       
-      setContract(data);
-      if (data.clauses_json) {
-        setData(data.clauses_json as unknown as ContractData);
+      if (data && data.clauses_json) {
+        const loadedData = data.clauses_json as unknown as ContractData;
+        setContractData({
+          ...loadedData,
+          documentTitle: loadedData.documentTitle || 'SERVICE AGREEMENT',
+          documentSubtitle: loadedData.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT',
+          logoStyle: loadedData.logoStyle || 'round',
+          primaryColor: loadedData.primaryColor || '#3B82F6',
+          fontFamily: loadedData.fontFamily || 'inter',
+          fontSize: loadedData.fontSize || 'medium',
+          lineSpacing: loadedData.lineSpacing || 1.5,
+          headingStyle: loadedData.headingStyle || 'h1',
+          listStyle: loadedData.listStyle || 'ul',
+          textAlignment: loadedData.textAlignment || 'left',
+          paragraphSpacing: loadedData.paragraphSpacing || 1.5,
+          partiesBold: loadedData.partiesBold || false,
+          partiesBullets: loadedData.partiesBullets || false,
+          scopeBold: loadedData.scopeBold || false,
+          scopeBullets: loadedData.scopeBullets || false,
+          paymentBold: loadedData.paymentBold || false,
+          paymentBullets: loadedData.paymentBullets || false,
+          termsBold: loadedData.termsBold || false,
+          termsBullets: loadedData.termsBullets || false
+        });
+        setContractId(data.id);
+        setContractStatus(data.status || 'draft');
+        
+        // Only lock if status is 'sent_for_signature' and no revision is requested
+        setIsLocked(data.status === 'sent_for_signature' && data.is_locked);
       }
     } catch (error) {
       console.error('Error loading contract:', error);
@@ -159,75 +365,49 @@ const ContractBuilder = () => {
     }
   };
 
-  const updateData = (field: keyof ContractData, value: any) => {
-    setData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const nextStep = () => {
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) {
-      toast({
-        title: "Unauthorized",
-        description: "You must be logged in to save a contract.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSaving(true);
+  const saveProgress = async () => {
+    if (!user || isLocked) return;
+    
+    setSaving(true);
     try {
-      const clauses_json = data;
-      const contractData = {
-        title: data.documentTitle || 'Untitled Contract',
-        client_name: data.clientName,
-        client_email: data.clientEmail,
-        contract_amount: data.paymentAmount,
-        clauses_json,
+      const contractPayload = {
         user_id: user.id,
-        status: 'draft' as const
+        title: contractData.templateName || `Contract with ${contractData.clientName || 'Client'}`,
+        status: contractStatus,
+        client_name: contractData.clientName,
+        client_email: contractData.clientEmail,
+        client_phone: contractData.clientPhone,
+        scope_of_work: contractData.services,
+        payment_terms: JSON.stringify(contractData.paymentSchedule),
+        project_timeline: contractData.endDate,
+        contract_amount: contractData.totalAmount || contractData.rate,
+        clauses_json: contractData as any
       };
 
-      let result;
-      if (id) {
-        // Update existing contract
-        const { data: updatedContract, error } = await supabase
+      if (contractId) {
+        const { error } = await supabase
           .from('contracts')
-          .update(contractData)
-          .eq('id', id)
-          .select()
-          .single();
-
+          .update(contractPayload)
+          .eq('id', contractId);
         if (error) throw error;
-        result = updatedContract;
-        setContract(updatedContract);
       } else {
-        // Create new contract
-        const { data: newContract, error } = await supabase
+        const { data, error } = await supabase
           .from('contracts')
-          .insert(contractData)
-          .select()
+          .insert(contractPayload)
+          .select('id')
           .single();
-
         if (error) throw error;
-        result = newContract;
-        navigate(`/contract/edit/${newContract.id}`);
+        setContractId(data.id);
+        navigate(`/contract/edit/${data.id}`, { replace: true });
       }
-
-      toast({
-        title: "Contract Saved",
-        description: "Your contract has been successfully saved."
-      });
+      
+      if (!isLocked) {
+        toast({
+          title: "Auto-saved",
+          description: "Your changes have been saved automatically.",
+          duration: 2000
+        });
+      }
     } catch (error) {
       console.error('Error saving contract:', error);
       toast({
@@ -236,251 +416,255 @@ const ContractBuilder = () => {
         variant: "destructive"
       });
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  const handleLock = async () => {
-    if (!id) return;
+  const updateContractData = (updates: Partial<ContractData>) => {
+    if (!isLocked) {
+      setContractData(prev => ({ ...prev, ...updates }));
+    }
+  };
 
-    setIsLocked(true);
+  const handleSectionChange = (value: string | undefined) => {
+    setActiveSection(value);
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
     try {
-      const { error } = await supabase
-        .from('contracts')
-        .update({ is_locked: true, locked_at: new Date().toISOString() })
-        .eq('id', id);
+      const html2canvas = (await import('html2canvas')).default;
       
-      if (error) throw error;
-      setContract(prev => ({ ...prev, is_locked: true, locked_at: new Date().toISOString() }));
-      
+      const previewElement = document.querySelector('.contract-preview');
+      if (!previewElement) {
+        throw new Error('Contract preview not found');
+      }
+
+      const canvas = await html2canvas(previewElement as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const link = document.createElement('a');
+      link.download = `${contractData.templateName || 'contract'}-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      toast({
+        title: "PDF Downloaded",
+        description: "Your contract has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleShareLink = async () => {
+    if (isLocked) {
       toast({
         title: "Contract Locked",
-        description: "The contract is now locked for editing."
-      });
-    } catch (error) {
-      console.error('Error locking contract:', error);
-      toast({
-        title: "Error",
-        description: "Failed to lock contract",
+        description: "This contract is already locked and cannot generate new eSign links.",
         variant: "destructive"
       });
-      setIsLocked(false);
+      return;
     }
-  };
-
-  const handleUnlock = async () => {
-    if (!id) return;
-
-    setIsLocked(false);
-    try {
-      const { error } = await supabase
-        .from('contracts')
-        .update({ is_locked: false, locked_at: null })
-        .eq('id', id);
-      
-      if (error) throw error;
-      setContract(prev => ({ ...prev, is_locked: false, locked_at: null }));
-      
-      toast({
-        title: "Contract Unlocked",
-        description: "The contract is now unlocked for editing."
-      });
-    } catch (error) {
-      console.error('Error unlocking contract:', error);
-      toast({
-        title: "Error",
-        description: "Failed to unlock contract",
-        variant: "destructive"
-      });
-      setIsLocked(true);
-    }
-  };
-
-  const handleDownloadPDF = useCallback(() => {
-    if (!id) return;
-
-    // @ts-ignore
-    import('@react-pdf/renderer').then((module) => {
-      const { Document, PDFViewer } = module;
-      const MyDocument = () => (
-        <Document>
-          <ContractPreview data={data} />
-        </Document>
-      );
-
-      // @ts-ignore
-      import('@react-pdf/renderer').then(async (module) => {
-        const { pdf } = module;
-        const myDoc = MyDocument();
-        const pdfBlob = await pdf(myDoc).toBlob();
-        saveAs(pdfBlob, `${data.documentTitle || 'Contract'}.pdf`);
-      });
-    });
-  }, [data, id]);
-
-  const handleShareContract = () => {
-    if (!id) return;
-    handleLock();
     setShowESignDialog(true);
   };
 
-  const handleRevisionRequested = () => {
-    navigate(`/contract/view/${id}`);
+  const handleESignSuccess = (shareData: any) => {
+    setShareInfo(shareData);
+    setIsLocked(true);
+    setLockedAt(new Date().toISOString());
+    setContractStatus('sent_for_signature');
+    setShowESignDialog(false);
   };
 
-  const handleESignSuccess = () => {
-    setContract(prev => ({ ...prev, status: 'sent_for_signature', is_locked: true }));
-    setShowESignDialog(false);
-    
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
     toast({
-      title: "eSign Sent",
-      description: "Contract shared with client for signature. Editing is locked.",
-      variant: "default",
-      action: (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/contract/view/${id}`)}
-        >
-          View Contract
-        </Button>
-      ),
+      title: "Copied",
+      description: `${type} copied to clipboard`
     });
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <PartiesInformation
-            data={data}
-            updateData={updateData}
-            onNext={nextStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
-          />
-        );
-      case 1:
-        return (
-          <ScopeOfWork
-            data={data}
-            updateData={updateData}
-            onNext={nextStep}
-            onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
-          />
-        );
-      case 2:
-        return (
-          <PaymentTerms
-            data={data}
-            updateData={updateData}
-            onNext={nextStep}
-            onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
-          />
-        );
-      case 3:
-        return (
-          <TerminationDispute
-            data={data}
-            updateData={updateData}
-            onNext={nextStep}
-            onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
-          />
-        );
-      case 4:
-        return (
-          <SignatureStep
-            data={data}
-            updateData={updateData}
-            onNext={nextStep}
-            onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
-          />
-        );
-      default:
-        return <div>Unknown step</div>;
-    }
-  };
+  // Add event listeners for navbar actions
+  useEffect(() => {
+    const handleDownloadEvent = () => {
+      handleDownloadPDF();
+    };
+
+    const handleShareEvent = () => {
+      handleShareLink();
+    };
+
+    window.addEventListener('downloadPDF', handleDownloadEvent);
+    window.addEventListener('shareContract', handleShareEvent);
+
+    return () => {
+      window.removeEventListener('downloadPDF', handleDownloadEvent);
+      window.removeEventListener('shareContract', handleShareEvent);
+    };
+  }, [isLocked]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Alert Message if Contract is Locked */}
-      {isLocked && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            This contract is locked for editing. Please contact the administrator to unlock it.
-          </AlertDescription>
-        </Alert>
-      )}
+    <>
+      <SEOHead 
+        title="Contract Builder - Agrezy"
+        description="Create professional service contracts with our AI-powered step-by-step builder"
+      />
+      <div className="min-h-screen bg-background">
+        <div className="flex h-[calc(100vh-64px)]">
+          {/* Left Panel */}
+          <div className="w-2/5 border-r bg-card p-6 overflow-y-auto">
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <ContractStatusBadge status={contractStatus} />
+                {saving && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    Saving...
+                  </div>
+                )}
+              </div>
 
-      {/* Stepper */}
-      <div className="border-b">
-        <div className="mx-auto flex h-16 max-w-7xl items-center space-x-4 px-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-            <ChevronLeft className="h-4 w-4" />
-            Dashboard
-          </Button>
-          <div className="h-6 w-px bg-border" />
-          <Button variant="ghost" size="sm" onClick={handleSave} disabled={isSaving || isLocked}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
-          {!isLocked && (
-            <Button variant="ghost" size="sm" onClick={handleLock}>
-              <Lock className="h-4 w-4 mr-2" />
-              Lock
-            </Button>
-          )}
-          {isLocked && (
-            <Button variant="ghost" size="sm" onClick={handleUnlock}>
-              <Lock className="h-4 w-4 mr-2" />
-              Unlock
-            </Button>
-          )}
-          <div className="ml-auto flex items-center space-x-2">
-            Step {currentStep + 1} of {totalSteps}
-            <Button variant="outline" size="sm" onClick={prevStep} disabled={currentStep === 0 || isLocked}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={nextStep} disabled={currentStep === totalSteps - 1 || isLocked}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              {/* Simple status indicators */}
+              {contractStatus === 'revision_requested' && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-orange-800">
+                    <AlertCircle className="h-5 w-5" />
+                    <h3 className="font-medium">Revision Requested</h3>
+                  </div>
+                  <p className="text-sm text-orange-700 mt-1">
+                    Client has requested changes. Contract is now unlocked for editing.
+                  </p>
+                </div>
+              )}
+
+              {contractStatus === 'sent_for_signature' && isLocked && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <Send className="h-5 w-5" />
+                    <h3 className="font-medium">eSign Sent</h3>
+                  </div>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Contract shared with client for signature. Editing is locked.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="edit" disabled={isLocked}>
+                  Edit Contract {isLocked && <Lock className="h-3 w-3 ml-1" />}
+                </TabsTrigger>
+                <TabsTrigger value="design" disabled={isLocked}>
+                  Design {isLocked && <Lock className="h-3 w-3 ml-1" />}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="edit" className="space-y-3">
+                <Accordion type="single" value={activeSection} onValueChange={handleSectionChange} collapsible className="space-y-3">
+                  {EDIT_STEPS.map((step, index) => {
+                    const Component = step.component;
+                    return (
+                      <AccordionItem key={step.id} value={step.id} className={`border rounded-lg px-4 ${isLocked ? 'opacity-50' : ''}`}>
+                        <AccordionTrigger className="text-left hover:no-underline py-4" disabled={isLocked}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
+                              activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <span className="font-medium text-sm">{step.title}</span>
+                            {isLocked && <Lock className="h-3 w-3 ml-auto" />}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 pb-4">
+                          <Component
+                            data={contractData}
+                            updateData={updateContractData}
+                            onNext={() => {}}
+                            onPrev={() => {}}
+                            isFirst={index === 0}
+                            isLast={index === EDIT_STEPS.length - 1}
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </TabsContent>
+
+              <TabsContent value="design" className="space-y-3">
+                <Accordion type="single" value={activeSection} onValueChange={handleSectionChange} collapsible className="space-y-3">
+                  {DESIGN_STEPS.map((step, index) => {
+                    const Component = step.component;
+                    return (
+                      <AccordionItem key={step.id} value={step.id} className={`border rounded-lg px-4 ${isLocked ? 'opacity-50' : ''}`}>
+                        <AccordionTrigger className="text-left hover:no-underline py-4" disabled={isLocked}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
+                              activeSection === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <span className="font-medium text-sm">{step.title}</span>
+                            {isLocked && <Lock className="h-3 w-3 ml-auto" />}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 pb-4">
+                          <Component
+                            data={contractData}
+                            updateData={updateContractData}
+                            onNext={() => {}}
+                            onPrev={() => {}}
+                            isFirst={index === 0}
+                            isLast={index === DESIGN_STEPS.length - 1}
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Right Panel */}
+          <div className="w-3/5 bg-muted/20">
+            <ContractPreview data={contractData} />
           </div>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="container py-8">
-        <Card className="w-full max-w-4xl mx-auto">
-          <CardContent className="p-8">
-            {renderStepContent()}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Modals */}
-      <RevisionRequestModal
-        isOpen={showRevisionModal}
-        onClose={() => setShowRevisionModal(false)}
-        contractId={id}
-        onRevisionRequested={handleRevisionRequested}
-      />
-
-      <ESignDialog
-        isOpen={showESignDialog}
-        onClose={() => setShowESignDialog(false)}
-        contractId={id}
+      <ESignDialog 
+        isOpen={showESignDialog} 
+        onClose={() => setShowESignDialog(false)} 
+        contractId={contractId}
         onSuccess={handleESignSuccess}
       />
-    </div>
+    </>
   );
 };
 
