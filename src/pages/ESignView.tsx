@@ -288,7 +288,7 @@ const ESignView = () => {
   if (!hasAccess) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
-        <Navbar />
+        <Navbar variant="centered-logo" />
         <main className="flex-grow flex flex-col items-center justify-center p-6 pt-24">
           <SEOHead 
             title="Contract Access - Secure eSign"

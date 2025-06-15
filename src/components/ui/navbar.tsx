@@ -6,28 +6,53 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
 
-  const navigation: { name: string; href: string }[] = [];
+  const navigation = [
+    { name: 'Features', href: '#features' },
+    { name: 'Pricing', href: '#pricing' },
+    { name: 'Contact', href: '#contact' },
+  ];
+
+  if (variant === 'centered-logo') {
+    return (
+      <nav className="fixed top-0 w-full z-50 glass-effect border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center h-16">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2"
+            >
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-sm font-heading">A</span>
+                </div>
+                <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="fixed top-0 w-full z-50 glass-effect border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-3 items-center h-16">
+        <div className="flex items-center justify-between h-16">
           {/* Left section */}
           <div className="flex items-center space-x-8">
-            <div className="md:hidden">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(!isOpen)}
-                className="rounded-xl"
-              >
-                {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-sm font-heading">A</span>
+                </div>
+                <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
+              </Link>
+            </motion.div>
             <div className="hidden md:flex items-center space-x-8">
               {navigation.map((item) => (
                 <a
@@ -40,30 +65,32 @@ const Navbar = () => {
               ))}
             </div>
           </div>
-          
-          {/* Logo with Brand Name - Centered */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center space-x-2 justify-center"
-          >
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-sm font-heading">A</span>
-              </div>
-              <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
-            </Link>
-          </motion.div>
 
-          {/* Right section */}
-          <div className="flex items-center justify-end">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="hidden md:flex items-center space-x-4"
-            >
-              {/* Dashboard button has been removed */}
+          {/* Right section - Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+              {user ? (
+                <Button asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Button variant="ghost" asChild>
+                    <Link to="/auth">Sign In</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/auth">Get Started</Link>
+                  </Button>
+                </div>
+              )}
             </motion.div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)} className="rounded-xl">
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
 
@@ -86,8 +113,21 @@ const Navbar = () => {
                   {item.name}
                 </a>
               ))}
-              <div className="pt-4 space-y-2">
-                 {/* Dashboard button has been removed */}
+              <div className="pt-4 mt-4 border-t border-border/50 space-y-2">
+                {user ? (
+                  <Button asChild className="w-full">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" asChild className="w-full">
+                      <Link to="/auth">Sign In</Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link to="/auth">Get Started</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
