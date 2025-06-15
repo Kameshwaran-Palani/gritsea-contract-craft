@@ -436,68 +436,248 @@ const ContractBuilder = () => {
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      const contractContent = document.querySelector('.contract-preview');
-      if (!contractContent) {
-        throw new Error('Contract preview not found');
-      }
-
       toast({
         title: "Generating PDF",
         description: "Please wait while we generate your PDF..."
       });
 
-      // Create a temporary container for better PDF rendering
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.top = '-9999px';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.width = '794px'; // A4 width at 96 DPI
-      tempContainer.style.backgroundColor = '#ffffff';
-      
-      // Clone the contract content
-      const clonedContent = contractContent.cloneNode(true) as HTMLElement;
-      clonedContent.style.maxWidth = '100%';
-      clonedContent.style.width = '100%';
-      clonedContent.style.margin = '0';
-      clonedContent.style.padding = '0';
-      
-      tempContainer.appendChild(clonedContent);
-      document.body.appendChild(tempContainer);
-
-      // Get all pages from the cloned content
-      const pages = tempContainer.querySelectorAll('.mx-auto.bg-white.shadow-lg');
-      
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const a4Width = 210;
-      const a4Height = 297;
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+      
+      let yPosition = margin;
 
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i] as HTMLElement;
-        
-        if (i > 0) {
+      // Helper function to add new page if needed
+      const checkNewPage = (neededHeight: number) => {
+        if (yPosition + neededHeight > pageHeight - margin) {
           pdf.addPage();
+          yPosition = margin;
+          return true;
+        }
+        return false;
+      };
+
+      // Helper function to add text with word wrapping
+      const addText = (text: string, fontSize: number, fontStyle: string = 'normal', color: string = '#000000') => {
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', fontStyle);
+        
+        // Convert hex color to RGB
+        if (color.startsWith('#')) {
+          const r = parseInt(color.slice(1, 3), 16);
+          const g = parseInt(color.slice(3, 5), 16);
+          const b = parseInt(color.slice(5, 7), 16);
+          pdf.setTextColor(r, g, b);
+        } else {
+          pdf.setTextColor(0, 0, 0);
         }
 
-        // Create canvas for this specific page
-        const canvas = await html2canvas(page, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          width: 794,
-          windowWidth: 794,
-          height: 1123 // A4 height at 96 DPI
-        });
-
-        const imgData = canvas.toDataURL('image/png');
+        const lines = pdf.splitTextToSize(text, contentWidth);
+        const lineHeight = fontSize * 0.4;
         
-        // Add the page to PDF with exact A4 dimensions
-        pdf.addImage(imgData, 'PNG', 0, 0, a4Width, a4Height);
+        checkNewPage(lines.length * lineHeight);
+        
+        lines.forEach((line: string) => {
+          pdf.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+        
+        return lines.length * lineHeight;
+      };
+
+      // Header Section
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(contractData.documentTitle, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 10;
+
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(contractData.documentSubtitle, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+
+      // Add a line separator
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 10;
+
+      // Agreement Introduction
+      if (contractData.agreementIntroText) {
+        addText('AGREEMENT INTRODUCTION', 16, 'bold', contractData.primaryColor);
+        yPosition += 5;
+        addText(contractData.agreementIntroText, 12);
+        yPosition += 8;
+        
+        if (contractData.effectiveDate) {
+          addText(`Effective Date: ${new Date(contractData.effectiveDate).toLocaleDateString()}`, 12, 'bold');
+          yPosition += 10;
+        }
       }
 
-      // Remove temporary container
-      document.body.removeChild(tempContainer);
+      // Parties Information
+      addText('PARTIES TO THE AGREEMENT', 16, 'bold', contractData.primaryColor);
+      yPosition += 5;
+
+      addText('Service Provider:', 14, 'bold');
+      yPosition += 2;
+      addText(`Name: ${contractData.freelancerName}`, 12);
+      if (contractData.freelancerBusinessName) {
+        addText(`Business: ${contractData.freelancerBusinessName}`, 12);
+      }
+      addText(`Address: ${contractData.freelancerAddress}`, 12);
+      addText(`Email: ${contractData.freelancerEmail}`, 12);
+      if (contractData.freelancerPhone) {
+        addText(`Phone: ${contractData.freelancerPhone}`, 12);
+      }
+      yPosition += 8;
+
+      addText('Client:', 14, 'bold');
+      yPosition += 2;
+      addText(`Name: ${contractData.clientName}`, 12);
+      if (contractData.clientCompany) {
+        addText(`Company: ${contractData.clientCompany}`, 12);
+      }
+      addText(`Email: ${contractData.clientEmail}`, 12);
+      if (contractData.clientPhone) {
+        addText(`Phone: ${contractData.clientPhone}`, 12);
+      }
+      yPosition += 10;
+
+      // Scope of Work
+      if (contractData.services) {
+        addText('SCOPE OF WORK', 16, 'bold', contractData.primaryColor);
+        yPosition += 5;
+        
+        addText('Services:', 14, 'bold');
+        yPosition += 2;
+        addText(contractData.services, 12);
+        yPosition += 8;
+      }
+
+      if (contractData.deliverables) {
+        addText('Deliverables:', 14, 'bold');
+        yPosition += 2;
+        addText(contractData.deliverables, 12);
+        yPosition += 8;
+      }
+
+      // Milestones
+      if (contractData.milestones && contractData.milestones.length > 0) {
+        addText('Milestones:', 14, 'bold');
+        yPosition += 2;
+        contractData.milestones.forEach((milestone, index) => {
+          addText(`${index + 1}. ${milestone.title}`, 12, 'bold');
+          addText(`   ${milestone.description}`, 12);
+          addText(`   Due: ${new Date(milestone.dueDate).toLocaleDateString()}`, 12);
+          if (milestone.amount) {
+            addText(`   Amount: ₹${milestone.amount.toLocaleString()}`, 12);
+          }
+          yPosition += 3;
+        });
+        yPosition += 5;
+      }
+
+      // Payment Terms
+      addText('PAYMENT TERMS', 16, 'bold', contractData.primaryColor);
+      yPosition += 5;
+
+      if (contractData.paymentType === 'hourly') {
+        addText(`Hourly Rate: ₹${contractData.rate?.toLocaleString()} per hour`, 12, 'bold');
+      } else {
+        addText(`Total Project Amount: ₹${contractData.totalAmount?.toLocaleString()}`, 12, 'bold');
+      }
+      yPosition += 5;
+
+      // Payment Schedule
+      if (contractData.paymentType === 'fixed' && contractData.paymentSchedule && contractData.paymentSchedule.length > 0) {
+        addText('Payment Schedule:', 14, 'bold');
+        yPosition += 2;
+        contractData.paymentSchedule.forEach((payment, index) => {
+          const amount = contractData.totalAmount ? (contractData.totalAmount * payment.percentage) / 100 : 0;
+          addText(`${payment.description || `Payment ${index + 1}`}: ${payment.percentage}% - ₹${amount.toLocaleString()}`, 12);
+          if (payment.dueDate) {
+            addText(`Due: ${new Date(payment.dueDate).toLocaleDateString()}`, 12);
+          }
+        });
+        yPosition += 8;
+      }
+
+      // Late Fee
+      if (contractData.lateFeeEnabled && contractData.lateFeeAmount) {
+        addText(`Late Fee: ₹${contractData.lateFeeAmount} per day for payments made after the due date.`, 12);
+        yPosition += 8;
+      }
+
+      // Project Timeline
+      if (contractData.startDate || contractData.endDate) {
+        addText('PROJECT TIMELINE', 16, 'bold', contractData.primaryColor);
+        yPosition += 5;
+        if (contractData.startDate) {
+          addText(`Start Date: ${new Date(contractData.startDate).toLocaleDateString()}`, 12);
+        }
+        if (contractData.endDate) {
+          addText(`End Date: ${new Date(contractData.endDate).toLocaleDateString()}`, 12);
+        }
+        yPosition += 10;
+      }
+
+      // Service Level Agreement
+      addText('SERVICE LEVEL AGREEMENT', 16, 'bold', contractData.primaryColor);
+      yPosition += 5;
+      addText(`Response Time: ${contractData.responseTime}`, 12);
+      addText(`Revision Limit: ${contractData.revisionLimit} revisions included`, 12);
+      if (contractData.uptimeRequirement) {
+        addText(`Uptime Requirement: ${contractData.uptimeRequirement}`, 12);
+      }
+      yPosition += 10;
+
+      // Intellectual Property
+      addText('INTELLECTUAL PROPERTY RIGHTS', 16, 'bold', contractData.primaryColor);
+      yPosition += 5;
+      const ipText = contractData.ipOwnership === 'client' ? 'Client owns all work product' : 
+                     contractData.ipOwnership === 'freelancer' ? 'Service Provider retains ownership' : 
+                     'Joint ownership as specified';
+      addText(`Ownership: ${ipText}`, 12);
+      const usageText = contractData.usageRights === 'full' ? 'Full usage rights granted' : 'Limited usage rights as specified';
+      addText(`Usage Rights: ${usageText}`, 12);
+      yPosition += 10;
+
+      // Termination & Dispute Resolution
+      addText('TERMINATION & DISPUTE RESOLUTION', 16, 'bold', contractData.primaryColor);
+      yPosition += 5;
+      addText(`Termination Conditions: ${contractData.terminationConditions}`, 12);
+      addText(`Notice Period: ${contractData.noticePeriod}`, 12);
+      addText(`Governing Jurisdiction: ${contractData.jurisdiction}`, 12);
+      addText(`Arbitration: ${contractData.arbitrationClause ? 'Disputes subject to arbitration' : 'Standard legal proceedings apply'}`, 12);
+      yPosition += 15;
+
+      // Signature Section
+      checkNewPage(60);
+      
+      // Add signature line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPosition + 40, pageWidth - margin, yPosition + 40);
+      yPosition += 15;
+
+      addText('SIGNATURES', 16, 'bold', contractData.primaryColor);
+      yPosition += 20;
+
+      // Service Provider Signature
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Service Provider:', margin, yPosition);
+      pdf.text(`${contractData.freelancerName}`, margin, yPosition + 15);
+      pdf.text(`Date: ${contractData.signedDate ? new Date(contractData.signedDate).toLocaleDateString() : '_____________'}`, margin, yPosition + 25);
+
+      // Client Signature
+      pdf.text('Client:', pageWidth - margin - 80, yPosition);
+      pdf.text(`${contractData.clientName}`, pageWidth - margin - 80, yPosition + 15);
+      pdf.text(`Date: ${contractData.signedDate ? new Date(contractData.signedDate).toLocaleDateString() : '_____________'}`, pageWidth - margin - 80, yPosition + 25);
 
       // Download the PDF
       const fileName = `${contractData.templateName || 'contract'}.pdf`;

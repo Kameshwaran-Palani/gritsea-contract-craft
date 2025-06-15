@@ -26,68 +26,96 @@ const ContractEdit = () => {
 
   const handleDownloadPDF = async () => {
     try {
-      const contractContent = document.querySelector('.contract-preview');
-      if (!contractContent) {
-        throw new Error('Contract preview not found');
-      }
-
       toast({
         title: "Generating PDF",
         description: "Please wait while we generate your PDF..."
       });
 
-      // Create a temporary container for better PDF rendering
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.top = '-9999px';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.width = '794px'; // A4 width at 96 DPI
-      tempContainer.style.backgroundColor = '#ffffff';
-      
-      // Clone the contract content
-      const clonedContent = contractContent.cloneNode(true) as HTMLElement;
-      clonedContent.style.maxWidth = '100%';
-      clonedContent.style.width = '100%';
-      clonedContent.style.margin = '0';
-      clonedContent.style.padding = '0';
-      
-      tempContainer.appendChild(clonedContent);
-      document.body.appendChild(tempContainer);
-
-      // Get all pages from the cloned content
-      const pages = tempContainer.querySelectorAll('.mx-auto.bg-white.shadow-lg');
-      
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const a4Width = 210;
-      const a4Height = 297;
-
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i] as HTMLElement;
-        
-        if (i > 0) {
-          pdf.addPage();
-        }
-
-        // Create canvas for this specific page
-        const canvas = await html2canvas(page, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          width: 794,
-          windowWidth: 794,
-          height: 1123 // A4 height at 96 DPI
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Add the page to PDF with exact A4 dimensions
-        pdf.addImage(imgData, 'PNG', 0, 0, a4Width, a4Height);
+      // Get contract data from the ContractBuilder context or preview
+      const contractContent = document.querySelector('.contract-preview');
+      if (!contractContent) {
+        throw new Error('Contract preview not found');
       }
 
-      // Remove temporary container
-      document.body.removeChild(tempContainer);
+      // Create PDF using similar approach as ContractBuilder
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+      
+      let yPosition = margin;
+
+      // Helper function to add new page if needed
+      const checkNewPage = (neededHeight: number) => {
+        if (yPosition + neededHeight > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+          return true;
+        }
+        return false;
+      };
+
+      // Helper function to add text with word wrapping
+      const addText = (text: string, fontSize: number, fontStyle: string = 'normal') => {
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', fontStyle);
+        pdf.setTextColor(0, 0, 0);
+
+        const lines = pdf.splitTextToSize(text, contentWidth);
+        const lineHeight = fontSize * 0.4;
+        
+        checkNewPage(lines.length * lineHeight);
+        
+        lines.forEach((line: string) => {
+          pdf.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+        
+        return lines.length * lineHeight;
+      };
+
+      // Extract text content from the preview
+      const titleElement = contractContent.querySelector('h1');
+      const subtitleElement = contractContent.querySelector('h2');
+      
+      if (titleElement) {
+        pdf.setFontSize(24);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(titleElement.textContent || 'SERVICE AGREEMENT', pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 10;
+      }
+
+      if (subtitleElement) {
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(subtitleElement.textContent || 'PROFESSIONAL SERVICE CONTRACT', pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 15;
+      }
+
+      // Add separator line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 10;
+
+      // Extract and add other content sections
+      const sections = contractContent.querySelectorAll('section');
+      sections.forEach((section) => {
+        const heading = section.querySelector('h3');
+        if (heading) {
+          addText(heading.textContent || '', 16, 'bold');
+          yPosition += 5;
+        }
+
+        const paragraphs = section.querySelectorAll('p, div');
+        paragraphs.forEach((p) => {
+          if (p.textContent && p.textContent.trim()) {
+            addText(p.textContent.trim(), 12);
+            yPosition += 3;
+          }
+        });
+        yPosition += 8;
+      });
 
       // Download the PDF
       const fileName = `contract-${Date.now()}.pdf`;
