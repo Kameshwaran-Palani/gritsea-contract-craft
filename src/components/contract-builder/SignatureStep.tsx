@@ -48,12 +48,14 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
       updateData('freelancerSignature', '');
+      updateData('signedDate', '');
     }
   };
 
   const saveFreelancerSignature = () => {
     if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
       const signatureData = freelancerSigRef.current.toDataURL();
+      console.log('Saving signature:', signatureData);
       updateData('freelancerSignature', signatureData);
       // Also update signed date
       updateData('signedDate', new Date().toISOString());
@@ -84,6 +86,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       
       // Convert to data URL and update
       const signatureData = canvas.toDataURL();
+      console.log('Generating font signature:', signatureData);
       updateData('freelancerSignature', signatureData);
       // Also update signed date
       updateData('signedDate', new Date().toISOString());
@@ -94,6 +97,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     setSignatureType(type);
     // Clear existing signature when switching types
     updateData('freelancerSignature', '');
+    updateData('signedDate', '');
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
     }
@@ -101,7 +105,10 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
 
   // Auto-save when draw signature ends
   const handleDrawEnd = () => {
-    saveFreelancerSignature();
+    console.log('Draw ended, saving signature...');
+    setTimeout(() => {
+      saveFreelancerSignature();
+    }, 100); // Small delay to ensure canvas is ready
   };
 
   return (
@@ -215,6 +222,11 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   className="h-16 object-contain"
                 />
               </div>
+              {data.signedDate && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Signed on: {new Date(data.signedDate).toLocaleString()}
+                </p>
+              )}
             </div>
           )}
         </CardContent>
