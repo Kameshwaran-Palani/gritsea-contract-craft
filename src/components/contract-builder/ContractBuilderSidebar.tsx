@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ContractMilestone } from './ContractMilestone';
+import ContractMilestone from './ContractMilestone';
 import { ContractData } from '@/types/ContractData';
 
 interface ContractBuilderSidebarProps {

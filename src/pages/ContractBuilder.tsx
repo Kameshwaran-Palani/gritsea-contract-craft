@@ -10,7 +10,7 @@ import { GeneralInfoStep } from '@/components/contract-builder/GeneralInfoStep';
 import { ScopePaymentStep } from '@/components/contract-builder/ScopePaymentStep';
 import { TimelineMilestonesStep } from '@/components/contract-builder/TimelineMilestonesStep';
 import { LegalTermsStep } from '@/components/contract-builder/LegalTermsStep';
-import { SignatureStep } from '@/components/contract-builder/SignatureStep';
+import SignatureStep from '@/components/contract-builder/SignatureStep';
 import { ContractPreviewSection } from '@/components/contract-builder/ContractPreviewSection';
 
 const ContractBuilder = () => {
@@ -113,9 +113,36 @@ const ContractBuilder = () => {
       }
 
       if (contract) {
-        setData(contract);
+        // Map database fields to ContractData structure
+        const contractData: ContractData = {
+          contractTitle: contract.title || 'Service Agreement',
+          contractSubtitle: 'General Service Contract',
+          clientName: contract.client_name || '',
+          clientEmail: contract.client_email || '',
+          freelancerName: contract.clauses_json?.freelancerName || '',
+          freelancerEmail: contract.clauses_json?.freelancerEmail || '',
+          introduction: contract.clauses_json?.introduction || '',
+          scopeOfWork: contract.scope_of_work || '',
+          paymentTerms: contract.clauses_json?.paymentTerms || '',
+          totalAmount: contract.contract_amount || 0,
+          paymentSchedule: contract.clauses_json?.paymentSchedule || [{ description: '', amount: 0 }],
+          timelineStartDate: contract.clauses_json?.timelineStartDate ? new Date(contract.clauses_json.timelineStartDate) : undefined,
+          timelineEndDate: contract.clauses_json?.timelineEndDate ? new Date(contract.clauses_json.timelineEndDate) : undefined,
+          milestones: contract.clauses_json?.milestones || [{ title: '', description: '', dueDate: null, amount: 0 }],
+          confidentiality: contract.clauses_json?.confidentiality || false,
+          intellectualProperty: contract.clauses_json?.intellectualProperty || '',
+          terminationClause: contract.clauses_json?.terminationClause || '',
+          governingLaw: contract.clauses_json?.governingLaw || '',
+          disputeResolution: contract.clauses_json?.disputeResolution || '',
+          signature: contract.clauses_json?.signature || '',
+          freelancerSignature: contract.clauses_json?.freelancerSignature || '',
+          signedDate: contract.clauses_json?.signedDate ? new Date(contract.clauses_json.signedDate) : undefined,
+          shareInfo: contract.clauses_json?.shareInfo || undefined
+        };
+        
+        setData(contractData);
         setStatus(contract.status || 'draft');
-        setShareInfo(contract.shareInfo || null);
+        setShareInfo(contract.clauses_json?.shareInfo || null);
       }
     } catch (error: any) {
       console.error('Error loading contract:', error.message);
@@ -131,9 +158,14 @@ const ContractBuilder = () => {
     setIsSaving(true);
     try {
       const contractData = {
-        ...data,
+        title: data.contractTitle,
+        client_name: data.clientName,
+        client_email: data.clientEmail,
+        scope_of_work: data.scopeOfWork,
+        contract_amount: data.totalAmount,
+        status: status as 'draft' | 'sent' | 'signed' | 'cancelled' | 'sent_for_signature' | 'revision_requested',
         user_id: user?.id,
-        status: status
+        clauses_json: data
       };
 
       if (id) {
@@ -199,7 +231,10 @@ const ContractBuilder = () => {
 
       const { error } = await supabase
         .from('contracts')
-        .update({ shareInfo: shareData, status: 'sent_for_signature' })
+        .update({ 
+          clauses_json: { ...data, shareInfo: shareData }, 
+          status: 'sent_for_signature' 
+        })
         .eq('id', id);
 
       if (error) {
