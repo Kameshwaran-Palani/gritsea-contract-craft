@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -72,8 +71,9 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const hasOngoingWork = () => data.paymentType === 'ongoing';
   const hasSLA = () => data.responseTime;
   const hasIP = () => data.ipOwnership;
-  const hasTermination = () => data.terminationClause;
+  const hasTermination = () => true; // Always show termination clause
 
+  // Helper function to format payment schedule
   const formatPaymentSchedule = () => {
     if (!data.paymentSchedule || data.paymentSchedule.length === 0) return null;
     return data.paymentSchedule.map((payment, index) => {
@@ -348,7 +348,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
               </h3>
               <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-2`}>
                 {data.responseTime && <p><span className="font-bold">Response Time:</span> {data.responseTime}</p>}
-                {data.availability && <p><span className="font-bold">Availability:</span> {data.availability}</p>}
               </div>
             </section>
             <hr className="border-gray-300 my-8" />
@@ -393,7 +392,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 TERMINATION
               </h3>
               <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-                <p>Either party may terminate this agreement with proper notice as specified in the termination clause.</p>
+                <p>Either party may terminate this agreement with 30 days written notice. Upon termination, all outstanding payments for completed work shall be made within 15 days.</p>
               </div>
             </section>
             <hr className="border-gray-300 my-8" />
@@ -431,7 +430,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 <p className="font-bold text-gray-900">CLIENT</p>
                 <p className="text-gray-700">{data.clientName}</p>
                 <p className="text-gray-600">Date: _____________</p>
-                <p className="text-xs text-gray-500 mt-2">Client will sign via e-signature</p>
               </div>
             </div>
           </div>
