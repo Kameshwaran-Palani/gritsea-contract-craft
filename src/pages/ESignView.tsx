@@ -13,6 +13,8 @@ import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ContractDecisionPanel from '@/components/contract-builder/ContractDecisionPanel';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
+import Navbar from '@/components/ui/navbar';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const ESignView = () => {
   const { contractId, authMethod } = useParams();
@@ -29,6 +31,42 @@ const ESignView = () => {
     phone: '',
     secretKey: ''
   });
+  const [freelancerName, setFreelancerName] = useState('');
+  const [creatorLoading, setCreatorLoading] = useState(true);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+
+  useEffect(() => {
+    const fetchContractCreator = async () => {
+      if (!contractId) {
+        setCreatorLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('contracts')
+          .select('clauses_json')
+          .eq('id', contractId)
+          .single();
+
+        if (error || !data) {
+          console.error('Error fetching contract for creator name:', error);
+          return;
+        }
+
+        if (data.clauses_json) {
+          const contractData = data.clauses_json as unknown as ContractData;
+          setFreelancerName(contractData.freelancerName || '');
+        }
+      } catch (error) {
+        console.error('Error fetching contract creator:', error);
+      } finally {
+        setCreatorLoading(false);
+      }
+    };
+
+    fetchContractCreator();
+  }, [contractId]);
 
   useEffect(() => {
     if (showSignature) {
@@ -159,6 +197,7 @@ const ESignView = () => {
       });
 
       setShowSignature(false);
+      setShowDownloadDialog(true);
     } catch (error) {
       console.error('Error signing contract:', error);
       toast({
@@ -225,11 +264,17 @@ const ESignView = () => {
   if (!hasAccess) {
     return (
       <>
+        <Navbar />
         <SEOHead 
           title="Contract Access - Secure eSign"
           description="Secure contract access and digital signing portal"
         />
-        <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 pt-24">
+          {!creatorLoading && freelancerName && (
+            <p className="text-center text-muted-foreground mb-4">
+              {freelancerName} has shared this contract with you.
+            </p>
+          )}
           <Card className="w-full max-w-md">
             <CardHeader className="text-center">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -241,7 +286,7 @@ const ESignView = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="secretKey" className="flex items-center gap-2">
                   <KeyRound className="h-4 w-4" />
                   Secret Key
@@ -255,7 +300,7 @@ const ESignView = () => {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   {authMethod === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
                   {authMethod === 'email' ? 'Email Address' : 'Phone Number'}
@@ -412,6 +457,30 @@ const ESignView = () => {
           </div>
         </div>
       </div>
+      <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Contract Signed Successfully</DialogTitle>
+            <DialogDescription>
+              Thank you for signing the contract. You can now download the PDF copy for your records.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={downloadingPDF}
+              className="flex items-center gap-2"
+              size="lg"
+            >
+              <Download className="h-4 w-4" />
+              {downloadingPDF ? 'Downloading...' : 'Download PDF'}
+            </Button>
+          </div>
+          <DialogFooter className="justify-center">
+            <p className="text-xs text-muted-foreground">Powered by Agrezy</p>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
