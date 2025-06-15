@@ -18,7 +18,6 @@ import ESignView from "./pages/ESignView";
 import ContractRedirect from "./pages/ContractRedirect";
 import Templates from "./pages/Templates";
 import Settings from "./pages/Settings";
-import Pricing from "./pages/Pricing";
 import Community from "./pages/Community";
 import AIAssistant from "./pages/AIAssistant";
 import AIPrompt from "./pages/AIPrompt";
@@ -48,7 +47,6 @@ function App() {
               <Route path="/contract/:id" element={<ContractRedirect />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/pricing" element={<Pricing />} />
               <Route path="/community" element={<Community />} />
               <Route path="/ai-assistant" element={<AIAssistant />} />
               <Route path="/ai-prompt" element={<AIPrompt />} />

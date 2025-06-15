@@ -45,10 +45,6 @@ const DashboardLayout = ({
     href: '/ai-assistant',
     icon: Bot
   }, {
-    name: 'Pricing',
-    href: '/pricing',
-    icon: CreditCard
-  }, {
     name: 'Settings',
     href: '/settings',
     icon: Settings
@@ -66,7 +62,6 @@ const DashboardLayout = ({
   }: {
     mobile?: boolean;
   }) => <div className="flex h-full flex-col bg-card border-r">
-      {/* Collapse button - only show on desktop */}
       {!mobile && <div className="px-4 border-b py-[13px]">
           <Button variant="ghost" size="sm" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className={`rounded-2xl ${sidebarCollapsed ? 'w-full justify-center' : 'w-full justify-start'}`}>
             <PanelLeft className="h-5 w-5" />
@@ -74,7 +69,6 @@ const DashboardLayout = ({
           </Button>
         </div>}
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-1 px-4 py-6">
         {navigation.map(item => {
         const Icon = item.icon;
@@ -85,7 +79,6 @@ const DashboardLayout = ({
       })}
       </nav>
 
-      {/* User section */}
       {(!sidebarCollapsed || mobile) && user && <div className="border-t p-4">
           <div className="flex items-center space-x-3 mb-4">
             <Avatar className="h-10 w-10">
@@ -109,7 +102,6 @@ const DashboardLayout = ({
           </Button>
         </div>}
 
-      {/* Collapsed User Avatar */}
       {sidebarCollapsed && !mobile && user && <div className="border-t p-4 flex justify-center">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -120,30 +112,24 @@ const DashboardLayout = ({
         </div>}
     </div>;
   return <div className="flex h-screen bg-background w-full">
-      {/* Desktop Sidebar */}
       <div className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}`}>
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-64 p-0">
           <Sidebar mobile />
         </SheetContent>
       </Sheet>
 
-      {/* Main Content */}
       <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        {/* Top Bar */}
         <header className="flex h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
           <div className="flex items-center space-x-4">
-            {/* Mobile menu trigger */}
             <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open sidebar</span>
             </Button>
             
-            {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-sm font-heading">A</span>
@@ -164,7 +150,6 @@ const DashboardLayout = ({
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-muted/20">
           <div className="p-4 lg:p-8">
             {children}

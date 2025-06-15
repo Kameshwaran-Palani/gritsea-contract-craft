@@ -10,11 +10,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
 
-  const navigation = [
-    { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'Contact', href: '#contact' },
-  ];
+  const navigation: { name: string; href: string }[] = [];
 
   return (
     <nav className="fixed top-0 w-full z-50 glass-effect border-b border-border/50">
@@ -51,25 +47,12 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             className="hidden md:flex items-center space-x-4"
           >
-            {user ? (
+            {user && (
               <Link to="/dashboard">
                 <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                   Dashboard
                 </Button>
               </Link>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link to="/auth">
-                  <Button variant="ghost" size="sm" className="rounded-xl">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
             )}
           </motion.div>
 
@@ -106,25 +89,12 @@ const Navbar = () => {
                 </a>
               ))}
               <div className="pt-4 space-y-2">
-                {user ? (
+                {user && (
                   <Link to="/dashboard" onClick={() => setIsOpen(false)}>
                     <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                       Dashboard
                     </Button>
                   </Link>
-                ) : (
-                  <>
-                    <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full rounded-xl">
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
-                        Get Started
-                      </Button>
-                    </Link>
-                  </>
                 )}
               </div>
             </div>
