@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -132,9 +131,6 @@ const DashboardLayout = ({
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open sidebar</span>
             </Button>
-          </div>
-
-          <div className="flex justify-center">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-sm font-heading">A</span>
@@ -142,6 +138,8 @@ const DashboardLayout = ({
               <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
             </Link>
           </div>
+
+          <div></div>
 
           <div className="flex items-center justify-end space-x-4">
             <Badge variant="outline" className="hidden sm:flex">
