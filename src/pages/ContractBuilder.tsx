@@ -357,6 +357,7 @@ const ContractBuilder = () => {
             data={data}
             updateData={updateData}
             onNext={nextStep}
+            onPrev={prevStep}
             isFirst={true}
             isLast={false}
           />
