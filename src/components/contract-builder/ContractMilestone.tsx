@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -123,14 +124,14 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
       {
         id: 'created',
         title: 'Contract Created',
-        description: 'Contract has been drafted and saved',
+        description: '',
         status: 'completed',
         icon: FileText
       },
       {
         id: 'shared',
         title: 'Contract Shared',
-        description: 'eSign link generated and shared with client',
+        description: '',
         status: status === 'draft' ? 'pending' : 'completed',
         icon: Send
       },
@@ -172,13 +173,20 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
   const milestones = getMilestones();
   const currentShareInfo = shareInfo || eSignDetails;
   
-  const activeMilestoneIndex = milestones.map(m => m.status).findLastIndex(s => s !== 'pending');
+  const statuses = milestones.map(m => m.status);
+  let activeMilestoneIndex = -1;
+  for (let i = statuses.length - 1; i >= 0; i--) {
+    if (statuses[i] !== 'pending') {
+      activeMilestoneIndex = i;
+      break;
+    }
+  }
   const progress = activeMilestoneIndex >= 0 ? (activeMilestoneIndex / (milestones.length - 1)) * 100 : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col lg:flex-row gap-6">
       {/* Contract Milestones */}
-      <Card>
+      <Card className="flex-1">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
@@ -231,7 +239,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
 
       {/* eSign Details */}
       {currentShareInfo && (
-        <Card>
+        <Card className="lg:w-[400px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Send className="h-5 w-5" />
