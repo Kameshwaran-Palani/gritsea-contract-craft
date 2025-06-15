@@ -41,6 +41,22 @@ const ContractsTabbed = () => {
 
   useEffect(() => {
     loadContracts();
+
+    const channel = supabase
+      .channel('contracts-tabbed-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'contracts' },
+        (payload) => {
+          console.log('Realtime change received!', payload);
+          handleRealtimeChange(payload);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -48,6 +64,39 @@ const ContractsTabbed = () => {
       generateImagesForContracts();
     }
   }, [contracts]);
+
+  const handleRealtimeChange = (payload: any) => {
+    const { eventType, new: newRecord, old: oldRecord } = payload;
+    
+    if (eventType === 'INSERT') {
+      const newContract = newRecord as Contract;
+      setContracts((prevContracts) => [newContract, ...prevContracts]);
+    } else if (eventType === 'UPDATE') {
+      const updatedContract = newRecord as Contract;
+      setContracts((prevContracts) =>
+        prevContracts.map((contract) =>
+          contract.id === updatedContract.id ? updatedContract : contract
+        )
+      );
+      // Force image regeneration by removing the old one and setting loading state
+      setContractImages(prev => {
+        const newImages = { ...prev };
+        delete newImages[updatedContract.id];
+        return newImages;
+      });
+      setImagesLoading(prev => ({ ...prev, [updatedContract.id]: true }));
+    } else if (eventType === 'DELETE') {
+      const deletedContractId = oldRecord.id;
+      setContracts((prevContracts) =>
+        prevContracts.filter((contract) => contract.id !== deletedContractId)
+      );
+      setContractImages(prev => {
+        const newImages = { ...prev };
+        delete newImages[deletedContractId];
+        return newImages;
+      });
+    }
+  };
 
   const generateImagesForContracts = async () => {
     const imagePromises = contracts.map(async (contract) => {
@@ -58,7 +107,9 @@ const ContractsTabbed = () => {
       setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
       
       try {
-        const imageDataUrl = await generateContractCardImage(contract.clauses_json);
+        // Merge contract data with clauses_json to provide all details for image generation
+        const contractDataForImage = { ...contract.clauses_json, ...contract };
+        const imageDataUrl = await generateContractCardImage(contractDataForImage as any);
         if (imageDataUrl && imageDataUrl.length > 100) {
           setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
         } else {
