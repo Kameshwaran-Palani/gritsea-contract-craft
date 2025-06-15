@@ -38,7 +38,7 @@ const ContractEdit = () => {
         throw new Error('Contract preview not found');
       }
 
-      // Create PDF using jsPDF with cleaner formatting
+      // Create PDF with exact A4 dimensions and proper margins
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
@@ -57,161 +57,209 @@ const ContractEdit = () => {
         return false;
       };
 
-      // Helper function to add text with clean formatting
-      const addText = (text: string, fontSize: number, fontStyle: string = 'normal', color: string = '#000000') => {
-        if (!text || !text.trim()) return 0;
-        
-        pdf.setFontSize(fontSize);
-        pdf.setFont('helvetica', fontStyle);
-        
-        // Convert hex color to RGB
-        if (color.startsWith('#')) {
-          const r = parseInt(color.slice(1, 3), 16);
-          const g = parseInt(color.slice(3, 5), 16);
-          const b = parseInt(color.slice(5, 7), 16);
-          pdf.setTextColor(r, g, b);
-        } else {
-          pdf.setTextColor(0, 0, 0);
-        }
-
-        const lines = pdf.splitTextToSize(text.trim(), contentWidth);
-        const lineHeight = fontSize * 0.35;
-        
-        checkNewPage(lines.length * lineHeight);
-        
-        lines.forEach((line: string) => {
-          pdf.text(line, margin, yPosition);
-          yPosition += lineHeight;
-        });
-        
-        return lines.length * lineHeight;
-      };
-
-      // Helper function to add section divider
-      const addSectionDivider = () => {
-        pdf.setDrawColor(200, 200, 200);
-        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 8;
-      };
-
-      // Extract text content from the preview with clean structure
+      // Clean header section exactly matching the preview
       const titleElement = contractContent.querySelector('h1');
       const subtitleElement = contractContent.querySelector('h2');
       
-      // Clean header
       if (titleElement && titleElement.textContent && titleElement.textContent.trim()) {
-        pdf.setFontSize(24);
+        // Main title with blue color and center alignment
+        pdf.setFontSize(28);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246); // Blue color
-        pdf.text(titleElement.textContent.trim(), pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 12;
-      }
-
-      if (subtitleElement && subtitleElement.textContent && subtitleElement.textContent.trim()) {
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(107, 114, 128); // Gray color
-        pdf.text(subtitleElement.textContent.trim(), pageWidth / 2, yPosition, { align: 'center' });
+        pdf.setTextColor(59, 130, 246); // Blue color matching preview
+        const titleText = titleElement.textContent.trim();
+        pdf.text(titleText, pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
       }
 
-      addSectionDivider();
+      if (subtitleElement && subtitleElement.textContent && subtitleElement.textContent.trim()) {
+        // Subtitle with gray color and center alignment
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(107, 114, 128); // Gray color matching preview
+        const subtitleText = subtitleElement.textContent.trim();
+        pdf.text(subtitleText, pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 20;
+      }
 
-      // Extract and add content sections with proper formatting
+      // Add horizontal line separator exactly like preview
+      pdf.setDrawColor(229, 231, 235); // Light gray
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 15;
+
+      // Process sections with exact formatting from preview
       const sections = contractContent.querySelectorAll('section');
       sections.forEach((section) => {
         const heading = section.querySelector('h3');
         
         if (heading && heading.textContent && heading.textContent.trim()) {
-          // Section header with clean styling
-          checkNewPage(20);
-          pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246);
-          pdf.text(heading.textContent.trim(), margin, yPosition);
-          yPosition += 8;
+          const sectionTitle = heading.textContent.trim();
           
-          // Add underline
+          // Check if we need a new page for this section
+          checkNewPage(25);
+          
+          // Section header with blue color and underline (matching preview)
+          pdf.setFontSize(18);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(59, 130, 246); // Blue color
+          pdf.text(sectionTitle, margin, yPosition);
+          yPosition += 3;
+          
+          // Blue underline
           pdf.setDrawColor(59, 130, 246);
-          pdf.setLineWidth(0.5);
+          pdf.setLineWidth(0.8);
           pdf.line(margin, yPosition, margin + 60, yPosition);
-          yPosition += 8;
+          yPosition += 12;
 
-          // Content paragraphs
-          const paragraphs = section.querySelectorAll('p, div');
-          paragraphs.forEach((p) => {
-            if (p.textContent && 
-                p.textContent.trim() && 
-                !p.textContent.includes('Page ') && 
-                p.textContent.trim() !== heading?.textContent?.trim()) {
+          // Handle different section content based on section type
+          if (sectionTitle.includes('PARTIES TO THE AGREEMENT')) {
+            // Two-column layout for parties information
+            const serviceProvider = section.querySelector('div:first-of-type');
+            const client = section.querySelector('div:last-of-type');
+            
+            if (serviceProvider) {
+              // Service Provider column (left)
+              pdf.setFontSize(14);
+              pdf.setFont('helvetica', 'bold');
+              pdf.setTextColor(0, 0, 0);
+              pdf.text('SERVICE PROVIDER', margin, yPosition);
+              yPosition += 8;
               
-              // Clean text formatting
-              const text = p.textContent.trim();
-              if (text) {
-                pdf.setFontSize(11);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(55, 65, 81);
-                
-                const lines = pdf.splitTextToSize(text, contentWidth);
-                const lineHeight = 5;
-                
-                checkNewPage(lines.length * lineHeight);
-                
-                lines.forEach((line: string) => {
-                  pdf.text(line, margin, yPosition);
-                  yPosition += lineHeight;
-                });
-                yPosition += 3;
-              }
+              const spDetails = serviceProvider.querySelectorAll('p');
+              spDetails.forEach((detail) => {
+                if (detail.textContent && detail.textContent.trim()) {
+                  pdf.setFontSize(11);
+                  pdf.setFont('helvetica', 'normal');
+                  pdf.setTextColor(55, 65, 81);
+                  const lines = pdf.splitTextToSize(detail.textContent.trim(), contentWidth / 2 - 10);
+                  lines.forEach((line: string) => {
+                    pdf.text(line, margin, yPosition);
+                    yPosition += 5;
+                  });
+                }
+              });
             }
-          });
-          yPosition += 6;
+
+            // Reset position for client column (right side)
+            let clientY = yPosition - (serviceProvider?.querySelectorAll('p').length || 0) * 5 - 8;
+            
+            if (client) {
+              pdf.setFontSize(14);
+              pdf.setFont('helvetica', 'bold');
+              pdf.setTextColor(0, 0, 0);
+              pdf.text('CLIENT', pageWidth / 2 + 10, clientY);
+              clientY += 8;
+              
+              const clientDetails = client.querySelectorAll('p');
+              clientDetails.forEach((detail) => {
+                if (detail.textContent && detail.textContent.trim()) {
+                  pdf.setFontSize(11);
+                  pdf.setFont('helvetica', 'normal');
+                  pdf.setTextColor(55, 65, 81);
+                  const lines = pdf.splitTextToSize(detail.textContent.trim(), contentWidth / 2 - 10);
+                  lines.forEach((line: string) => {
+                    pdf.text(line, pageWidth / 2 + 10, clientY);
+                    clientY += 5;
+                  });
+                }
+              });
+            }
+            
+            yPosition = Math.max(yPosition, clientY) + 10;
+            
+          } else {
+            // Regular section content
+            const paragraphs = section.querySelectorAll('p, div');
+            paragraphs.forEach((p) => {
+              if (p.textContent && 
+                  p.textContent.trim() && 
+                  !p.textContent.includes('Page ') && 
+                  p.textContent.trim() !== sectionTitle) {
+                
+                const text = p.textContent.trim();
+                if (text) {
+                  // Check for subsection headers
+                  const isSubHeader = p.querySelector('span[class*="font-bold"]') || 
+                                    p.textContent.includes(':') && p.textContent.length < 100;
+                  
+                  if (isSubHeader) {
+                    pdf.setFontSize(12);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(0, 0, 0);
+                  } else {
+                    pdf.setFontSize(11);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setTextColor(55, 65, 81);
+                  }
+                  
+                  const lines = pdf.splitTextToSize(text, contentWidth);
+                  const lineHeight = 5;
+                  
+                  checkNewPage(lines.length * lineHeight);
+                  
+                  lines.forEach((line: string) => {
+                    pdf.text(line, margin, yPosition);
+                    yPosition += lineHeight;
+                  });
+                  yPosition += 3; // Extra spacing between paragraphs
+                }
+              }
+            });
+          }
+          
+          yPosition += 10; // Section spacing
         }
       });
 
-      // Clean signature section
-      checkNewPage(50);
-      pdf.setFontSize(16);
+      // Signature section with proper formatting
+      checkNewPage(80);
+      
+      // Add separator line before signatures
+      pdf.setDrawColor(229, 231, 235);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 15;
+      
+      pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(59, 130, 246);
       pdf.text('SIGNATURES', margin, yPosition);
-      yPosition += 15;
+      yPosition += 20;
 
-      // Service Provider signature area
+      // Two-column signature layout
+      const signatureY = yPosition;
+      
+      // Service Provider signature (left)
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
-      pdf.text('Service Provider:', margin, yPosition);
-      yPosition += 20;
+      pdf.text('SERVICE PROVIDER', margin, signatureY);
       
       // Signature line
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(margin, yPosition, margin + 70, yPosition);
-      yPosition += 8;
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, signatureY + 20, margin + 70, signatureY + 20);
       
-      // Name and date
+      // Labels
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Name: _________________________', margin, yPosition);
-      yPosition += 8;
-      pdf.text('Date: _________________________', margin, yPosition);
+      pdf.text('Name: _________________________', margin, signatureY + 30);
+      pdf.text('Date: __________________________', margin, signatureY + 38);
       
-      // Client signature area
-      const clientX = pageWidth - margin - 80;
-      yPosition -= 36; // Reset to signature level
-      
+      // Client signature (right)
+      const clientSignatureX = pageWidth / 2 + 10;
+      pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Client:', clientX, yPosition);
-      yPosition += 20;
+      pdf.text('CLIENT', clientSignatureX, signatureY);
       
       // Signature line
-      pdf.line(clientX, yPosition, clientX + 70, yPosition);
-      yPosition += 8;
+      pdf.line(clientSignatureX, signatureY + 20, clientSignatureX + 70, signatureY + 20);
       
-      // Name and date
+      // Labels
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Name: ___________________', clientX, yPosition);
-      yPosition += 8;
-      pdf.text('Date: ___________________', clientX, yPosition);
+      pdf.text('Name: _________________________', clientSignatureX, signatureY + 30);
+      pdf.text('Date: __________________________', clientSignatureX, signatureY + 38);
 
       // Download the PDF
       const fileName = `contract-${Date.now()}.pdf`;
