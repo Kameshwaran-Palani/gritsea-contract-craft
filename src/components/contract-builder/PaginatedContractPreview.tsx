@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -10,6 +11,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<HTMLElement[]>([]);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   // A4 dimensions in pixels (at 96 DPI)
   const PAGE_WIDTH = 794; // 210mm
@@ -17,6 +19,11 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const PAGE_MARGIN = 60; // ~20mm
   const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
   const CONTENT_HEIGHT = PAGE_HEIGHT - PAGE_MARGIN * 2;
+
+  // Force update when signature changes
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [data.freelancerSignature, data.clientSignature, data.signedDate]);
 
   const getFontSizeClass = (size: string = 'medium') => {
     const sizes = {
@@ -136,6 +143,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
     return () => clearTimeout(timer);
   }, [
     data, 
+    forceUpdate, // Include forceUpdate to trigger re-pagination when signatures change
     data.freelancerSignature, 
     data.signedDate, 
     data.clientSignature,
@@ -405,7 +413,12 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.freelancerSignature && (
-                  <img src={data.freelancerSignature} alt="Service Provider Signature" className="h-16 object-contain" />
+                  <img 
+                    src={data.freelancerSignature} 
+                    alt="Service Provider Signature" 
+                    className="h-16 object-contain"
+                    key={`freelancer-sig-${forceUpdate}`}
+                  />
                 )}
               </div>
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
@@ -419,7 +432,12 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.clientSignature && (
-                  <img src={data.clientSignature} alt="Client Signature" className="h-16 object-contain" />
+                  <img 
+                    src={data.clientSignature} 
+                    alt="Client Signature" 
+                    className="h-16 object-contain"
+                    key={`client-sig-${forceUpdate}`}
+                  />
                 )}
               </div>
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
@@ -435,7 +453,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
       {/* Horizontally Scrollable Paginated Display */}
       <div className="flex space-x-8 overflow-x-auto pb-4">
         {pages.map((page, index) => (
-          <div key={`page-${index}-${data.freelancerSignature?.slice(-10) || 'nosig'}`} className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" style={{
+          <div key={`page-${index}-${forceUpdate}-${data.freelancerSignature?.slice(-10) || 'nosig'}`} className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" style={{
             width: `${PAGE_WIDTH}px`,
             minHeight: `${PAGE_HEIGHT}px`,
             padding: `${PAGE_MARGIN}px`,
