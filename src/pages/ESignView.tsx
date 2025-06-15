@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -339,15 +338,18 @@ const ESignView = () => {
                   <h3 className="text-lg font-semibold mb-4">Sign Contract</h3>
                   <SignatureStep
                     data={contractData!}
-                    updateData={(field, value) => {
-                      if (field === 'clientSignature') {
-                        setClientSignature(value);
+                    updateData={(updates) => {
+                      if (updates.clientSignature) {
+                        setClientSignature(updates.clientSignature);
                       }
+                      // Update contract data to reflect changes in preview immediately
+                      setContractData(prev => prev ? { ...prev, ...updates } : null);
                     }}
                     onNext={() => {}}
                     onPrev={() => setShowSignature(false)}
                     isFirst={false}
                     isLast={true}
+                    signerType="client"
                   />
                   <div className="flex gap-3 mt-6">
                     <Button 

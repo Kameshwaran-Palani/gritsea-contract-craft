@@ -17,6 +17,7 @@ interface SignatureStepProps {
   onPrev: () => void;
   isFirst: boolean;
   isLast: boolean;
+  signerType?: 'freelancer' | 'client';
 }
 
 const SignatureStep: React.FC<SignatureStepProps> = ({ 
@@ -25,32 +26,39 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   onNext, 
   onPrev, 
   isFirst, 
-  isLast 
+  isLast,
+  signerType = 'freelancer'
 }) => {
-  const freelancerSigRef = useRef<SignatureCanvas>(null);
+  const isClient = signerType === 'client';
+
+  const sigCanvasRef = useRef<SignatureCanvas>(null);
+  
+  const signerName = isClient ? data.clientName : data.freelancerName;
+  const signatureDataUrl = isClient ? data.clientSignature : data.freelancerSignature;
+
   const [signatureType, setSignatureType] = useState<'draw' | 'font'>('draw');
-  const [fontSignatureName, setFontSignatureName] = useState(data.freelancerName || '');
-  const [isSignatureSaved, setIsSignatureSaved] = useState(!!data.freelancerSignature);
+  const [fontSignatureName, setFontSignatureName] = useState(signerName || '');
+  const [isSignatureSaved, setIsSignatureSaved] = useState(!!signatureDataUrl);
   const [isCanvasLoaded, setIsCanvasLoaded] = useState(false);
   const { toast } = useToast();
 
   // Load existing signature when component mounts or signature type changes
   useEffect(() => {
-    if (data.freelancerSignature && freelancerSigRef.current && signatureType === 'draw' && !isCanvasLoaded) {
+    if (signatureDataUrl && sigCanvasRef.current && signatureType === 'draw' && !isCanvasLoaded) {
       // Delay loading to ensure canvas is ready
       const timer = setTimeout(() => {
         try {
-          freelancerSigRef.current?.fromDataURL(data.freelancerSignature);
+          sigCanvasRef.current?.fromDataURL(signatureDataUrl);
           setIsCanvasLoaded(true);
-          console.log('Loaded existing signature from data:', data.freelancerSignature);
+          console.log(`[SignatureStep - ${signerType}] Loaded existing signature from data:`, signatureDataUrl.slice(0, 50));
         } catch (error) {
           console.error('Error loading signature:', error);
         }
       }, 100);
       return () => clearTimeout(timer);
     }
-    setIsSignatureSaved(!!data.freelancerSignature);
-  }, [data.freelancerSignature, signatureType]);
+    setIsSignatureSaved(!!signatureDataUrl);
+  }, [signatureDataUrl, signatureType, signerType, isCanvasLoaded]);
 
   // Reset canvas loaded state when signature type changes
   useEffect(() => {
@@ -58,27 +66,27 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   }, [signatureType]);
 
   useEffect(() => {
-    // Update font signature name when freelancer name changes
-    if (signatureType === 'font' && data.freelancerName && !fontSignatureName) {
-      setFontSignatureName(data.freelancerName);
+    // Update font signature name when name changes
+    if (signatureType === 'font' && signerName && !fontSignatureName) {
+      setFontSignatureName(signerName);
     }
-  }, [data.freelancerName, signatureType, fontSignatureName]);
+  }, [signerName, signatureType, fontSignatureName]);
 
   // Wrap updateData to log
   const debugUpdateData = (updates: Partial<ContractData>) => {
-    console.log("[SignatureStep] updateData called with:", updates);
+    console.log(`[SignatureStep - ${signerType}] updateData called with:`, updates);
     updateData(updates);
   };
 
   // Real-time signature update for drawing
   const handleSignatureEnd = () => {
-    if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
-      const signatureData = freelancerSigRef.current.toDataURL();
-      console.log('[SignatureStep] Real-time signature update:', signatureData.slice(0, 50), '...');
-      debugUpdateData({
-        freelancerSignature: signatureData,
-        signedDate: new Date().toISOString(),
-      });
+    if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
+      const signatureData = sigCanvasRef.current.toDataURL();
+      console.log(`[SignatureStep - ${signerType}] Real-time signature update:`, signatureData.slice(0, 50), '...');
+      const updates = isClient
+        ? { clientSignature: signatureData, signedDate: new Date().toISOString() }
+        : { freelancerSignature: signatureData, signedDate: new Date().toISOString() };
+      debugUpdateData(updates);
       setIsSignatureSaved(true);
     }
   };
@@ -86,20 +94,27 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   // Real-time signature update for font
   const handleFontSignatureChange = (name: string) => {
     setFontSignatureName(name);
-    updateData({ freelancerName: name });
+    const nameUpdate = isClient ? { clientName: name } : { freelancerName: name };
+    updateData(nameUpdate);
     if (name.trim()) {
       generateFontSignature(name);
     } else {
-      debugUpdateData({ freelancerSignature: '', signedDate: '' });
+      const signatureClear = isClient
+        ? { clientSignature: '', signedDate: '' }
+        : { freelancerSignature: '', signedDate: '' };
+      debugUpdateData(signatureClear);
       setIsSignatureSaved(false);
     }
   };
 
-  const clearFreelancerSignature = () => {
-    if (freelancerSigRef.current) {
-      freelancerSigRef.current.clear();
+  const clearSignature = () => {
+    if (sigCanvasRef.current) {
+      sigCanvasRef.current.clear();
     }
-    debugUpdateData({ freelancerSignature: '', signedDate: '' });
+    const signatureClear = isClient
+      ? { clientSignature: '', signedDate: '' }
+      : { freelancerSignature: '', signedDate: '' };
+    debugUpdateData(signatureClear);
     setIsSignatureSaved(false);
     setIsCanvasLoaded(false);
     
@@ -109,15 +124,15 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     });
   };
 
-  const saveFreelancerSignature = () => {
+  const saveSignature = () => {
     if (signatureType === 'draw') {
-      if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
-        const signatureData = freelancerSigRef.current.toDataURL();
-        console.log('[SignatureStep] Saving drawn signature:', signatureData.slice(0, 50), '...');
-        debugUpdateData({
-          freelancerSignature: signatureData,
-          signedDate: new Date().toISOString(),
-        });
+      if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
+        const signatureData = sigCanvasRef.current.toDataURL();
+        console.log(`[SignatureStep - ${signerType}] Saving drawn signature:`, signatureData.slice(0, 50), '...');
+        const updates = isClient
+          ? { clientSignature: signatureData, signedDate: new Date().toISOString() }
+          : { freelancerSignature: signatureData, signedDate: new Date().toISOString() };
+        debugUpdateData(updates);
         setIsSignatureSaved(true);
         
         toast({
@@ -173,11 +188,11 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       
       // Convert to data URL and update
       const signatureData = canvas.toDataURL();
-      console.log('[SignatureStep] Generating font signature:', signatureData.slice(0, 50), '...');
-      debugUpdateData({
-        freelancerSignature: signatureData,
-        signedDate: new Date().toISOString(),
-      });
+      console.log(`[SignatureStep - ${signerType}] Generating font signature:`, signatureData.slice(0, 50), '...');
+      const updates = isClient
+        ? { clientSignature: signatureData, signedDate: new Date().toISOString() }
+        : { freelancerSignature: signatureData, signedDate: new Date().toISOString() };
+      debugUpdateData(updates);
       setIsSignatureSaved(true);
     }
   };
@@ -185,11 +200,14 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   const handleSignatureTypeChange = (type: 'draw' | 'font') => {
     setSignatureType(type);
     // Clear existing signature when switching types
-    updateData({ freelancerSignature: '', signedDate: '' });
+    const signatureClear = isClient
+      ? { clientSignature: '', signedDate: '' }
+      : { freelancerSignature: '', signedDate: '' };
+    updateData(signatureClear);
     setIsSignatureSaved(false);
     setIsCanvasLoaded(false);
-    if (freelancerSigRef.current) {
-      freelancerSigRef.current.clear();
+    if (sigCanvasRef.current) {
+      sigCanvasRef.current.clear();
     }
   };
 
@@ -202,23 +220,24 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
         </p>
       </div>
 
-      {/* Freelancer Signature */}
+      {/* Signature */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PenTool className="h-5 w-5" />
-            Your Signature (Service Provider)
+            {isClient ? 'Your Signature (Client)' : 'Your Signature (Service Provider)'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="freelancerName">Full Name</Label>
+            <Label htmlFor={isClient ? "clientName" : "freelancerName"}>Full Name</Label>
             <Input
-              id="freelancerName"
-              value={data.freelancerName || ''}
+              id={isClient ? "clientName" : "freelancerName"}
+              value={signerName || ''}
               onChange={(e) => {
                 const newName = e.target.value;
-                updateData({ freelancerName: newName });
+                const nameUpdate = isClient ? { clientName: newName } : { freelancerName: newName };
+                updateData(nameUpdate);
                 if (signatureType === 'font') {
                   handleFontSignatureChange(newName);
                 }
@@ -256,7 +275,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <Label>Draw Your Signature</Label>
               <div className="border rounded-lg p-4 bg-white">
                 <SignatureCanvas
-                  ref={freelancerSigRef}
+                  ref={sigCanvasRef}
                   onEnd={handleSignatureEnd}
                   canvasProps={{
                     width: 300,
@@ -270,7 +289,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={clearFreelancerSignature}
+                  onClick={clearSignature}
                   className="flex items-center gap-1"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -280,7 +299,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   type="button"
                   variant="default"
                   size="sm"
-                  onClick={saveFreelancerSignature}
+                  onClick={saveSignature}
                   className="flex items-center gap-1"
                 >
                   <Save className="h-3 w-3" />
@@ -306,7 +325,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   type="button"
                   variant="default"
                   size="sm"
-                  onClick={saveFreelancerSignature}
+                  onClick={saveSignature}
                   className="flex items-center gap-1"
                   disabled={!fontSignatureName.trim()}
                 >
@@ -318,19 +337,19 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
           )}
 
           {/* Signature Preview */}
-          {data.freelancerSignature && isSignatureSaved && (
+          {signatureDataUrl && isSignatureSaved && (
             <div>
               <Label>Signature Preview</Label>
               <div className="border rounded-lg p-4 bg-gray-50 flex justify-center">
                 <img 
-                  src={data.freelancerSignature} 
+                  src={signatureDataUrl} 
                   alt="Your Signature" 
                   className="h-16 object-contain"
                   onError={() => {
-                    console.error("[SignatureStep] Error loading signature preview in left panel");
+                    console.error(`[SignatureStep - ${signerType}] Error loading signature preview in left panel`);
                   }}
                   onLoad={() => {
-                    console.log("[SignatureStep] Signature preview image loaded in left panel");
+                    console.log(`[SignatureStep - ${signerType}] Signature preview image loaded in left panel`);
                   }}
                 />
               </div>
@@ -342,7 +361,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <div className="mt-2">
                 <p className="text-sm text-green-600 font-medium">✓ Signature saved and will appear in the contract</p>
                 <p className="text-xs text-gray-400">
-                  [DEBUG] <span className="break-all">{data.freelancerSignature?.slice(0, 40)}...</span>
+                  [DEBUG] <span className="break-all">{signatureDataUrl?.slice(0, 40)}...</span>
                 </p>
               </div>
             </div>
