@@ -57,6 +57,26 @@ const ContractEdit = () => {
         return false;
       };
 
+      // Helper function to add text with proper line wrapping and spacing
+      const addTextWithWrapping = (text: string, fontSize: number, fontStyle: string, color: number[], startY: number, maxWidth: number = contentWidth) => {
+        if (!text || !text.trim()) return startY;
+        
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', fontStyle);
+        pdf.setTextColor(color[0], color[1], color[2]);
+        
+        const lines = pdf.splitTextToSize(text.trim(), maxWidth);
+        const lineHeight = fontSize * 0.4; // Better line spacing
+        
+        checkNewPage(lines.length * lineHeight + 5);
+        
+        lines.forEach((line: string, index: number) => {
+          pdf.text(line, margin, startY + (index * lineHeight));
+        });
+        
+        return startY + (lines.length * lineHeight) + 3; // Return next Y position with proper spacing
+      };
+
       // Clean header section exactly matching the preview
       const titleElement = contractContent.querySelector('h1');
       const subtitleElement = contractContent.querySelector('h2');
@@ -65,7 +85,7 @@ const ContractEdit = () => {
         // Main title with consistent blue color
         pdf.setFontSize(28);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246); // Consistent blue color for all headers
+        pdf.setTextColor(59, 130, 246); // Blue color for headers
         const titleText = titleElement.textContent.trim();
         pdf.text(titleText, pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
@@ -87,9 +107,9 @@ const ContractEdit = () => {
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 15;
 
-      // Process sections with consistent formatting
+      // Process sections with proper formatting
       const sections = contractContent.querySelectorAll('section');
-      let signatureSectionProcessed = false; // Flag to prevent duplicate signature sections
+      let signatureSectionProcessed = false;
       
       sections.forEach((section) => {
         const heading = section.querySelector('h3');
@@ -108,11 +128,11 @@ const ContractEdit = () => {
           // Section header with consistent blue color and underline
           pdf.setFontSize(18);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246); // Consistent blue color for ALL section headers
+          pdf.setTextColor(59, 130, 246); // Blue color for section headers
           pdf.text(sectionTitle, margin, yPosition);
           yPosition += 3;
           
-          // Blue underline for all sections
+          // Blue underline for sections
           pdf.setDrawColor(59, 130, 246);
           pdf.setLineWidth(0.8);
           pdf.line(margin, yPosition, margin + 60, yPosition);
@@ -124,61 +144,62 @@ const ContractEdit = () => {
             const serviceProvider = section.querySelector('div:first-of-type');
             const client = section.querySelector('div:last-of-type');
             
+            const startY = yPosition;
+            let maxY = startY;
+            
             if (serviceProvider) {
               // Service Provider column (left)
               pdf.setFontSize(14);
               pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(0, 0, 0); // Black for all subsection headers
+              pdf.setTextColor(0, 0, 0);
               pdf.text('SERVICE PROVIDER', margin, yPosition);
               yPosition += 8;
               
               const spDetails = serviceProvider.querySelectorAll('p');
               spDetails.forEach((detail) => {
                 if (detail.textContent && detail.textContent.trim()) {
-                  pdf.setFontSize(11);
-                  pdf.setFont('helvetica', 'normal');
-                  pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
-                  const lines = pdf.splitTextToSize(detail.textContent.trim(), contentWidth / 2 - 10);
-                  lines.forEach((line: string) => {
-                    pdf.text(line, margin, yPosition);
-                    yPosition += 5;
-                  });
+                  const text = detail.textContent.trim();
+                  yPosition = addTextWithWrapping(text, 11, 'normal', [55, 65, 81], yPosition, contentWidth / 2 - 10);
+                  yPosition += 2; // Extra spacing between details
                 }
               });
+              maxY = Math.max(maxY, yPosition);
             }
 
             // Reset position for client column (right side)
-            let clientY = yPosition - (serviceProvider?.querySelectorAll('p').length || 0) * 5 - 8;
+            let clientY = startY;
             
             if (client) {
               pdf.setFontSize(14);
               pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(0, 0, 0); // Black for all subsection headers
+              pdf.setTextColor(0, 0, 0);
               pdf.text('CLIENT', pageWidth / 2 + 10, clientY);
               clientY += 8;
               
               const clientDetails = client.querySelectorAll('p');
               clientDetails.forEach((detail) => {
                 if (detail.textContent && detail.textContent.trim()) {
+                  const text = detail.textContent.trim();
                   pdf.setFontSize(11);
                   pdf.setFont('helvetica', 'normal');
-                  pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
-                  const lines = pdf.splitTextToSize(detail.textContent.trim(), contentWidth / 2 - 10);
+                  pdf.setTextColor(55, 65, 81);
+                  const lines = pdf.splitTextToSize(text, contentWidth / 2 - 10);
                   lines.forEach((line: string) => {
                     pdf.text(line, pageWidth / 2 + 10, clientY);
                     clientY += 5;
                   });
+                  clientY += 2; // Extra spacing between details
                 }
               });
+              maxY = Math.max(maxY, clientY);
             }
             
-            yPosition = Math.max(yPosition, clientY) + 10;
+            yPosition = maxY + 10;
             
           } else if (sectionTitle.includes('SIGNATURES')) {
-            // Mark signature section as processed to prevent duplicates
+            // Mark signature section as processed
             signatureSectionProcessed = true;
             
-            // Signature section with consistent formatting
             checkNewPage(80);
             
             const signatureY = yPosition;
@@ -186,7 +207,7 @@ const ContractEdit = () => {
             // Service Provider signature (left)
             pdf.setFontSize(12);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 0, 0); // Black for all labels
+            pdf.setTextColor(0, 0, 0);
             pdf.text('SERVICE PROVIDER', margin, signatureY);
             
             // Signature line
@@ -197,7 +218,7 @@ const ContractEdit = () => {
             // Labels
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
+            pdf.setTextColor(55, 65, 81);
             pdf.text('Name: _________________________', margin, signatureY + 30);
             pdf.text('Date: __________________________', margin, signatureY + 38);
             
@@ -205,7 +226,7 @@ const ContractEdit = () => {
             const clientSignatureX = pageWidth / 2 + 10;
             pdf.setFontSize(12);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 0, 0); // Black for all labels
+            pdf.setTextColor(0, 0, 0);
             pdf.text('CLIENT', clientSignatureX, signatureY);
             
             // Signature line
@@ -214,49 +235,44 @@ const ContractEdit = () => {
             // Labels
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
+            pdf.setTextColor(55, 65, 81);
             pdf.text('Name: _________________________', clientSignatureX, signatureY + 30);
             pdf.text('Date: __________________________', clientSignatureX, signatureY + 38);
             
-            yPosition += 50; // Space after signature section
+            yPosition += 50;
             
           } else {
-            // Regular section content with consistent formatting
-            const paragraphs = section.querySelectorAll('p, div');
-            paragraphs.forEach((p) => {
-              if (p.textContent && 
-                  p.textContent.trim() && 
-                  !p.textContent.includes('Page ') && 
-                  p.textContent.trim() !== sectionTitle &&
-                  !p.textContent.includes('Name:') &&
-                  !p.textContent.includes('Date:')) {
+            // Regular section content with proper formatting
+            const contentElements = section.querySelectorAll('p, div, h4');
+            
+            contentElements.forEach((element) => {
+              if (element.textContent && element.textContent.trim()) {
+                const text = element.textContent.trim();
                 
-                const text = p.textContent.trim();
-                if (text) {
-                  // Check for subsection headers
-                  const isSubHeader = p.querySelector('span[class*="font-bold"]') || 
-                                    p.textContent.includes(':') && p.textContent.length < 100;
-                  
-                  if (isSubHeader) {
-                    pdf.setFontSize(12);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(0, 0, 0); // Black for all subsection headers
-                  } else {
-                    pdf.setFontSize(11);
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
-                  }
-                  
-                  const lines = pdf.splitTextToSize(text, contentWidth);
-                  const lineHeight = 5;
-                  
-                  checkNewPage(lines.length * lineHeight);
-                  
-                  lines.forEach((line: string) => {
-                    pdf.text(line, margin, yPosition);
-                    yPosition += lineHeight;
-                  });
-                  yPosition += 3; // Extra spacing between paragraphs
+                // Skip empty content, page numbers, and signature labels
+                if (!text || 
+                    text.includes('Page ') || 
+                    text === sectionTitle ||
+                    text.includes('Name:') ||
+                    text.includes('Date:') ||
+                    text.length < 3) {
+                  return;
+                }
+                
+                // Check if it's a subsection header (h4 or contains colon and short)
+                const isSubHeader = element.tagName === 'H4' || 
+                                  element.querySelector('span[class*="font-bold"]') || 
+                                  (text.includes(':') && text.length < 100);
+                
+                if (isSubHeader) {
+                  // Add extra spacing before subsection headers
+                  yPosition += 5;
+                  yPosition = addTextWithWrapping(text, 12, 'bold', [0, 0, 0], yPosition);
+                  yPosition += 3; // Extra spacing after headers
+                } else {
+                  // Regular paragraph content
+                  yPosition = addTextWithWrapping(text, 11, 'normal', [55, 65, 81], yPosition);
+                  yPosition += 4; // Spacing between paragraphs
                 }
               }
             });
@@ -278,7 +294,7 @@ const ContractEdit = () => {
         
         pdf.setFontSize(18);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246); // Consistent blue color
+        pdf.setTextColor(59, 130, 246);
         pdf.text('SIGNATURES', margin, yPosition);
         yPosition += 20;
 
