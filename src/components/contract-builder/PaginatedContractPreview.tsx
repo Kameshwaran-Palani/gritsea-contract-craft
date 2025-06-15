@@ -1,9 +1,9 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface PaginatedContractPreviewProps {
   data: ContractData & { freelancerSignature?: string | null; clientSignature?: string | null; clientSignedDate?: string | null };
@@ -109,7 +109,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </div>
           <div className="text-sm text-gray-600">
             {payment.percentage}% of total amount
-            {payment.dueDate && ` • Due: ${new Date(payment.dueDate).toLocaleDateString()}`}
+            {payment.dueDate && ` • Due: ${format(new Date(payment.dueDate), 'dd-MM-yyyy')}`}
           </div>
         </div>
       );
@@ -190,7 +190,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           lineHeight: data.lineSpacing || 1.6,
           color: data.contentColor || '#1f2937'
         }}>
-          <div className="text-center mb-8 pb-6">
+          <div className="text-center mb-4 pb-4">
             <h1 className="font-bold mb-2 tracking-tight" style={getHeaderStyle('document')}>
               {data.documentTitle || 'SERVICE AGREEMENT'}
             </h1>
@@ -201,7 +201,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
           {hasAgreementIntro() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-4" style={getHeaderStyle('section', 'introduction')}>
                   AGREEMENT INTRODUCTION
                 </h3>
@@ -209,18 +209,18 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   <p className="leading-relaxed">{data.agreementIntroText}</p>
                   {data.effectiveDate && (
                     <p className="font-semibold" style={{ color: data.primaryColor }}>
-                      Effective Date: {new Date(data.effectiveDate).toLocaleDateString()}
+                      Effective Date: {format(new Date(data.effectiveDate), 'dd-MM-yyyy')}
                     </p>
                   )}
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasPartiesInfo() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'parties')}>
                   PARTIES TO THE AGREEMENT
                 </h3>
@@ -254,13 +254,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   )}
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasScopeOfWork() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'scope')}>
                   SCOPE OF WORK
                 </h3>
@@ -291,7 +291,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                           <div key={index} className="border-l-4 border-gray-300 pl-4" style={getBodyStyle()}>
                             <p className="font-semibold" style={{ color: data.primaryColor }}>{milestone.title}</p>
                             {milestone.description && <p className="mt-1">{milestone.description}</p>}
-                            {milestone.dueDate && <p className="mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
+                            {milestone.dueDate && <p className="mt-1">Due: {format(new Date(milestone.dueDate), 'dd-MM-yyyy')}</p>}
                             {milestone.amount && <p className="font-semibold mt-1" style={{ color: data.primaryColor }}>Amount: ₹{milestone.amount.toLocaleString()}</p>}
                           </div>
                         ))}
@@ -300,13 +300,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   )}
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasPaymentTerms() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'payment')}>
                   PAYMENT TERMS
                 </h3>
@@ -343,28 +343,28 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   )}
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasProjectTimeline() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'timeline')}>
                   PROJECT TIMELINE
                 </h3>
                 <div className="space-y-3" style={getContentStyle('timeline')}>
-                  {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
-                  {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
+                  {data.startDate && <p><span className="font-bold">Start Date:</span> {format(new Date(data.startDate), 'dd-MM-yyyy')}</p>}
+                  {data.endDate && <p><span className="font-bold">End Date:</span> {format(new Date(data.endDate), 'dd-MM-yyyy')}</p>}
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasSLA() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'sla')}>
                   SERVICE LEVEL AGREEMENT
                 </h3>
@@ -372,13 +372,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   {data.responseTime && <p><span className="font-bold">Response Time:</span> {data.responseTime}</p>}
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasIP() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'ip')}>
                   INTELLECTUAL PROPERTY
                 </h3>
@@ -386,13 +386,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   <p><span className="font-bold">IP Ownership:</span> {data.ipOwnership}</p>
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasConfidentialityInfo() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'nda')}>
                   CONFIDENTIALITY
                 </h3>
@@ -400,13 +400,13 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   <p>Both parties agree to maintain confidentiality of all proprietary and sensitive information shared during the course of this agreement.</p>
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
           {hasTermination() && (
             <>
-              <section className="mb-8">
+              <section className="mb-4">
                 <h3 className="font-bold mb-6" style={getHeaderStyle('section', 'termination')}>
                   TERMINATION
                 </h3>
@@ -414,11 +414,11 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   <p>Either party may terminate this agreement with 30 days written notice. Upon termination, all outstanding payments for completed work shall be made within 15 days.</p>
                 </div>
               </section>
-              <hr className="border-gray-300 my-8" />
+              <hr className="border-gray-300 my-4" />
             </>
           )}
 
-          <section className="border-t-2 border-gray-300 pt-12 mt-16">
+          <section className="border-t-2 border-gray-300 pt-8 mt-8">
             <h3 className="font-bold mb-8" style={getHeaderStyle('section', 'signatures')}>
               DIGITAL SIGNATURES
             </h3>
@@ -441,7 +441,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 <div className="space-y-1" style={getBodyStyle()}>
                   <p className="font-bold" style={{ color: data.primaryColor }}>SERVICE PROVIDER</p>
                   <p>{data.freelancerName || <span className="text-gray-400">[DEBUG] No freelancerName</span>}</p>
-                  <p>Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
+                  <p>Date: {data.signedDate ? format(new Date(data.signedDate), 'dd-MM-yyyy') : '_____________'}</p>
                 </div>
               </div>
 
@@ -461,7 +461,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 <div className="space-y-1" style={getBodyStyle()}>
                   <p className="font-bold" style={{ color: data.primaryColor }}>CLIENT</p>
                   <p>{data.clientName}</p>
-                  <p>Date: {data.clientSignedDate ? new Date(data.clientSignedDate).toLocaleDateString() : '_____________'}</p>
+                  <p>Date: {data.clientSignedDate ? format(new Date(data.clientSignedDate), 'dd-MM-yyyy') : '_____________'}</p>
                 </div>
               </div>
             </div>
