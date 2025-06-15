@@ -1,311 +1,218 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, Users, TrendingUp, Eye, Edit, Calendar, DollarSign, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
-import SEOHead from '@/components/SEOHead';
-import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
+import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
-
-interface Contract {
-  id: string;
-  title: string;
-  client_name: string | null;
-  client_email: string | null;
-  status: 'draft' | 'sent' | 'signed' | 'cancelled' | 'sent_for_signature' | 'revision_requested';
-  created_at: string;
-  contract_amount: number | null;
-  clauses_json: any;
-}
+import SEOHead from '@/components/SEOHead';
 
 const Dashboard = () => {
-  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [loadingContracts, setLoadingContracts] = useState(true);
   const [stats, setStats] = useState({
-    total: 0,
-    draft: 0,
-    signed: 0,
-    pending: 0
+    totalContracts: 0,
+    draftContracts: 0,
+    signedContracts: 0,
+    pendingContracts: 0
   });
+  const [recentContracts, setRecentContracts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchContracts();
-    }
-  }, [user]);
+    loadDashboardData();
+  }, []);
 
-  const fetchContracts = async () => {
+  const loadDashboardData = async () => {
     try {
-      const { data, error } = await supabase
+      // Load contracts for stats and recent activity
+      const { data: contracts, error } = await supabase
         .from('contracts')
         .select('*')
-        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
-
+      
       if (error) throw error;
 
-      setContracts(data || []);
-      
       // Calculate stats
-      const total = data?.length || 0;
-      const draft = data?.filter(c => c.status === 'draft').length || 0;
-      const signed = data?.filter(c => c.status === 'signed').length || 0;
-      const pending = data?.filter(c => ['sent_for_signature', 'revision_requested'].includes(c.status)).length || 0;
-      
-      setStats({ total, draft, signed, pending });
+      const total = contracts?.length || 0;
+      const draft = contracts?.filter(c => ['draft', 'revision_requested'].includes(c.status)).length || 0;
+      const signed = contracts?.filter(c => c.status === 'signed').length || 0;
+      const pending = contracts?.filter(c => c.status === 'sent_for_signature').length || 0;
+
+      setStats({
+        totalContracts: total,
+        draftContracts: draft,
+        signedContracts: signed,
+        pendingContracts: pending
+      });
+
+      // Set recent contracts (first 5)
+      setRecentContracts(contracts?.slice(0, 5) || []);
     } catch (error) {
-      console.error('Error fetching contracts:', error);
+      console.error('Error loading dashboard data:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch contracts",
+        description: "Failed to load dashboard data",
         variant: "destructive"
       });
     } finally {
-      setLoadingContracts(false);
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return 'bg-gray-100 text-gray-800';
+      case 'sent_for_signature':
+        return 'bg-blue-100 text-blue-800';
+      case 'signed':
+        return 'bg-green-100 text-green-800';
+      case 'revision_requested':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
     );
   }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'signed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'sent':
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'draft':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <FileText className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      draft: "outline",
-      sent: "secondary", 
-      signed: "default",
-      cancelled: "destructive"
-    };
-    return (
-      <Badge variant={variants[status] || "outline"} className="capitalize">
-        {status}
-      </Badge>
-    );
-  };
 
   return (
-    <DashboardLayout>
+    <>
       <SEOHead 
         title="Dashboard - Agrezy"
-        description="Manage your contracts and view your dashboard overview"
+        description="Your contract management dashboard"
       />
-      <div className="space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center"
-        >
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Welcome back!</h1>
-            <p className="text-muted-foreground">Here's what's happening with your contracts today.</p>
-          </div>
-          <Link to="/contract/new">
-            <Button className="bg-accent hover:bg-accent/90">
-              <Plus className="mr-2 h-4 w-4" />
-              New Contract
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Dashboard</h1>
+              <p className="text-muted-foreground">
+                Welcome back! Here's what's happening with your contracts.
+              </p>
+            </div>
+            <Button onClick={() => navigate('/contract/new')} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Create Contract
             </Button>
-          </Link>
-        </motion.div>
+          </div>
 
-        {/* Stats Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
-        >
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Contracts</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalContracts}</div>
+                <p className="text-xs text-muted-foreground">
+                  All time contracts created
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Draft Contracts</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.draftContracts}</div>
+                <p className="text-xs text-muted-foreground">
+                  Contracts in progress
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Signature</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.pendingContracts}</div>
+                <p className="text-xs text-muted-foreground">
+                  Awaiting client signatures
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Signed Contracts</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.signedContracts}</div>
+                <p className="text-xs text-muted-foreground">
+                  Successfully completed
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Contracts */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Contracts</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Recent Contracts</CardTitle>
+              <Button variant="outline" onClick={() => navigate('/contracts')}>
+                View All
+              </Button>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Draft Contracts</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.draft}</div>
-              <p className="text-xs text-muted-foreground">Need attention</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Signed Contracts</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.signed}</div>
-              <p className="text-xs text-muted-foreground">Completed</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Contracts</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
-              <p className="text-xs text-muted-foreground">Pending</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Recent Contracts */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Contracts</CardTitle>
-                  <CardDescription>Your latest contract activity</CardDescription>
-                </div>
-                <Link to="/contracts">
-                  <Button variant="outline" size="sm">View All</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingContracts ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="w-8 h-8 bg-muted rounded animate-pulse"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-muted rounded animate-pulse"></div>
-                        <div className="h-3 bg-muted rounded w-1/2 animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : contracts.length === 0 ? (
+              {recentContracts.length === 0 ? (
                 <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-2 text-sm font-semibold text-foreground">No contracts yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">Get started by creating your first contract.</p>
-                  <div className="mt-6">
-                    <Link to="/contract/new">
-                      <Button className="bg-accent hover:bg-accent/90">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Contract
-                      </Button>
-                    </Link>
-                  </div>
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold">No contracts yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create your first contract to get started
+                  </p>
+                  <Button onClick={() => navigate('/contract/new')}>
+                    Create Contract
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {contracts.map((contract) => (
-                    <div key={contract.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center space-x-4">
-                        {getStatusIcon(contract.status)}
-                        <div>
-                          <h4 className="font-medium">{contract.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {contract.client_name} • {new Date(contract.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
+                  {recentContracts.map((contract) => (
+                    <div
+                      key={contract.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/contract/view/${contract.id}`)}
+                    >
+                      <div className="space-y-1">
+                        <h4 className="font-medium">{contract.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {contract.client_name || 'No client specified'} • 
+                          Created {new Date(contract.created_at).toLocaleDateString()}
+                        </p>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        {contract.contract_amount && (
-                          <span className="text-sm font-medium">₹{contract.contract_amount.toLocaleString()}</span>
-                        )}
-                        {getStatusBadge(contract.status)}
-                      </div>
+                      <Badge className={getStatusColor(contract.status)}>
+                        {contract.status === 'sent_for_signature' ? 'Pending' : 
+                         contract.status === 'revision_requested' ? 'Revision' : 
+                         contract.status}
+                      </Badge>
                     </div>
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="grid gap-4 md:grid-cols-3"
-        >
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/contract/new">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Create Contract
-                </CardTitle>
-                <CardDescription>Start a new service agreement</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/ai-assistant">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="mr-2 h-5 w-5" />
-                  AI Assistant
-                </CardTitle>
-                <CardDescription>Get help with legal language</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/pricing">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="mr-2 h-5 w-5" />
-                  Upgrade Plan
-                </CardTitle>
-                <CardDescription>Unlock more features</CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
-        </motion.div>
-      </div>
-    </DashboardLayout>
+        </div>
+      </DashboardLayout>
+    </>
   );
 };
 

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, AlertCircle, Shield, KeyRound, Mail, Phone } from 'lucide-react';
+import { CheckCircle, AlertCircle, Shield, KeyRound, Mail, Phone, Download } from 'lucide-react';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
@@ -23,6 +23,8 @@ const ESignView = () => {
   const [loading, setLoading] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
+  const [clientSignature, setClientSignature] = useState('');
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [credentials, setCredentials] = useState({
     email: '',
     phone: '',
@@ -103,7 +105,7 @@ const ESignView = () => {
     if (!contract || !contractData) return;
 
     try {
-      // Create signature record
+      // Create signature record for client
       const { error: signatureError } = await supabase
         .from('signatures')
         .insert({
@@ -117,7 +119,7 @@ const ESignView = () => {
 
       if (signatureError) throw signatureError;
 
-      // Update contract status to signed
+      // Update contract status to signed with client signature
       const { error: statusError } = await supabase
         .from('contracts')
         .update({ 
@@ -130,11 +132,12 @@ const ESignView = () => {
 
       if (statusError) throw statusError;
 
-      setContract(prev => ({ ...prev, status: 'signed' }));
+      setContract(prev => ({ ...prev, status: 'signed', client_signature_url: signatureData }));
+      setClientSignature(signatureData);
       
       toast({
         title: "Contract Signed Successfully",
-        description: "Thank you for signing the contract. Both parties will receive confirmation."
+        description: "Thank you for signing the contract. You can now download the PDF."
       });
 
       setShowSignature(false);
@@ -145,6 +148,55 @@ const ESignView = () => {
         description: "Failed to sign contract",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setDownloadingPDF(true);
+    try {
+      // Generate and download PDF
+      const element = document.getElementById('contract-preview');
+      if (element) {
+        const html2canvas = (await import('html2canvas')).default;
+        const jsPDF = (await import('jspdf')).default;
+        
+        const canvas = await html2canvas(element);
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF();
+        const imgWidth = 210;
+        const pageHeight = 295;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        
+        let position = 0;
+        
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        
+        pdf.save(`${contractData?.documentTitle || 'Contract'}.pdf`);
+        
+        toast({
+          title: "Download Complete",
+          description: "Contract PDF has been downloaded successfully."
+        });
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Download Error",
+        description: "Failed to download PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingPDF(false);
     }
   };
 
@@ -246,10 +298,20 @@ const ESignView = () => {
 
             <div className="flex items-center space-x-4">
               {contract?.status === 'signed' && (
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">Signed</span>
-                </div>
+                <>
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Signed</span>
+                  </div>
+                  <Button
+                    onClick={handleDownloadPDF}
+                    disabled={downloadingPDF}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    {downloadingPDF ? 'Downloading...' : 'Download PDF'}
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -274,9 +336,14 @@ const ESignView = () => {
             <div className="lg:col-span-2">
               {showSignature ? (
                 <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <h3 className="text-lg font-semibold mb-4">Sign Contract</h3>
                   <SignatureStep
                     data={contractData!}
-                    updateData={() => {}}
+                    updateData={(field, value) => {
+                      if (field === 'clientSignature') {
+                        setClientSignature(value);
+                      }
+                    }}
                     onNext={() => {}}
                     onPrev={() => setShowSignature(false)}
                     isFirst={false}
@@ -292,11 +359,11 @@ const ESignView = () => {
                     </Button>
                     <Button 
                       onClick={() => {
-                        if (contractData?.freelancerSignature) {
-                          handleSignContract(contractData.freelancerSignature);
+                        if (clientSignature) {
+                          handleSignContract(clientSignature);
                         }
                       }}
-                      disabled={!contractData?.freelancerSignature}
+                      disabled={!clientSignature}
                       className="flex-1"
                     >
                       Complete Signing
@@ -304,7 +371,7 @@ const ESignView = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg shadow-sm border">
+                <div className="bg-white rounded-lg shadow-sm border" id="contract-preview">
                   <ContractPreview data={contractData!} />
                 </div>
               )}

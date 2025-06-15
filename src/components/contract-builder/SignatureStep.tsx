@@ -1,192 +1,195 @@
-import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+
+import React, { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ContractData } from '@/pages/ContractBuilder';
-import { PenTool, RotateCcw, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import SignatureCanvas from 'react-signature-canvas';
+import { Trash2, PenTool } from 'lucide-react';
+import { ContractData } from '@/pages/ContractBuilder';
 
 interface SignatureStepProps {
   data: ContractData;
-  updateData: (updates: Partial<ContractData>) => void;
+  updateData: (field: keyof ContractData, value: any) => void;
   onNext: () => void;
   onPrev: () => void;
   isFirst: boolean;
   isLast: boolean;
 }
 
-const SignatureStep: React.FC<SignatureStepProps> = ({
-  data,
-  updateData
+const SignatureStep: React.FC<SignatureStepProps> = ({ 
+  data, 
+  updateData, 
+  onNext, 
+  onPrev, 
+  isFirst, 
+  isLast 
 }) => {
-  const sigRef = useRef<SignatureCanvas>(null);
-  const [signatureImage, setSignatureImage] = useState<string>(data.freelancerSignature || '');
+  const freelancerSigRef = useRef<SignatureCanvas>(null);
+  const clientSigRef = useRef<SignatureCanvas>(null);
 
-  const clearSignature = () => {
-    if (sigRef.current) {
-      sigRef.current.clear();
-      setSignatureImage('');
-      updateData({ freelancerSignature: undefined, signedDate: undefined });
+  useEffect(() => {
+    // Load existing signatures if they exist
+    if (data.freelancerSignature && freelancerSigRef.current) {
+      freelancerSigRef.current.fromDataURL(data.freelancerSignature);
+    }
+    if (data.clientSignature && clientSigRef.current) {
+      clientSigRef.current.fromDataURL(data.clientSignature);
+    }
+  }, [data.freelancerSignature, data.clientSignature]);
+
+  const clearFreelancerSignature = () => {
+    if (freelancerSigRef.current) {
+      freelancerSigRef.current.clear();
+      updateData('freelancerSignature', '');
     }
   };
 
-  const saveSignature = () => {
-    if (sigRef.current && !sigRef.current.isEmpty()) {
-      const signatureData = sigRef.current.toDataURL();
-      setSignatureImage(signatureData);
-      updateData({ 
-        freelancerSignature: signatureData,
-        signedDate: new Date().toISOString()
-      });
+  const clearClientSignature = () => {
+    if (clientSigRef.current) {
+      clientSigRef.current.clear();
+      updateData('clientSignature', '');
+    }
+  };
+
+  const saveFreelancerSignature = () => {
+    if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
+      const signatureData = freelancerSigRef.current.toDataURL();
+      updateData('freelancerSignature', signatureData);
+    }
+  };
+
+  const saveClientSignature = () => {
+    if (clientSigRef.current && !clientSigRef.current.isEmpty()) {
+      const signatureData = clientSigRef.current.toDataURL();
+      updateData('clientSignature', signatureData);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <PenTool className="h-12 w-12 text-primary mx-auto mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Your Digital Signature</h2>
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Digital Signatures</h2>
         <p className="text-muted-foreground">
-          Sign below to create your digital signature for this contract
+          Add digital signatures to complete the contract signing process.
         </p>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        {/* Freelancer Signature */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PenTool className="h-5 w-5" />
-              Digital Signature
+              Your Signature (Freelancer)
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">
-                Draw your signature in the box below
-              </p>
-              
-              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 mb-4 bg-white">
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="freelancerName">Full Name</Label>
+              <Input
+                id="freelancerName"
+                value={data.freelancerName || ''}
+                onChange={(e) => updateData('freelancerName', e.target.value)}
+                placeholder="Enter your full name"
+              />
+            </div>
+            
+            <div>
+              <Label>Digital Signature</Label>
+              <div className="border rounded-lg p-4 bg-white">
                 <SignatureCanvas
-                  ref={sigRef}
+                  ref={freelancerSigRef}
                   canvasProps={{
-                    className: 'signature-canvas w-full h-40 rounded',
-                    width: 600,
-                    height: 160
+                    width: 300,
+                    height: 150,
+                    className: 'signature-canvas w-full'
                   }}
-                  backgroundColor="white"
-                  penColor="black"
-                  onEnd={saveSignature}
+                  onEnd={saveFreelancerSignature}
                 />
               </div>
-              
-              <div className="flex justify-center gap-3">
+              <div className="flex gap-2 mt-2">
                 <Button
+                  type="button"
                   variant="outline"
-                  onClick={clearSignature}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  onClick={clearFreelancerSignature}
+                  className="flex items-center gap-1"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                   Clear
                 </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Client Signature */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PenTool className="h-5 w-5" />
+              Client Signature
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="clientSignatureName">Client Name</Label>
+              <Input
+                id="clientSignatureName"
+                value={data.clientName || ''}
+                onChange={(e) => updateData('clientName', e.target.value)}
+                placeholder="Client's full name"
+              />
+            </div>
+            
+            <div>
+              <Label>Digital Signature</Label>
+              <div className="border rounded-lg p-4 bg-white">
+                <SignatureCanvas
+                  ref={clientSigRef}
+                  canvasProps={{
+                    width: 300,
+                    height: 150,
+                    className: 'signature-canvas w-full'
+                  }}
+                  onEnd={saveClientSignature}
+                />
+              </div>
+              <div className="flex gap-2 mt-2">
                 <Button
-                  onClick={saveSignature}
-                  className="flex items-center gap-2"
-                  disabled={!sigRef.current}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearClientSignature}
+                  className="flex items-center gap-1"
                 >
-                  <Check className="h-4 w-4" />
-                  Save Signature
+                  <Trash2 className="h-3 w-3" />
+                  Clear
                 </Button>
               </div>
             </div>
-
-            {signatureImage && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="font-medium text-green-800">Signature Saved</span>
-                </div>
-                <div className="flex justify-center">
-                  <img 
-                    src={signatureImage} 
-                    alt="Your signature" 
-                    className="max-w-xs border rounded bg-white p-2"
-                  />
-                </div>
-                <p className="text-sm text-green-700 mt-2 text-center">
-                  Signed on: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : 'Today'}
-                </p>
-              </motion.div>
-            )}
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Legal Declaration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">By signing this contract, you confirm that:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• You have read and understood all terms and conditions</li>
-                <li>• You agree to be legally bound by this agreement</li>
-                <li>• All information provided is accurate and complete</li>
-                <li>• You have the authority to enter into this contract</li>
-                <li>• This digital signature has the same legal effect as a handwritten signature</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Next Steps</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">After You Sign:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Contract will be saved as "Signed"</li>
-                  <li>• PDF will be generated automatically</li>
-                  <li>• Client will receive signing invitation</li>
-                  <li>• You'll get confirmation email</li>
-                </ul>
-              </div>
-              
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Client Signing:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Client gets secure signing link</li>
-                  <li>• No account required for client</li>
-                  <li>• Email notifications to both parties</li>
-                  <li>• Contract becomes legally binding</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <div className="flex justify-between pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onPrev}
+          disabled={isFirst}
+        >
+          Previous
+        </Button>
+        <Button
+          type="button"
+          onClick={onNext}
+          disabled={isLast}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };
