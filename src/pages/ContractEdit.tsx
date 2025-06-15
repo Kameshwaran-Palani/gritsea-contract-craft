@@ -4,11 +4,15 @@ import { useParams, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, User, Download, Send } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import ContractBuilder from './ContractBuilder';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const ContractEdit = () => {
   const { user } = useAuth();
   const { id } = useParams();
+  const { toast } = useToast();
 
   console.log('ContractEdit - User:', user);
   console.log('ContractEdit - Contract ID:', id);
@@ -22,9 +26,63 @@ const ContractEdit = () => {
   }
 
   const handleDownloadPDF = async () => {
-    // Trigger download from ContractBuilder
-    const event = new CustomEvent('downloadPDF');
-    window.dispatchEvent(event);
+    try {
+      const contractContent = document.querySelector('.contract-preview');
+      if (contractContent) {
+        toast({
+          title: "Generating PDF",
+          description: "Please wait while we generate your PDF..."
+        });
+
+        // Create canvas from the contract content
+        const canvas = await html2canvas(contractContent as HTMLElement, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Calculate PDF dimensions
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 295; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+
+        // Create PDF
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        let position = 0;
+
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Add additional pages if content is longer than one page
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        // Download the PDF
+        const fileName = `contract-${Date.now()}.pdf`;
+        pdf.save(fileName);
+
+        toast({
+          title: "PDF Downloaded",
+          description: "Contract has been downloaded as PDF successfully."
+        });
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleShareContract = async () => {

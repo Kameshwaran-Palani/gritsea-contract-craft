@@ -27,6 +27,8 @@ import TerminationDispute from '@/components/contract-builder/TerminationDispute
 import SignatureStep from '@/components/contract-builder/SignatureStep';
 import DesignCustomization from '@/components/contract-builder/DesignCustomization';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export interface ContractData {
   // Template
@@ -433,24 +435,51 @@ const ContractBuilder = () => {
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      
-      const previewElement = document.querySelector('.contract-preview');
-      if (!previewElement) {
+      const contractContent = document.querySelector('.contract-preview');
+      if (!contractContent) {
         throw new Error('Contract preview not found');
       }
 
-      const canvas = await html2canvas(previewElement as HTMLElement, {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your PDF..."
+      });
+
+      // Create canvas from the contract content
+      const canvas = await html2canvas(contractContent as HTMLElement, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff'
       });
 
-      const link = document.createElement('a');
-      link.download = `${contractData.templateName || 'contract'}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate PDF dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if content is longer than one page
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download the PDF
+      const fileName = `${contractData.templateName || 'contract'}.pdf`;
+      pdf.save(fileName);
 
       toast({
         title: "PDF Downloaded",
