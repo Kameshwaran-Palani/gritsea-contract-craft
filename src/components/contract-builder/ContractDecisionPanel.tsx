@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,7 @@ const ContractDecisionPanel: React.FC<ContractDecisionPanelProps> = ({
           contract_id: contractData.id,
           message: rejectionReason,
           client_name: contractData.clauses_json?.clientName || 'Client',
-          client_email: contractData.client_email
+          client_email: contractData.client_email || null
         });
 
       if (revisionError) throw revisionError;

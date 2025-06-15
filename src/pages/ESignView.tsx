@@ -449,7 +449,7 @@ const ESignView = () => {
                 <ContractDecisionPanel
                   contractData={contract}
                   onApprove={() => {}}
-                  onReject={() => {}}
+                  onReject={() => setContract(prev => prev ? { ...prev, status: 'revision_requested' } : null)}
                   onSign={() => setShowSignature(true)}
                 />
               )}
