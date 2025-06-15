@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,6 +78,63 @@ export interface ContractData {
   sectionStyles: {
     [key: string]: SectionDesign;
   };
+
+  // Parties
+  freelancerName: string;
+  freelancerAddress: string;
+  freelancerBusinessName?: string;
+  freelancerEmail: string;
+  freelancerPhone?: string;
+  clientName: string;
+  clientCompany?: string;
+  clientEmail: string;
+  clientPhone?: string;
+  
+  // Scope
+  startDate: string;
+  endDate?: string;
+  services: string;
+  deliverables: string;
+  milestones: { title: string; description?: string; dueDate?: string; amount?: number }[];
+  
+  // Payment
+  paymentType: 'fixed' | 'hourly';
+  rate: number;
+  totalAmount?: number;
+  paymentSchedule: { description: string; percentage: number; dueDate?: string }[];
+  lateFeeEnabled: boolean;
+  lateFeeAmount?: number;
+  
+  // Ongoing
+  isRetainer: boolean;
+  retainerAmount?: number;
+  renewalCycle?: 'monthly' | 'quarterly' | 'yearly';
+  autoRenew: boolean;
+  
+  // SLA
+  responseTime: string;
+  revisionLimit: number;
+  uptimeRequirement?: string;
+
+  // Confidentiality
+  includeNDA: boolean;
+  confidentialityScope?: string;
+  confidentialityDuration?: string;
+  breachPenalty?: number;
+
+  // IP
+  ipOwnership: 'client' | 'freelancer' | 'joint';
+  usageRights: 'limited' | 'full';
+
+  // Termination
+  terminationConditions: string;
+  noticePeriod: string;
+  jurisdiction: string;
+  arbitrationClause: boolean;
+
+  // Signature
+  signedDate?: string;
+  clientSignedDate?: string;
 }
 
 const ContractBuilder = () => {
@@ -130,32 +188,32 @@ const ContractBuilder = () => {
     sectionStyles: {},
     freelancerName: '',
     freelancerAddress: '',
-    freelancerBusinessName?: string;
+    freelancerBusinessName: '',
     freelancerEmail: '',
-    freelancerPhone?: string;
+    freelancerPhone: '',
     clientName: '',
-    clientCompany?: string;
+    clientCompany: '',
     clientEmail: '',
-    clientPhone?: string;
+    clientPhone: '',
     startDate: '',
-    endDate?: string,
+    endDate: '',
     services: '',
     deliverables: '',
     milestones: [],
-    paymentType: 'fixed' | 'hourly',
+    paymentType: 'fixed',
     rate: 0,
     paymentSchedule: [{ description: 'Full payment', percentage: 100 }],
     lateFeeEnabled: false,
-    lateFeeAmount?: number,
+    lateFeeAmount: 0,
     isRetainer: false,
-    retainerAmount?: number,
-    renewalCycle?: 'monthly' | 'quarterly' | 'yearly',
+    retainerAmount: 0,
+    renewalCycle: 'monthly',
     autoRenew: false,
     responseTime: '24 hours',
     revisionLimit: 3,
     includeNDA: true,
-    ipOwnership: 'client' | 'freelancer' | 'joint',
-    usageRights: 'limited' | 'full',
+    ipOwnership: 'client',
+    usageRights: 'limited',
     terminationConditions: 'Either party may terminate this agreement with written notice.',
     noticePeriod: '30 days',
     jurisdiction: 'India',
@@ -924,3 +982,4 @@ const ContractBuilder = () => {
 };
 
 export default ContractBuilder;
+
