@@ -13,6 +13,8 @@ import ESignDialog from '@/components/contract-builder/ESignDialog';
 import ContractMilestone from '@/components/contract-builder/ContractMilestone';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const ContractView = () => {
   const { id } = useParams();
@@ -259,31 +261,59 @@ const ContractView = () => {
 
   const downloadPDF = async () => {
     try {
-      // Simple implementation - in a real app, you'd generate actual PDF
       const contractContent = document.querySelector('.contract-preview');
       if (contractContent) {
-        // Create a simple download - in production, use proper PDF generation
-        const content = contractContent.innerHTML;
-        const blob = new Blob([content], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${contractData?.documentTitle || 'contract'}.html`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
         toast({
-          title: "Download Started",
-          description: "Contract is being downloaded as HTML file."
+          title: "Generating PDF",
+          description: "Please wait while we generate your PDF..."
+        });
+
+        // Create canvas from the contract content
+        const canvas = await html2canvas(contractContent as HTMLElement, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Calculate PDF dimensions
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 295; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+
+        // Create PDF
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        let position = 0;
+
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Add additional pages if content is longer than one page
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        // Download the PDF
+        const fileName = `${contractData?.documentTitle || 'contract'}.pdf`;
+        pdf.save(fileName);
+
+        toast({
+          title: "PDF Downloaded",
+          description: "Contract has been downloaded as PDF successfully."
         });
       }
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error generating PDF:', error);
       toast({
         title: "Error",
-        description: "Failed to download contract",
+        description: "Failed to generate PDF. Please try again.",
         variant: "destructive"
       });
     }
