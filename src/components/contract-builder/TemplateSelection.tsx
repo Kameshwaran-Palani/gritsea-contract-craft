@@ -8,8 +8,12 @@ import { ContractData } from '@/pages/ContractBuilder';
 import { FileText, Code, Palette, PenTool, Search, Users, Video, Smartphone, Languages, Briefcase } from 'lucide-react';
 
 interface TemplateSelectionProps {
-  updateContractData: (updates: Partial<ContractData>) => void;
-  contractData: ContractData;
+  data: ContractData;
+  updateData: (updates: Partial<ContractData>) => void;
+  onNext: () => void;
+  onPrev: () => void;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
 const TEMPLATES = [
@@ -116,27 +120,21 @@ const TEMPLATES = [
 ];
 
 const TemplateSelection: React.FC<TemplateSelectionProps> = ({
-  updateContractData,
-  contractData
+  data,
+  updateData,
+  onNext
 }) => {
   const handleTemplateSelect = (template: typeof TEMPLATES[0]) => {
-    updateContractData({
-      template: template.id,
+    updateData({
+      templateId: template.id,
       templateName: template.name,
       services: template.scope,
       paymentSchedule: [
-        { 
-          description: 'Initial payment', 
-          percentage: 50,
-          dueDate: new Date().toISOString().split('T')[0]
-        },
-        { 
-          description: 'Final payment', 
-          percentage: 50,
-          dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0]
-        }
+        { description: 'Initial payment', percentage: 50 },
+        { description: 'Final payment', percentage: 50 }
       ]
     });
+    onNext();
   };
 
   return (
@@ -160,7 +158,7 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
             >
               <Card 
                 className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                  contractData?.template === template.id ? 'ring-2 ring-accent' : ''
+                  data.templateId === template.id ? 'ring-2 ring-accent' : ''
                 }`}
                 onClick={() => handleTemplateSelect(template)}
               >

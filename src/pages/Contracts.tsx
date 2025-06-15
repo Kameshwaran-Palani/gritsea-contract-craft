@@ -209,10 +209,6 @@ const Contracts = () => {
     navigate(`/contract/edit/${contractId}`);
   };
 
-  const handleCardClick = (contractId: string) => {
-    navigate(`/contract/view/${contractId}`);
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-800';
@@ -305,7 +301,7 @@ const Contracts = () => {
                       {/* Optimized Contract Card Image */}
                       <div 
                         className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b" 
-                        onClick={() => handleCardClick(contract.id)}
+                        onClick={() => navigate(`/contract/${contract.id}`)}
                       >
                         {imagesLoading[contract.id] ? (
                           <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
