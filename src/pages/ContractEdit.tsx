@@ -37,11 +37,11 @@ const ContractEdit = () => {
         throw new Error('Contract preview not found');
       }
 
-      // Create PDF using similar approach as ContractBuilder
+      // Create PDF using jsPDF directly to match preview exactly
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
-      const margin = 20;
+      const margin = 25;
       const contentWidth = pageWidth - (margin * 2);
       
       let yPosition = margin;
@@ -58,7 +58,7 @@ const ContractEdit = () => {
 
       // Helper function to add text with word wrapping
       const addText = (text: string, fontSize: number, fontStyle: string = 'normal') => {
-        if (!text || !text.trim()) return 0; // Skip empty content
+        if (!text || !text.trim()) return 0;
         
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', fontStyle);
@@ -77,7 +77,7 @@ const ContractEdit = () => {
         return lines.length * lineHeight;
       };
 
-      // Extract text content from the preview, but only include sections with content
+      // Extract text content from the preview sections that actually have content
       const titleElement = contractContent.querySelector('h1');
       const subtitleElement = contractContent.querySelector('h2');
       
@@ -100,26 +100,38 @@ const ContractEdit = () => {
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 10;
 
-      // Extract and add other content sections - only if they have content
+      // Extract and add content sections - only if they exist and have meaningful content
       const sections = contractContent.querySelectorAll('section');
       sections.forEach((section) => {
         const heading = section.querySelector('h3');
-        const hasContent = section.textContent && section.textContent.trim();
+        const paragraphs = section.querySelectorAll('p, div');
         
-        // Only add section if it has meaningful content beyond just the heading
-        if (hasContent && hasContent.length > (heading?.textContent?.length || 0) + 10) {
-          if (heading && heading.textContent && heading.textContent.trim()) {
-            addText(heading.textContent.trim(), 16, 'bold');
-            yPosition += 5;
-          }
+        // Check if section has meaningful content beyond just the heading
+        const hasContent = Array.from(paragraphs).some(p => 
+          p.textContent && 
+          p.textContent.trim() && 
+          p.textContent.trim() !== heading?.textContent?.trim() &&
+          !p.textContent.includes('Page ') // Skip page indicators
+        );
+        
+        if (hasContent && heading && heading.textContent && heading.textContent.trim()) {
+          addText(heading.textContent.trim(), 16, 'bold');
+          yPosition += 5;
 
-          const paragraphs = section.querySelectorAll('p, div');
           paragraphs.forEach((p) => {
-            if (p.textContent && p.textContent.trim() && 
-                !p.textContent.includes('Page ') && // Skip page indicators
-                p.textContent.trim() !== heading?.textContent?.trim()) { // Skip duplicate headings
-              const added = addText(p.textContent.trim(), 12);
-              if (added > 0) yPosition += 3;
+            if (p.textContent && 
+                p.textContent.trim() && 
+                !p.textContent.includes('Page ') && 
+                p.textContent.trim() !== heading?.textContent?.trim()) {
+              
+              // Check if this is a sub-heading (h4)
+              if (p.tagName === 'H4' || p.querySelector('strong')) {
+                addText(p.textContent.trim(), 14, 'bold');
+                yPosition += 2;
+              } else {
+                addText(p.textContent.trim(), 12);
+                yPosition += 3;
+              }
             }
           });
           yPosition += 8;

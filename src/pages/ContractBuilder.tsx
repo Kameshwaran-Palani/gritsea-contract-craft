@@ -445,7 +445,7 @@ const ContractBuilder = () => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
-      const margin = 20;
+      const margin = 25;
       const contentWidth = pageWidth - (margin * 2);
       
       let yPosition = margin;
@@ -462,6 +462,8 @@ const ContractBuilder = () => {
 
       // Helper function to add text with word wrapping
       const addText = (text: string, fontSize: number, fontStyle: string = 'normal', color: string = '#000000') => {
+        if (!text || !text.trim()) return 0;
+        
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', fontStyle);
         
@@ -475,7 +477,7 @@ const ContractBuilder = () => {
           pdf.setTextColor(0, 0, 0);
         }
 
-        const lines = pdf.splitTextToSize(text, contentWidth);
+        const lines = pdf.splitTextToSize(text.trim(), contentWidth);
         const lineHeight = fontSize * 0.4;
         
         checkNewPage(lines.length * lineHeight);
@@ -487,6 +489,21 @@ const ContractBuilder = () => {
         
         return lines.length * lineHeight;
       };
+
+      // Helper functions to check if sections have content (same as preview)
+      const hasAgreementIntro = () => contractData.agreementIntroText && contractData.agreementIntroText.trim();
+      const hasPartiesInfo = () => contractData.freelancerName || contractData.clientName;
+      const hasScopeOfWork = () => {
+        return (contractData.services && contractData.services.trim()) || 
+               (contractData.deliverables && contractData.deliverables.trim()) || 
+               (contractData.milestones && contractData.milestones.length > 0 && 
+                contractData.milestones.some(m => m.title && m.title.trim()));
+      };
+      const hasPaymentTerms = () => contractData.rate > 0 || contractData.totalAmount > 0 || 
+                                   (contractData.paymentSchedule && contractData.paymentSchedule.length > 0);
+      const hasProjectTimeline = () => contractData.startDate || contractData.endDate;
+      const hasRetainerInfo = () => contractData.isRetainer && contractData.retainerAmount && contractData.retainerAmount > 0;
+      const hasConfidentialityInfo = () => contractData.includeNDA;
 
       // Header Section
       pdf.setFontSize(24);
@@ -500,13 +517,13 @@ const ContractBuilder = () => {
       pdf.text(contractData.documentSubtitle, pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
 
-      // Add a line separator
+      // Add separator line
       pdf.setDrawColor(200, 200, 200);
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 10;
 
-      // Agreement Introduction - only if text exists
-      if (contractData.agreementIntroText && contractData.agreementIntroText.trim()) {
+      // Agreement Introduction - only if has content
+      if (hasAgreementIntro()) {
         addText('AGREEMENT INTRODUCTION', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
         addText(contractData.agreementIntroText, 12);
@@ -518,8 +535,8 @@ const ContractBuilder = () => {
         }
       }
 
-      // Parties Information - only if required fields exist
-      if (contractData.freelancerName || contractData.clientName) {
+      // Parties Information - only if has content
+      if (hasPartiesInfo()) {
         addText('PARTIES TO THE AGREEMENT', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
 
@@ -559,10 +576,8 @@ const ContractBuilder = () => {
         }
       }
 
-      // Scope of Work - only if services or deliverables exist
-      if ((contractData.services && contractData.services.trim()) || 
-          (contractData.deliverables && contractData.deliverables.trim()) || 
-          (contractData.milestones && contractData.milestones.length > 0)) {
+      // Scope of Work - only if has content
+      if (hasScopeOfWork()) {
         addText('SCOPE OF WORK', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
         
@@ -580,12 +595,13 @@ const ContractBuilder = () => {
           yPosition += 8;
         }
 
-        // Milestones - only if they exist
+        // Milestones - only if they exist with content
         if (contractData.milestones && contractData.milestones.length > 0) {
-          addText('Milestones:', 14, 'bold');
-          yPosition += 2;
-          contractData.milestones.forEach((milestone, index) => {
-            if (milestone.title && milestone.title.trim()) {
+          const validMilestones = contractData.milestones.filter(m => m.title && m.title.trim());
+          if (validMilestones.length > 0) {
+            addText('Milestones:', 14, 'bold');
+            yPosition += 2;
+            validMilestones.forEach((milestone, index) => {
               addText(`${index + 1}. ${milestone.title}`, 12, 'bold');
               if (milestone.description && milestone.description.trim()) {
                 addText(`   ${milestone.description}`, 12);
@@ -597,18 +613,19 @@ const ContractBuilder = () => {
                 addText(`   Amount: ₹${milestone.amount.toLocaleString()}`, 12);
               }
               yPosition += 3;
-            }
-          });
-          yPosition += 5;
+            });
+            yPosition += 5;
+          }
         }
       }
 
-      // Payment Terms - only if payment info exists
-      if (contractData.rate > 0 || contractData.totalAmount || 
-          (contractData.paymentSchedule && contractData.paymentSchedule.length > 0)) {
+      // Payment Terms - only if has content
+      if (hasPaymentTerms()) {
         addText('PAYMENT TERMS', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
 
+        addText('Payment Structure:', 14, 'bold');
+        yPosition += 2;
         if (contractData.paymentType === 'hourly' && contractData.rate > 0) {
           addText(`Hourly Rate: ₹${contractData.rate?.toLocaleString()} per hour`, 12, 'bold');
         } else if (contractData.totalAmount && contractData.totalAmount > 0) {
@@ -636,13 +653,15 @@ const ContractBuilder = () => {
 
         // Late Fee - only if enabled
         if (contractData.lateFeeEnabled && contractData.lateFeeAmount && contractData.lateFeeAmount > 0) {
+          addText('Late Payment Terms:', 14, 'bold');
+          yPosition += 2;
           addText(`Late Fee: ₹${contractData.lateFeeAmount} per day for payments made after the due date.`, 12);
           yPosition += 8;
         }
       }
 
       // Project Timeline - only if dates exist
-      if (contractData.startDate || contractData.endDate) {
+      if (hasProjectTimeline()) {
         addText('PROJECT TIMELINE', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
         if (contractData.startDate) {
@@ -655,14 +674,14 @@ const ContractBuilder = () => {
       }
 
       // Ongoing Work - only if retainer is enabled
-      if (contractData.isRetainer && contractData.retainerAmount && contractData.retainerAmount > 0) {
-        addText('ONGOING WORK TERMS', 16, 'bold', contractData.primaryColor);
+      if (hasRetainerInfo()) {
+        addText('RETAINER AGREEMENT', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
-        addText(`Monthly Retainer: ₹${contractData.retainerAmount.toLocaleString()}`, 12, 'bold');
+        addText(`Retainer Amount: ₹${contractData.retainerAmount.toLocaleString()}`, 12);
         if (contractData.renewalCycle) {
           addText(`Renewal Cycle: ${contractData.renewalCycle}`, 12);
         }
-        addText(`Auto Renewal: ${contractData.autoRenew ? 'Yes' : 'No'}`, 12);
+        addText(`Auto-Renewal: ${contractData.autoRenew ? 'Yes' : 'No'}`, 12);
         yPosition += 10;
       }
 
@@ -677,8 +696,8 @@ const ContractBuilder = () => {
       yPosition += 10;
 
       // Confidentiality - only if NDA is included
-      if (contractData.includeNDA) {
-        addText('CONFIDENTIALITY & NON-DISCLOSURE', 16, 'bold', contractData.primaryColor);
+      if (hasConfidentialityInfo()) {
+        addText('CONFIDENTIALITY AGREEMENT', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
         addText('Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.', 12);
         if (contractData.confidentialityScope && contractData.confidentialityScope.trim()) {

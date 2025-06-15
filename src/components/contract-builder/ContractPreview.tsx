@@ -75,22 +75,51 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
     });
   };
 
+  // Helper functions to check if sections have content
+  const hasPartiesInfo = () => {
+    return data.freelancerName || data.clientName;
+  };
+
+  const hasScopeOfWork = () => {
+    return (data.services && data.services.trim()) || 
+           (data.deliverables && data.deliverables.trim()) || 
+           (data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim()));
+  };
+
+  const hasPaymentTerms = () => {
+    return data.rate > 0 || data.totalAmount > 0 || 
+           (data.paymentSchedule && data.paymentSchedule.length > 0);
+  };
+
+  const hasProjectTimeline = () => {
+    return data.startDate || data.endDate;
+  };
+
+  const hasRetainerInfo = () => {
+    return data.isRetainer && data.retainerAmount && data.retainerAmount > 0;
+  };
+
+  const hasConfidentialityInfo = () => {
+    return data.includeNDA;
+  };
+
+  const hasAgreementIntro = () => {
+    return data.agreementIntroText && data.agreementIntroText.trim();
+  };
+
   return (
     <div className="contract-preview h-full overflow-auto bg-gray-100 p-6">
-      {/* Page 1 */}
       <div 
-        className="mx-auto bg-white shadow-lg mb-8 page-break-after"
+        className="mx-auto bg-white shadow-lg"
         style={{
           width: '210mm',
           minHeight: '297mm',
-          maxHeight: '297mm',
           fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
                      data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
                      data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
           lineHeight: data.lineSpacing || 1.6,
           color: '#1a1a1a',
-          padding: '25mm',
-          overflow: 'hidden'
+          padding: '25mm'
         }}
       >
         {/* Header Section */}
@@ -133,10 +162,9 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Page 1 Content */}
         <div className="space-y-8">
-          {/* Agreement Introduction */}
-          {data.agreementIntroText && (
+          {/* Agreement Introduction - Only show if has content */}
+          {hasAgreementIntro() && (
             <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-4`} style={{ color: data.primaryColor }}>
                 Agreement Introduction
@@ -152,103 +180,78 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </section>
           )}
 
-          {/* Parties Information */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-              Parties to the Agreement
-            </h3>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
-                  Service Provider
-                </h4>
-                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
-                  <p><strong>Name:</strong> {data.freelancerName}</p>
-                  {data.freelancerBusinessName && <p><strong>Business:</strong> {data.freelancerBusinessName}</p>}
-                  <p><strong>Address:</strong> {data.freelancerAddress}</p>
-                  <p><strong>Email:</strong> {data.freelancerEmail}</p>
-                  {data.freelancerPhone && <p><strong>Phone:</strong> {data.freelancerPhone}</p>}
-                </div>
+          {/* Parties Information - Only show if has content */}
+          {hasPartiesInfo() && (
+            <section>
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
+                Parties to the Agreement
+              </h3>
+              <div className="grid md:grid-cols-2 gap-8">
+                {data.freelancerName && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
+                      Service Provider
+                    </h4>
+                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
+                      <p><strong>Name:</strong> {data.freelancerName}</p>
+                      {data.freelancerBusinessName && <p><strong>Business:</strong> {data.freelancerBusinessName}</p>}
+                      {data.freelancerAddress && <p><strong>Address:</strong> {data.freelancerAddress}</p>}
+                      {data.freelancerEmail && <p><strong>Email:</strong> {data.freelancerEmail}</p>}
+                      {data.freelancerPhone && <p><strong>Phone:</strong> {data.freelancerPhone}</p>}
+                    </div>
+                  </div>
+                )}
+                {data.clientName && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
+                      Client
+                    </h4>
+                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
+                      <p><strong>Name:</strong> {data.clientName}</p>
+                      {data.clientCompany && <p><strong>Company:</strong> {data.clientCompany}</p>}
+                      {data.clientEmail && <p><strong>Email:</strong> {data.clientEmail}</p>}
+                      {data.clientPhone && <p><strong>Phone:</strong> {data.clientPhone}</p>}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.partiesBold ? 'font-bold' : ''}`}>
-                  Client
-                </h4>
-                <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-2`}>
-                  <p><strong>Name:</strong> {data.clientName}</p>
-                  {data.clientCompany && <p><strong>Company:</strong> {data.clientCompany}</p>}
-                  <p><strong>Email:</strong> {data.clientEmail}</p>
-                  {data.clientPhone && <p><strong>Phone:</strong> {data.clientPhone}</p>}
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
-          {/* Scope of Work - First Part */}
-          {data.services && (
+          {/* Scope of Work - Only show if has content */}
+          {hasScopeOfWork() && (
             <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Scope of Work
               </h3>
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
-                    Services
-                  </h4>
-                  <p className="leading-relaxed">{data.services}</p>
-                </div>
-              </div>
-            </section>
-          )}
-        </div>
-
-        {/* Page Number */}
-        <div className="absolute bottom-8 right-8 text-sm text-gray-500">
-          Page 1
-        </div>
-      </div>
-
-      {/* Page 2 */}
-      <div 
-        className="mx-auto bg-white shadow-lg mb-8 page-break-after"
-        style={{
-          width: '210mm',
-          minHeight: '297mm',
-          maxHeight: '297mm',
-          fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
-                     data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
-                     data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
-          lineHeight: data.lineSpacing || 1.6,
-          color: '#1a1a1a',
-          padding: '25mm',
-          overflow: 'hidden'
-        }}
-      >
-        <div className="space-y-8">
-          {/* Scope of Work - Continued */}
-          {data.deliverables && (
-            <section>
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-                Scope of Work (Continued)
-              </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
-                    Deliverables
-                  </h4>
-                  <p className="leading-relaxed">{data.deliverables}</p>
-                </div>
-                {data.milestones && data.milestones.length > 0 && (
+                {data.services && data.services.trim() && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
+                      Services
+                    </h4>
+                    <p className="leading-relaxed">{data.services}</p>
+                  </div>
+                )}
+                {data.deliverables && data.deliverables.trim() && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
+                      Deliverables
+                    </h4>
+                    <p className="leading-relaxed">{data.deliverables}</p>
+                  </div>
+                )}
+                {data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim()) && (
                   <div>
                     <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.scopeBold ? 'font-bold' : ''}`}>
                       Milestones
                     </h4>
                     <div className="space-y-3">
-                      {data.milestones.map((milestone, index) => (
+                      {data.milestones.filter(m => m.title && m.title.trim()).map((milestone, index) => (
                         <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
                           <p className="font-medium">{milestone.title}</p>
-                          <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
-                          <p className="text-sm text-gray-500 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>
+                          {milestone.description && <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>}
+                          {milestone.dueDate && <p className="text-sm text-gray-500 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
                           {milestone.amount && <p className="text-sm font-medium mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
                         </div>
                       ))}
@@ -259,47 +262,49 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </section>
           )}
 
-          {/* Payment Terms */}
-          <section>
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
-              Payment Terms
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
-              <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
-                  Payment Structure
-                </h4>
-                {data.paymentType === 'hourly' ? (
-                  <p>Hourly Rate: <strong>₹{data.rate?.toLocaleString()}</strong> per hour</p>
-                ) : (
-                  <p>Total Project Amount: <strong>₹{data.totalAmount?.toLocaleString()}</strong></p>
-                )}
-              </div>
-
-              {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-4 ${data.paymentBold ? 'font-bold' : ''}`}>
-                    Payment Schedule
-                  </h4>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    {formatPaymentSchedule()}
-                  </div>
-                </div>
-              )}
-
-              {data.lateFeeEnabled && data.lateFeeAmount && (
+          {/* Payment Terms - Only show if has content */}
+          {hasPaymentTerms() && (
+            <section>
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
+                Payment Terms
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
                 <div>
                   <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
-                    Late Payment Terms
+                    Payment Structure
                   </h4>
-                  <p>Late Fee: ₹{data.lateFeeAmount} per day for payments made after the due date.</p>
+                  {data.paymentType === 'hourly' && data.rate > 0 ? (
+                    <p>Hourly Rate: <strong>₹{data.rate?.toLocaleString()}</strong> per hour</p>
+                  ) : data.totalAmount && data.totalAmount > 0 ? (
+                    <p>Total Project Amount: <strong>₹{data.totalAmount?.toLocaleString()}</strong></p>
+                  ) : null}
                 </div>
-              )}
-            </div>
-          </section>
 
-          {/* Project Timeline */}
-          {(data.startDate || data.endDate) && (
+                {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && data.totalAmount && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-4 ${data.paymentBold ? 'font-bold' : ''}`}>
+                      Payment Schedule
+                    </h4>
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      {formatPaymentSchedule()}
+                    </div>
+                  </div>
+                )}
+
+                {data.lateFeeEnabled && data.lateFeeAmount && data.lateFeeAmount > 0 && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-medium mb-3 ${data.paymentBold ? 'font-bold' : ''}`}>
+                      Late Payment Terms
+                    </h4>
+                    <p>Late Fee: ₹{data.lateFeeAmount} per day for payments made after the due date.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Project Timeline - Only show if has content */}
+          {hasProjectTimeline() && (
             <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Project Timeline
@@ -310,37 +315,15 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
               </div>
             </section>
           )}
-        </div>
 
-        {/* Page Number */}
-        <div className="absolute bottom-8 right-8 text-sm text-gray-500">
-          Page 2
-        </div>
-      </div>
-
-      {/* Page 3 */}
-      <div 
-        className="mx-auto bg-white shadow-lg"
-        style={{
-          width: '210mm',
-          minHeight: '297mm',
-          fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
-                     data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
-                     data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
-          lineHeight: data.lineSpacing || 1.6,
-          color: '#1a1a1a',
-          padding: '25mm'
-        }}
-      >
-        <div className="space-y-8">
-          {/* Ongoing Work & Retainer */}
-          {data.isRetainer && (
+          {/* Ongoing Work & Retainer - Only show if has content */}
+          {hasRetainerInfo() && (
             <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Retainer Agreement
               </h3>
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-                {data.retainerAmount && <p><strong>Retainer Amount:</strong> ₹{data.retainerAmount.toLocaleString()}</p>}
+                <p><strong>Retainer Amount:</strong> ₹{data.retainerAmount.toLocaleString()}</p>
                 {data.renewalCycle && <p><strong>Renewal Cycle:</strong> {data.renewalCycle}</p>}
                 <p><strong>Auto-Renewal:</strong> {data.autoRenew ? 'Yes' : 'No'}</p>
               </div>
@@ -359,8 +342,8 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
             </div>
           </section>
 
-          {/* Confidentiality */}
-          {data.includeNDA && (
+          {/* Confidentiality - Only show if has content */}
+          {hasConfidentialityInfo() && (
             <section>
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-semibold mb-6`} style={{ color: data.primaryColor }}>
                 Confidentiality Agreement
@@ -369,7 +352,7 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
                 <p className="leading-relaxed">Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.</p>
                 {data.confidentialityScope && <p><strong>Scope:</strong> {data.confidentialityScope}</p>}
                 {data.confidentialityDuration && <p><strong>Duration:</strong> {data.confidentialityDuration}</p>}
-                {data.breachPenalty && <p><strong>Breach Penalty:</strong> ₹{data.breachPenalty.toLocaleString()}</p>}
+                {data.breachPenalty && data.breachPenalty > 0 && <p><strong>Breach Penalty:</strong> ₹{data.breachPenalty.toLocaleString()}</p>}
               </div>
             </section>
           )}
@@ -432,11 +415,6 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
               </div>
             </div>
           </section>
-        </div>
-
-        {/* Page Number */}
-        <div className="absolute bottom-8 right-8 text-sm text-gray-500">
-          Page 3
         </div>
       </div>
     </div>
