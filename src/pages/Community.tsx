@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -148,37 +147,31 @@ const Community = () => {
                       <Card className="hover:shadow-lg transition-all duration-300 rounded-2xl">
                         <CardHeader>
                           <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <CardTitle className="text-lg font-heading">{template.title}</CardTitle>
-                                <Badge variant="secondary">{template.category}</Badge>
-                              </div>
-                              <CardDescription className="mb-3">{template.description}</CardDescription>
-                              
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <Avatar className="h-5 w-5">
-                                    <AvatarFallback className="text-xs">{template.author.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <span>{template.author}</span>
-                                </div>
-                                <span>•</span>
-                                <span>{template.uploadedAt}</span>
-                              </div>
+                            <div className="flex items-center space-x-2">
+                              <CardTitle className="text-lg font-heading">{template.title}</CardTitle>
+                              <Badge variant="secondary">{template.category}</Badge>
                             </div>
-                            
-                            <div className="text-right">
-                              <div className="flex items-center space-x-1 mb-1">
-                                <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                <span className="text-sm font-medium">{template.rating}</span>
-                              </div>
+                            <div className="flex items-center space-x-1">
+                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              <span className="text-sm font-medium">{template.rating}</span>
                             </div>
+                          </div>
+                          <CardDescription className="mt-2 mb-3">{template.description}</CardDescription>
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <div className="flex items-center space-x-1">
+                              <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-xs">{template.author.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span>{template.author}</span>
+                            </div>
+                            <span>•</span>
+                            <span>{template.uploadedAt}</span>
                           </div>
                         </CardHeader>
                         
                         <CardContent>
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                               <div className="flex items-center space-x-1">
                                 <Download className="h-4 w-4" />
                                 <span>{template.downloads}</span>
