@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import SignatureCanvas from 'react-signature-canvas';
-import { Trash2, PenTool, Type } from 'lucide-react';
+import { Trash2, PenTool, Type, Save } from 'lucide-react';
 import { ContractData } from '@/pages/ContractBuilder';
 
 interface SignatureStepProps {
@@ -29,12 +29,14 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   const freelancerSigRef = useRef<SignatureCanvas>(null);
   const [signatureType, setSignatureType] = useState<'draw' | 'font'>('draw');
   const [fontSignatureName, setFontSignatureName] = useState(data.freelancerName || '');
+  const [isSignatureSaved, setIsSignatureSaved] = useState(!!data.freelancerSignature);
 
   useEffect(() => {
     // Load existing signature if it exists
     if (data.freelancerSignature && freelancerSigRef.current && signatureType === 'draw') {
       freelancerSigRef.current.fromDataURL(data.freelancerSignature);
     }
+    setIsSignatureSaved(!!data.freelancerSignature);
   }, [data.freelancerSignature, signatureType]);
 
   useEffect(() => {
@@ -47,18 +49,21 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   const clearFreelancerSignature = () => {
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
-      updateData('freelancerSignature', '');
-      updateData('signedDate', '');
     }
+    updateData('freelancerSignature', '');
+    updateData('signedDate', '');
+    setIsSignatureSaved(false);
   };
 
   const saveFreelancerSignature = () => {
-    if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
+    if (signatureType === 'draw' && freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
       const signatureData = freelancerSigRef.current.toDataURL();
       console.log('Saving signature:', signatureData);
       updateData('freelancerSignature', signatureData);
-      // Also update signed date
       updateData('signedDate', new Date().toISOString());
+      setIsSignatureSaved(true);
+    } else if (signatureType === 'font' && fontSignatureName.trim()) {
+      generateFontSignature(fontSignatureName);
     }
   };
 
@@ -88,8 +93,8 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       const signatureData = canvas.toDataURL();
       console.log('Generating font signature:', signatureData);
       updateData('freelancerSignature', signatureData);
-      // Also update signed date
       updateData('signedDate', new Date().toISOString());
+      setIsSignatureSaved(true);
     }
   };
 
@@ -98,6 +103,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     // Clear existing signature when switching types
     updateData('freelancerSignature', '');
     updateData('signedDate', '');
+    setIsSignatureSaved(false);
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
     }
@@ -105,10 +111,8 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
 
   // Auto-save when draw signature ends
   const handleDrawEnd = () => {
-    console.log('Draw ended, saving signature...');
-    setTimeout(() => {
-      saveFreelancerSignature();
-    }, 100); // Small delay to ensure canvas is ready
+    console.log('Draw ended...');
+    // Don't auto-save, let user manually save
   };
 
   return (
@@ -193,6 +197,17 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   <Trash2 className="h-3 w-3" />
                   Clear
                 </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={saveFreelancerSignature}
+                  className="flex items-center gap-1"
+                  disabled={freelancerSigRef.current?.isEmpty()}
+                >
+                  <Save className="h-3 w-3" />
+                  Save Signature
+                </Button>
               </div>
             </div>
           ) : (
@@ -208,11 +223,24 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <p className="text-xs text-muted-foreground mt-1">
                 Preview: <span style={{ fontFamily: '"Dancing Script", cursive, serif', fontSize: '24px' }}>{fontSignatureName}</span>
               </p>
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={saveFreelancerSignature}
+                  className="flex items-center gap-1"
+                  disabled={!fontSignatureName.trim()}
+                >
+                  <Save className="h-3 w-3" />
+                  Save Signature
+                </Button>
+              </div>
             </div>
           )}
 
           {/* Signature Preview */}
-          {data.freelancerSignature && (
+          {data.freelancerSignature && isSignatureSaved && (
             <div>
               <Label>Signature Preview</Label>
               <div className="border rounded-lg p-4 bg-gray-50 flex justify-center">
@@ -227,6 +255,9 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                   Signed on: {new Date(data.signedDate).toLocaleString()}
                 </p>
               )}
+              <div className="mt-2">
+                <p className="text-sm text-green-600 font-medium">✓ Signature saved and will appear in the contract</p>
+              </div>
             </div>
           )}
         </CardContent>

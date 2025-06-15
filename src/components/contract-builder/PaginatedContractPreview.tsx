@@ -68,7 +68,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const hasRetainerInfo = () => data.isRetainer && data.retainerAmount && data.retainerAmount > 0;
   const hasConfidentialityInfo = () => data.includeNDA;
   const hasAgreementIntro = () => data.agreementIntroText && data.agreementIntroText.trim();
-  const hasOngoingWork = () => data.paymentType === 'ongoing';
   const hasSLA = () => data.responseTime;
   const hasIP = () => data.ipOwnership;
   const hasTermination = () => true; // Always show termination clause
