@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 import { Switch } from '@/components/ui/switch';
@@ -180,7 +181,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           />
         </div>
       </div>
-      <div className="flex-grow overflow-auto">
+      <div className={cn("flex-grow overflow-auto", isVerticalView && "grid place-items-center")}>
         <div ref={contentRef} style={{
           position: 'absolute',
           left: '-9999px',
@@ -467,7 +468,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </section>
         </div>
 
-        <div className={cn("p-8", isVerticalView ? "w-full flex justify-center" : "")}>
+        <div className="p-8">
           <div className={cn(isVerticalView ? "flex flex-col space-y-8" : "flex space-x-8")}>
             {pages.map((page, index) => (
               <div 
