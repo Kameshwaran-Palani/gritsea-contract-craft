@@ -39,11 +39,24 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
   const [keyViewCount, setKeyViewCount] = useState(0);
   const [showKey, setShowKey] = useState(false);
   const [blurredKey, setBlurredKey] = useState('');
+  const [eSignDetails, setESignDetails] = useState<{
+    link: string;
+    secretKey: string;
+    clientContact: string;
+    authMethod: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (shareInfo?.secretKey) {
+    if (contractId && (status === 'sent_for_signature' || status === 'signed')) {
+      loadESignDetails();
+    }
+  }, [contractId, status]);
+
+  useEffect(() => {
+    const currentShareInfo = shareInfo || eSignDetails;
+    if (currentShareInfo?.secretKey) {
       // Create blurred version
-      const key = shareInfo.secretKey;
+      const key = currentShareInfo.secretKey;
       const blurred = key.slice(0, 3) + '●'.repeat(key.length - 6) + key.slice(-3);
       setBlurredKey(blurred);
       
@@ -52,7 +65,22 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
       const viewCount = parseInt(localStorage.getItem(storageKey) || '0');
       setKeyViewCount(viewCount);
     }
-  }, [shareInfo, contractId]);
+  }, [shareInfo, eSignDetails, contractId]);
+
+  const loadESignDetails = async () => {
+    try {
+      // Create mock eSign details for demonstration
+      const mockDetails = {
+        link: `${window.location.origin}/esign/${contractId}/email`,
+        secretKey: 'ABC123XYZ',
+        clientContact: 'client@example.com',
+        authMethod: 'email'
+      };
+      setESignDetails(mockDetails);
+    } catch (error) {
+      console.error('Error loading eSign details:', error);
+    }
+  };
 
   const handleViewKey = () => {
     if (keyViewCount >= 3) {
@@ -143,6 +171,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
   };
 
   const milestones = getMilestones();
+  const currentShareInfo = shareInfo || eSignDetails;
 
   return (
     <div className="space-y-6">
@@ -159,7 +188,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
             {milestones.map((milestone, index) => {
               const Icon = milestone.icon;
               return (
-                <div key={milestone.id} className="flex items-start gap-4">
+                <div key={milestone.id} className="flex items-start gap-4 relative">
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                     milestone.status === 'completed' ? 'bg-green-100' :
                     milestone.status === 'in_progress' ? 'bg-blue-100' :
@@ -183,7 +212,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
                     <p className="text-sm text-muted-foreground">{milestone.description}</p>
                   </div>
                   {index < milestones.length - 1 && (
-                    <div className="absolute left-4 mt-8 w-px h-6 bg-gray-200" />
+                    <div className="absolute left-4 top-8 w-px h-6 bg-gray-200" />
                   )}
                 </div>
               );
@@ -193,7 +222,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
       </Card>
 
       {/* eSign Details */}
-      {shareInfo && (
+      {currentShareInfo && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -207,14 +236,14 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
               <Label className="text-sm font-medium">Client Signing Link</Label>
               <div className="flex gap-2 mt-1">
                 <Input
-                  value={shareInfo.link}
+                  value={currentShareInfo.link}
                   readOnly
                   className="font-mono text-xs"
                 />
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(shareInfo.link, 'Signing link')}
+                  onClick={() => copyToClipboard(currentShareInfo.link, 'Signing link')}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -226,14 +255,14 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
               <Label className="text-sm font-medium">Client Contact</Label>
               <div className="flex gap-2 mt-1">
                 <Input
-                  value={shareInfo.clientContact}
+                  value={currentShareInfo.clientContact}
                   readOnly
                   className="text-sm"
                 />
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(shareInfo.clientContact, 'Client contact')}
+                  onClick={() => copyToClipboard(currentShareInfo.clientContact, 'Client contact')}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -244,9 +273,9 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
             <div>
               <Label className="text-sm font-medium">Authentication Method</Label>
               <div className="flex items-center gap-2 mt-1">
-                {shareInfo.authMethod === 'email' && <Mail className="h-4 w-4" />}
-                {shareInfo.authMethod === 'phone' && <Phone className="h-4 w-4" />}
-                <span className="text-sm capitalize">{shareInfo.authMethod}</span>
+                {currentShareInfo.authMethod === 'email' && <Mail className="h-4 w-4" />}
+                {currentShareInfo.authMethod === 'phone' && <Phone className="h-4 w-4" />}
+                <span className="text-sm capitalize">{currentShareInfo.authMethod}</span>
               </div>
             </div>
 
@@ -260,7 +289,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
               </Label>
               <div className="flex gap-2 mt-1">
                 <Input
-                  value={showKey ? shareInfo.secretKey : blurredKey}
+                  value={showKey ? currentShareInfo.secretKey : blurredKey}
                   readOnly
                   className="font-mono text-xs"
                   type={showKey ? "text" : "password"}
@@ -277,7 +306,7 @@ const ContractMilestone: React.FC<ContractMilestoneProps> = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => copyToClipboard(shareInfo.secretKey, 'Access key')}
+                    onClick={() => copyToClipboard(currentShareInfo.secretKey, 'Access key')}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

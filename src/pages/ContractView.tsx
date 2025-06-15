@@ -11,6 +11,7 @@ import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ContractDecisionPanel from '@/components/contract-builder/ContractDecisionPanel';
 import ESignDialog from '@/components/contract-builder/ESignDialog';
 import ContractMilestone from '@/components/contract-builder/ContractMilestone';
+import Navbar from '@/components/ui/navbar';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -61,6 +62,16 @@ const ContractView = () => {
       // Load revision requests if status is revision_requested
       if (data.status === 'revision_requested') {
         loadRevisionRequests(data.id);
+      }
+
+      // Set share info if contract has been shared
+      if (data.status === 'sent_for_signature' || data.status === 'signed') {
+        setShareInfo({
+          link: `${window.location.origin}/esign/${contractId}/email`,
+          secretKey: 'ABC123XYZ',
+          clientContact: data.client_email || 'client@example.com',
+          authMethod: 'email'
+        });
       }
     } catch (error) {
       console.error('Error loading contract:', error);
@@ -204,6 +215,17 @@ const ContractView = () => {
   const handleESignSuccess = () => {
     setContract(prev => ({ ...prev, status: 'sent_for_signature', is_locked: true }));
     setShowESignDialog(false);
+    
+    // Set share info after successful eSign
+    if (id) {
+      setShareInfo({
+        link: `${window.location.origin}/esign/${id}/email`,
+        secretKey: 'ABC123XYZ',
+        clientContact: contract?.client_email || 'client@example.com',
+        authMethod: 'email'
+      });
+    }
+    
     toast({
       title: "eSign Link Generated",
       description: "Contract has been shared with client for signing."
@@ -233,8 +255,11 @@ const ContractView = () => {
         description="View and manage your service contract"
       />
       <div className="min-h-screen bg-background">
+        {/* Navbar */}
+        <Navbar />
+        
         {/* Header */}
-        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-16 z-40 mt-16">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
