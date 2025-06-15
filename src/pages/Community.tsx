@@ -128,7 +128,7 @@ const Community = () => {
 
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
               <TabsList className="grid w-full grid-cols-5 rounded-2xl">
                 <TabsTrigger value="all" className="rounded-xl">All</TabsTrigger>
@@ -238,7 +238,7 @@ const Community = () => {
               </TabsContent>
 
               <TabsContent value="contributors" className="mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-4">
                   {topContributors.map((contributor, index) => (
                     <motion.div
                       key={contributor.name}
@@ -246,7 +246,7 @@ const Community = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className="rounded-2xl h-full">
+                      <Card className="rounded-2xl">
                         <CardContent className="p-4 flex items-center space-x-4">
                            <span className="text-lg font-bold text-muted-foreground w-6 text-center">
                             #{index + 1}
@@ -267,23 +267,6 @@ const Community = () => {
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Upload Your Template */}
-            <Card className="rounded-2xl border-2 border-dashed border-primary/20">
-              <CardContent className="p-6 text-center">
-                <Upload className="mx-auto h-12 w-12 text-primary mb-4" />
-                <h3 className="font-semibold mb-2">Share Your Template</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Help the community by sharing your contract templates
-                </p>
-                <Button className="w-full bg-primary hover:bg-primary/90 rounded-xl" onClick={() => setIsUploadDialogOpen(true)}>
-                  Upload Template
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
