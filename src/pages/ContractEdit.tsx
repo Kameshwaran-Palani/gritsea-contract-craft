@@ -98,7 +98,7 @@ const ContractEdit = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Clean Header with Professional Design */}
+      {/* Clean Header with Website Theme */}
       <header className="border-b bg-white shadow-sm sticky top-0 z-50">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
@@ -109,12 +109,12 @@ const ContractEdit = () => {
               </Button>
             </Link>
             <div className="h-6 w-px bg-gray-300" />
-            {/* Agrezy Branding */}
+            {/* Agrezy Branding with Website Theme */}
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Agrezy</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Agrezy</span>
             </div>
             <div className="h-6 w-px bg-gray-300" />
             <h1 className="text-lg font-semibold text-gray-900">Contract Editor</h1>
@@ -132,7 +132,7 @@ const ContractEdit = () => {
             
             <Button
               onClick={handleShareContract}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white"
             >
               <Send className="h-4 w-4" />
               Get E-Sign

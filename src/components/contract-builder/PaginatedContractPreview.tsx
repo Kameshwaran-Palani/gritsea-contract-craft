@@ -69,10 +69,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const hasRetainerInfo = () => data.isRetainer && data.retainerAmount && data.retainerAmount > 0;
   const hasConfidentialityInfo = () => data.includeNDA;
   const hasAgreementIntro = () => data.agreementIntroText && data.agreementIntroText.trim();
-  const hasOngoingWork = () => data.paymentType === 'retainer';
-  const hasSLA = () => data.responseTime || data.availability;
+  const hasOngoingWork = () => data.paymentType === 'ongoing';
+  const hasSLA = () => data.responseTime;
   const hasIP = () => data.ipOwnership;
-  const hasTermination = () => data.terminationNotice;
+  const hasTermination = () => data.terminationClause;
 
   const formatPaymentSchedule = () => {
     if (!data.paymentSchedule || data.paymentSchedule.length === 0) return null;
@@ -138,7 +138,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   }, [data]);
 
   return (
-    <div className="contract-preview h-full overflow-auto bg-gray-100 p-8">
+    <div className="contract-preview h-full overflow-x-auto bg-gray-100 p-8">
       {/* Hidden content for measurement */}
       <div ref={contentRef} className="hidden" style={{
         width: `${CONTENT_WIDTH}px`,
@@ -393,19 +393,20 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 TERMINATION
               </h3>
               <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-                <p>Either party may terminate this agreement with {data.terminationNotice} notice.</p>
+                <p>Either party may terminate this agreement with proper notice as specified in the termination clause.</p>
               </div>
             </section>
             <hr className="border-gray-300 my-8" />
           </>
         )}
 
-        {/* Signature Section - Only Freelancer */}
+        {/* Signature Section - Both Parties */}
         <section className="border-t-2 border-gray-300 pt-12 mt-16">
           <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-8 text-gray-900`}>
-            DIGITAL SIGNATURE
+            DIGITAL SIGNATURES
           </h3>
-          <div className="max-w-md">
+          <div className="grid grid-cols-2 gap-8">
+            {/* Service Provider Signature */}
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.freelancerSignature && (
@@ -418,14 +419,29 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
               </div>
             </div>
+
+            {/* Client Signature */}
+            <div className="text-center">
+              <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
+                {data.clientSignature && (
+                  <img src={data.clientSignature} alt="Client Signature" className="h-16 object-contain" />
+                )}
+              </div>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
+                <p className="font-bold text-gray-900">CLIENT</p>
+                <p className="text-gray-700">{data.clientName}</p>
+                <p className="text-gray-600">Date: _____________</p>
+                <p className="text-xs text-gray-500 mt-2">Client will sign via e-signature</p>
+              </div>
+            </div>
           </div>
         </section>
       </div>
 
-      {/* Paginated Display */}
-      <div className="space-y-8">
+      {/* Horizontally Scrollable Paginated Display */}
+      <div className="flex space-x-8 overflow-x-auto pb-4">
         {pages.map((page, index) => (
-          <div key={index} className="mx-auto bg-white shadow-lg border border-gray-200 page-break-after" style={{
+          <div key={index} className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" style={{
             width: `${PAGE_WIDTH}px`,
             minHeight: `${PAGE_HEIGHT}px`,
             padding: `${PAGE_MARGIN}px`,
