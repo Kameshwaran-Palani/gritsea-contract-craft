@@ -124,9 +124,6 @@ const ContractDecisionPanel: React.FC<ContractDecisionPanelProps> = ({
             <div className="text-center">
               <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
               <div className="font-medium text-green-700">Approve & Sign</div>
-              <div className="text-xs text-green-600 min-h-[2.5rem] flex items-center justify-center">
-                I agree with all terms and conditions
-              </div>
             </div>
           </Button>
 
@@ -138,9 +135,6 @@ const ContractDecisionPanel: React.FC<ContractDecisionPanelProps> = ({
             <div className="text-center">
               <Edit className="h-6 w-6 text-orange-600 mx-auto mb-2" />
               <div className="font-medium text-orange-700">Request Changes</div>
-              <div className="text-xs text-orange-600 min-h-[2.5rem] flex items-center justify-center">
-                I need modifications to this contract
-              </div>
             </div>
           </Button>
         </div>
