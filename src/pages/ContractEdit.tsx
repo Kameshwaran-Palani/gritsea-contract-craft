@@ -62,50 +62,57 @@ const ContractEdit = () => {
       const subtitleElement = contractContent.querySelector('h2');
       
       if (titleElement && titleElement.textContent && titleElement.textContent.trim()) {
-        // Main title with blue color and center alignment
+        // Main title with consistent blue color
         pdf.setFontSize(28);
         pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246); // Blue color matching preview
+        pdf.setTextColor(59, 130, 246); // Consistent blue color for all headers
         const titleText = titleElement.textContent.trim();
         pdf.text(titleText, pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
       }
 
       if (subtitleElement && subtitleElement.textContent && subtitleElement.textContent.trim()) {
-        // Subtitle with gray color and center alignment
+        // Subtitle with gray color
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(107, 114, 128); // Gray color matching preview
+        pdf.setTextColor(107, 114, 128); // Gray color for subtitles
         const subtitleText = subtitleElement.textContent.trim();
         pdf.text(subtitleText, pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 20;
       }
 
-      // Add horizontal line separator exactly like preview
+      // Add horizontal line separator
       pdf.setDrawColor(229, 231, 235); // Light gray
       pdf.setLineWidth(0.5);
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 15;
 
-      // Process sections with exact formatting from preview
+      // Process sections with consistent formatting
       const sections = contractContent.querySelectorAll('section');
+      let signatureSectionProcessed = false; // Flag to prevent duplicate signature sections
+      
       sections.forEach((section) => {
         const heading = section.querySelector('h3');
         
         if (heading && heading.textContent && heading.textContent.trim()) {
           const sectionTitle = heading.textContent.trim();
           
+          // Skip duplicate signature sections
+          if (sectionTitle.includes('SIGNATURES') && signatureSectionProcessed) {
+            return;
+          }
+          
           // Check if we need a new page for this section
           checkNewPage(25);
           
-          // Section header with blue color and underline (matching preview)
+          // Section header with consistent blue color and underline
           pdf.setFontSize(18);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246); // Blue color
+          pdf.setTextColor(59, 130, 246); // Consistent blue color for ALL section headers
           pdf.text(sectionTitle, margin, yPosition);
           yPosition += 3;
           
-          // Blue underline
+          // Blue underline for all sections
           pdf.setDrawColor(59, 130, 246);
           pdf.setLineWidth(0.8);
           pdf.line(margin, yPosition, margin + 60, yPosition);
@@ -121,7 +128,7 @@ const ContractEdit = () => {
               // Service Provider column (left)
               pdf.setFontSize(14);
               pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(0, 0, 0);
+              pdf.setTextColor(0, 0, 0); // Black for all subsection headers
               pdf.text('SERVICE PROVIDER', margin, yPosition);
               yPosition += 8;
               
@@ -130,7 +137,7 @@ const ContractEdit = () => {
                 if (detail.textContent && detail.textContent.trim()) {
                   pdf.setFontSize(11);
                   pdf.setFont('helvetica', 'normal');
-                  pdf.setTextColor(55, 65, 81);
+                  pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
                   const lines = pdf.splitTextToSize(detail.textContent.trim(), contentWidth / 2 - 10);
                   lines.forEach((line: string) => {
                     pdf.text(line, margin, yPosition);
@@ -146,7 +153,7 @@ const ContractEdit = () => {
             if (client) {
               pdf.setFontSize(14);
               pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(0, 0, 0);
+              pdf.setTextColor(0, 0, 0); // Black for all subsection headers
               pdf.text('CLIENT', pageWidth / 2 + 10, clientY);
               clientY += 8;
               
@@ -155,7 +162,7 @@ const ContractEdit = () => {
                 if (detail.textContent && detail.textContent.trim()) {
                   pdf.setFontSize(11);
                   pdf.setFont('helvetica', 'normal');
-                  pdf.setTextColor(55, 65, 81);
+                  pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
                   const lines = pdf.splitTextToSize(detail.textContent.trim(), contentWidth / 2 - 10);
                   lines.forEach((line: string) => {
                     pdf.text(line, pageWidth / 2 + 10, clientY);
@@ -167,14 +174,62 @@ const ContractEdit = () => {
             
             yPosition = Math.max(yPosition, clientY) + 10;
             
+          } else if (sectionTitle.includes('SIGNATURES')) {
+            // Mark signature section as processed to prevent duplicates
+            signatureSectionProcessed = true;
+            
+            // Signature section with consistent formatting
+            checkNewPage(80);
+            
+            const signatureY = yPosition;
+            
+            // Service Provider signature (left)
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(0, 0, 0); // Black for all labels
+            pdf.text('SERVICE PROVIDER', margin, signatureY);
+            
+            // Signature line
+            pdf.setDrawColor(0, 0, 0);
+            pdf.setLineWidth(0.5);
+            pdf.line(margin, signatureY + 20, margin + 70, signatureY + 20);
+            
+            // Labels
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
+            pdf.text('Name: _________________________', margin, signatureY + 30);
+            pdf.text('Date: __________________________', margin, signatureY + 38);
+            
+            // Client signature (right)
+            const clientSignatureX = pageWidth / 2 + 10;
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(0, 0, 0); // Black for all labels
+            pdf.text('CLIENT', clientSignatureX, signatureY);
+            
+            // Signature line
+            pdf.line(clientSignatureX, signatureY + 20, clientSignatureX + 70, signatureY + 20);
+            
+            // Labels
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
+            pdf.text('Name: _________________________', clientSignatureX, signatureY + 30);
+            pdf.text('Date: __________________________', clientSignatureX, signatureY + 38);
+            
+            yPosition += 50; // Space after signature section
+            
           } else {
-            // Regular section content
+            // Regular section content with consistent formatting
             const paragraphs = section.querySelectorAll('p, div');
             paragraphs.forEach((p) => {
               if (p.textContent && 
                   p.textContent.trim() && 
                   !p.textContent.includes('Page ') && 
-                  p.textContent.trim() !== sectionTitle) {
+                  p.textContent.trim() !== sectionTitle &&
+                  !p.textContent.includes('Name:') &&
+                  !p.textContent.includes('Date:')) {
                 
                 const text = p.textContent.trim();
                 if (text) {
@@ -185,11 +240,11 @@ const ContractEdit = () => {
                   if (isSubHeader) {
                     pdf.setFontSize(12);
                     pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(0, 0, 0);
+                    pdf.setTextColor(0, 0, 0); // Black for all subsection headers
                   } else {
                     pdf.setFontSize(11);
                     pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(55, 65, 81);
+                    pdf.setTextColor(55, 65, 81); // Consistent gray for all body text
                   }
                   
                   const lines = pdf.splitTextToSize(text, contentWidth);
@@ -211,55 +266,60 @@ const ContractEdit = () => {
         }
       });
 
-      // Signature section with proper formatting
-      checkNewPage(80);
-      
-      // Add separator line before signatures
-      pdf.setDrawColor(229, 231, 235);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 15;
-      
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(59, 130, 246);
-      pdf.text('SIGNATURES', margin, yPosition);
-      yPosition += 20;
+      // Add final signature section if not already processed
+      if (!signatureSectionProcessed) {
+        checkNewPage(80);
+        
+        // Add separator line before signatures
+        pdf.setDrawColor(229, 231, 235);
+        pdf.setLineWidth(0.5);
+        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 15;
+        
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(59, 130, 246); // Consistent blue color
+        pdf.text('SIGNATURES', margin, yPosition);
+        yPosition += 20;
 
-      // Two-column signature layout
-      const signatureY = yPosition;
-      
-      // Service Provider signature (left)
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('SERVICE PROVIDER', margin, signatureY);
-      
-      // Signature line
-      pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, signatureY + 20, margin + 70, signatureY + 20);
-      
-      // Labels
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Name: _________________________', margin, signatureY + 30);
-      pdf.text('Date: __________________________', margin, signatureY + 38);
-      
-      // Client signature (right)
-      const clientSignatureX = pageWidth / 2 + 10;
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('CLIENT', clientSignatureX, signatureY);
-      
-      // Signature line
-      pdf.line(clientSignatureX, signatureY + 20, clientSignatureX + 70, signatureY + 20);
-      
-      // Labels
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Name: _________________________', clientSignatureX, signatureY + 30);
-      pdf.text('Date: __________________________', clientSignatureX, signatureY + 38);
+        // Two-column signature layout
+        const signatureY = yPosition;
+        
+        // Service Provider signature (left)
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('SERVICE PROVIDER', margin, signatureY);
+        
+        // Signature line
+        pdf.setDrawColor(0, 0, 0);
+        pdf.setLineWidth(0.5);
+        pdf.line(margin, signatureY + 20, margin + 70, signatureY + 20);
+        
+        // Labels
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text('Name: _________________________', margin, signatureY + 30);
+        pdf.text('Date: __________________________', margin, signatureY + 38);
+        
+        // Client signature (right)
+        const clientSignatureX = pageWidth / 2 + 10;
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('CLIENT', clientSignatureX, signatureY);
+        
+        // Signature line
+        pdf.line(clientSignatureX, signatureY + 20, clientSignatureX + 70, signatureY + 20);
+        
+        // Labels
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text('Name: _________________________', clientSignatureX, signatureY + 30);
+        pdf.text('Date: __________________________', clientSignatureX, signatureY + 38);
+      }
 
       // Download the PDF
       const fileName = `contract-${Date.now()}.pdf`;
