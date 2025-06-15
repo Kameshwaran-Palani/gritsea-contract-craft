@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +16,6 @@ const ContractNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showTemplateDialog, setShowTemplateDialog] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
   const handleTemplateSelect = async (templateData: Partial<ContractData>) => {
     if (!user) return;
@@ -52,7 +50,7 @@ const ContractNew = () => {
           milestones: [],
           paymentType: 'fixed',
           rate: 0,
-          paymentSchedule: templateData.paymentSchedule || [{ description: 'Full payment', percentage: 100 }],
+          paymentSchedule: templateData.paymentSchedule || [{ description: 'Full payment', percentage: 100, dueDate: new Date().toISOString().split('T')[0] }],
           lateFeeEnabled: false,
           isRetainer: false,
           autoRenew: false,
@@ -95,7 +93,7 @@ const ContractNew = () => {
 
   const handleStartFromScratch = () => {
     handleTemplateSelect({
-      templateId: undefined,
+      template: 'custom',
       templateName: 'Custom Contract'
     });
   };
@@ -175,12 +173,8 @@ const ContractNew = () => {
             {/* Template Selection */}
             <div className="mt-4">
               <TemplateSelection
-                data={{} as ContractData}
-                updateData={handleTemplateSelect}
-                onNext={() => setShowTemplateDialog(false)}
-                onPrev={() => {}}
-                isFirst={true}
-                isLast={false}
+                contractData={{} as ContractData}
+                updateContractData={handleTemplateSelect}
               />
             </div>
           </div>

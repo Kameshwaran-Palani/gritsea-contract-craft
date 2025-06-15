@@ -186,10 +186,7 @@ const ContractBuilder = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-	const [contract, setContract] = useState<any>(null);
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockedBy, setLockedBy] = useState<string | null>(null);
-  const [lockedAt, setLockedAt] = useState<string | null>(null);
+  const [contract, setContract] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
@@ -198,15 +195,6 @@ const ContractBuilder = () => {
       // Set a default template when creating a new contract
       setContractData(prev => ({ ...prev, template: 'basic-service-agreement' }));
     }
-
-    // Check if contract is locked every 10 seconds
-    const intervalId = setInterval(() => {
-      if (id) {
-        checkContractLock(id);
-      }
-    }, 10000);
-
-    return () => clearInterval(intervalId);
   }, [id]);
 
   useEffect(() => {
@@ -248,7 +236,6 @@ const ContractBuilder = () => {
       
       setContract(data);
       setContractData(data.clauses_json as unknown as ContractData);
-      checkContractLock(contractId);
     } catch (error) {
       console.error('Error loading contract:', error);
       toast({
@@ -258,97 +245,6 @@ const ContractBuilder = () => {
       });
     }
   };
-
-  const checkContractLock = async (contractId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('contracts')
-        .select('is_locked, locked_by, locked_at')
-        .eq('id', contractId)
-        .single();
-      
-      if (error) throw error;
-      
-      setIsLocked(data?.is_locked || false);
-      setLockedBy(data?.locked_by || null);
-      setLockedAt(data?.locked_at || null);
-      
-      if (data?.is_locked && data?.locked_by !== supabase.auth.user()?.id) {
-        toast({
-          title: "Contract Locked",
-          description: `This contract is currently being edited by another user. You can view it, but you won't be able to make changes.`,
-          duration: 5000,
-        });
-      }
-    } catch (error) {
-      console.error('Error checking contract lock:', error);
-    }
-  };
-
-  const lockContract = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      const { error } = await supabase
-        .from('contracts')
-        .update({ 
-          is_locked: true,
-          locked_by: supabase.auth.user()?.id,
-          locked_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      setIsLocked(true);
-      setLockedBy(supabase.auth.user()?.id || null);
-      setLockedAt(new Date().toISOString());
-    } catch (error) {
-      console.error('Error locking contract:', error);
-      toast({
-        title: "Error",
-        description: "Failed to lock contract",
-        variant: "destructive"
-      });
-    }
-  }, [id]);
-
-  const unlockContract = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      const { error } = await supabase
-        .from('contracts')
-        .update({ 
-          is_locked: false,
-          locked_by: null,
-          locked_at: null
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      setIsLocked(false);
-      setLockedBy(null);
-      setLockedAt(null);
-    } catch (error) {
-      console.error('Error unlocking contract:', error);
-      toast({
-        title: "Error",
-        description: "Failed to unlock contract",
-        variant: "destructive"
-      });
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id) {
-      lockContract();
-
-      // Unlock contract when component unmounts
-      return () => {
-        unlockContract();
-      };
-    }
-  }, [id, lockContract, unlockContract]);
 
   const updateContractData = (newData: Partial<ContractData>) => {
     setContractData(prev => ({ ...prev, ...newData }));
@@ -369,7 +265,7 @@ const ContractBuilder = () => {
 
     try {
       const clausesJson = contractData as unknown as Record<string, any>;
-      const status = action === 'publish' ? 'shared' : 'draft';
+      const status = action === 'publish' ? 'sent' : 'draft';
 
       if (id) {
         // Update existing contract
@@ -389,14 +285,16 @@ const ContractBuilder = () => {
         });
       } else {
         // Create new contract
+        const { data: authData } = await supabase.auth.getUser();
         const { data, error } = await supabase
           .from('contracts')
           .insert([{ 
+            title: contractData.documentTitle || 'New Contract',
             clauses_json: clausesJson,
-            user_id: supabase.auth.user()?.id,
+            user_id: authData.user?.id,
             status: status
           }])
-          .select('*')
+          .select('*');
 
         if (error) throw error;
 
@@ -432,7 +330,7 @@ const ContractBuilder = () => {
           .from('contracts')
           .update({ status: 'sent' })
           .eq('id', id)
-          .select('*')
+          .select('*');
 
         if (error) throw error;
 
