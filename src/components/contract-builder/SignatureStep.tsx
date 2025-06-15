@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface SignatureStepProps {
   data: ContractData;
-  updateData: (field: keyof ContractData, value: any) => void;
+  updateData: (updates: Partial<ContractData>) => void;
   onNext: () => void;
   onPrev: () => void;
   isFirst: boolean;
@@ -64,9 +65,9 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   }, [data.freelancerName, signatureType, fontSignatureName]);
 
   // Wrap updateData to log
-  const debugUpdateData = (field: keyof ContractData, value: any) => {
-    console.log("[SignatureStep] updateData called:", field, value);
-    updateData(field, value);
+  const debugUpdateData = (updates: Partial<ContractData>) => {
+    console.log("[SignatureStep] updateData called with:", updates);
+    updateData(updates);
   };
 
   // Real-time signature update for drawing
@@ -74,8 +75,10 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
       const signatureData = freelancerSigRef.current.toDataURL();
       console.log('[SignatureStep] Real-time signature update:', signatureData.slice(0, 50), '...');
-      debugUpdateData('freelancerSignature', signatureData);
-      debugUpdateData('signedDate', new Date().toISOString());
+      debugUpdateData({
+        freelancerSignature: signatureData,
+        signedDate: new Date().toISOString(),
+      });
       setIsSignatureSaved(true);
     }
   };
@@ -83,11 +86,11 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   // Real-time signature update for font
   const handleFontSignatureChange = (name: string) => {
     setFontSignatureName(name);
+    updateData({ freelancerName: name });
     if (name.trim()) {
       generateFontSignature(name);
     } else {
-      debugUpdateData('freelancerSignature', '');
-      debugUpdateData('signedDate', '');
+      debugUpdateData({ freelancerSignature: '', signedDate: '' });
       setIsSignatureSaved(false);
     }
   };
@@ -96,8 +99,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
     }
-    debugUpdateData('freelancerSignature', '');
-    debugUpdateData('signedDate', '');
+    debugUpdateData({ freelancerSignature: '', signedDate: '' });
     setIsSignatureSaved(false);
     setIsCanvasLoaded(false);
     
@@ -112,8 +114,10 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
         const signatureData = freelancerSigRef.current.toDataURL();
         console.log('[SignatureStep] Saving drawn signature:', signatureData.slice(0, 50), '...');
-        debugUpdateData('freelancerSignature', signatureData);
-        debugUpdateData('signedDate', new Date().toISOString());
+        debugUpdateData({
+          freelancerSignature: signatureData,
+          signedDate: new Date().toISOString(),
+        });
         setIsSignatureSaved(true);
         
         toast({
@@ -170,8 +174,10 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
       // Convert to data URL and update
       const signatureData = canvas.toDataURL();
       console.log('[SignatureStep] Generating font signature:', signatureData.slice(0, 50), '...');
-      debugUpdateData('freelancerSignature', signatureData);
-      debugUpdateData('signedDate', new Date().toISOString());
+      debugUpdateData({
+        freelancerSignature: signatureData,
+        signedDate: new Date().toISOString(),
+      });
       setIsSignatureSaved(true);
     }
   };
@@ -179,8 +185,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   const handleSignatureTypeChange = (type: 'draw' | 'font') => {
     setSignatureType(type);
     // Clear existing signature when switching types
-    updateData('freelancerSignature', '');
-    updateData('signedDate', '');
+    updateData({ freelancerSignature: '', signedDate: '' });
     setIsSignatureSaved(false);
     setIsCanvasLoaded(false);
     if (freelancerSigRef.current) {
@@ -212,9 +217,10 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               id="freelancerName"
               value={data.freelancerName || ''}
               onChange={(e) => {
-                updateData('freelancerName', e.target.value);
+                const newName = e.target.value;
+                updateData({ freelancerName: newName });
                 if (signatureType === 'font') {
-                  handleFontSignatureChange(e.target.value);
+                  handleFontSignatureChange(newName);
                 }
               }}
               placeholder="Enter your full name"
