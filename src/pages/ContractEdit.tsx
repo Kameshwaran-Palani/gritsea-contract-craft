@@ -58,11 +58,13 @@ const ContractEdit = () => {
 
       // Helper function to add text with word wrapping
       const addText = (text: string, fontSize: number, fontStyle: string = 'normal') => {
+        if (!text || !text.trim()) return 0; // Skip empty content
+        
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', fontStyle);
         pdf.setTextColor(0, 0, 0);
 
-        const lines = pdf.splitTextToSize(text, contentWidth);
+        const lines = pdf.splitTextToSize(text.trim(), contentWidth);
         const lineHeight = fontSize * 0.4;
         
         checkNewPage(lines.length * lineHeight);
@@ -75,21 +77,21 @@ const ContractEdit = () => {
         return lines.length * lineHeight;
       };
 
-      // Extract text content from the preview
+      // Extract text content from the preview, but only include sections with content
       const titleElement = contractContent.querySelector('h1');
       const subtitleElement = contractContent.querySelector('h2');
       
-      if (titleElement) {
+      if (titleElement && titleElement.textContent && titleElement.textContent.trim()) {
         pdf.setFontSize(24);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(titleElement.textContent || 'SERVICE AGREEMENT', pageWidth / 2, yPosition, { align: 'center' });
+        pdf.text(titleElement.textContent.trim(), pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 10;
       }
 
-      if (subtitleElement) {
+      if (subtitleElement && subtitleElement.textContent && subtitleElement.textContent.trim()) {
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(subtitleElement.textContent || 'PROFESSIONAL SERVICE CONTRACT', pageWidth / 2, yPosition, { align: 'center' });
+        pdf.text(subtitleElement.textContent.trim(), pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
       }
 
@@ -98,23 +100,30 @@ const ContractEdit = () => {
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 10;
 
-      // Extract and add other content sections
+      // Extract and add other content sections - only if they have content
       const sections = contractContent.querySelectorAll('section');
       sections.forEach((section) => {
         const heading = section.querySelector('h3');
-        if (heading) {
-          addText(heading.textContent || '', 16, 'bold');
-          yPosition += 5;
-        }
-
-        const paragraphs = section.querySelectorAll('p, div');
-        paragraphs.forEach((p) => {
-          if (p.textContent && p.textContent.trim()) {
-            addText(p.textContent.trim(), 12);
-            yPosition += 3;
+        const hasContent = section.textContent && section.textContent.trim();
+        
+        // Only add section if it has meaningful content beyond just the heading
+        if (hasContent && hasContent.length > (heading?.textContent?.length || 0) + 10) {
+          if (heading && heading.textContent && heading.textContent.trim()) {
+            addText(heading.textContent.trim(), 16, 'bold');
+            yPosition += 5;
           }
-        });
-        yPosition += 8;
+
+          const paragraphs = section.querySelectorAll('p, div');
+          paragraphs.forEach((p) => {
+            if (p.textContent && p.textContent.trim() && 
+                !p.textContent.includes('Page ') && // Skip page indicators
+                p.textContent.trim() !== heading?.textContent?.trim()) { // Skip duplicate headings
+              const added = addText(p.textContent.trim(), 12);
+              if (added > 0) yPosition += 3;
+            }
+          });
+          yPosition += 8;
+        }
       });
 
       // Download the PDF

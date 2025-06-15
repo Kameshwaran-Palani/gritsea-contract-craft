@@ -505,8 +505,8 @@ const ContractBuilder = () => {
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 10;
 
-      // Agreement Introduction
-      if (contractData.agreementIntroText) {
+      // Agreement Introduction - only if text exists
+      if (contractData.agreementIntroText && contractData.agreementIntroText.trim()) {
         addText('AGREEMENT INTRODUCTION', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
         addText(contractData.agreementIntroText, 12);
@@ -518,101 +518,130 @@ const ContractBuilder = () => {
         }
       }
 
-      // Parties Information
-      addText('PARTIES TO THE AGREEMENT', 16, 'bold', contractData.primaryColor);
-      yPosition += 5;
+      // Parties Information - only if required fields exist
+      if (contractData.freelancerName || contractData.clientName) {
+        addText('PARTIES TO THE AGREEMENT', 16, 'bold', contractData.primaryColor);
+        yPosition += 5;
 
-      addText('Service Provider:', 14, 'bold');
-      yPosition += 2;
-      addText(`Name: ${contractData.freelancerName}`, 12);
-      if (contractData.freelancerBusinessName) {
-        addText(`Business: ${contractData.freelancerBusinessName}`, 12);
-      }
-      addText(`Address: ${contractData.freelancerAddress}`, 12);
-      addText(`Email: ${contractData.freelancerEmail}`, 12);
-      if (contractData.freelancerPhone) {
-        addText(`Phone: ${contractData.freelancerPhone}`, 12);
-      }
-      yPosition += 8;
+        if (contractData.freelancerName) {
+          addText('Service Provider:', 14, 'bold');
+          yPosition += 2;
+          addText(`Name: ${contractData.freelancerName}`, 12);
+          if (contractData.freelancerBusinessName && contractData.freelancerBusinessName.trim()) {
+            addText(`Business: ${contractData.freelancerBusinessName}`, 12);
+          }
+          if (contractData.freelancerAddress && contractData.freelancerAddress.trim()) {
+            addText(`Address: ${contractData.freelancerAddress}`, 12);
+          }
+          if (contractData.freelancerEmail && contractData.freelancerEmail.trim()) {
+            addText(`Email: ${contractData.freelancerEmail}`, 12);
+          }
+          if (contractData.freelancerPhone && contractData.freelancerPhone.trim()) {
+            addText(`Phone: ${contractData.freelancerPhone}`, 12);
+          }
+          yPosition += 8;
+        }
 
-      addText('Client:', 14, 'bold');
-      yPosition += 2;
-      addText(`Name: ${contractData.clientName}`, 12);
-      if (contractData.clientCompany) {
-        addText(`Company: ${contractData.clientCompany}`, 12);
+        if (contractData.clientName) {
+          addText('Client:', 14, 'bold');
+          yPosition += 2;
+          addText(`Name: ${contractData.clientName}`, 12);
+          if (contractData.clientCompany && contractData.clientCompany.trim()) {
+            addText(`Company: ${contractData.clientCompany}`, 12);
+          }
+          if (contractData.clientEmail && contractData.clientEmail.trim()) {
+            addText(`Email: ${contractData.clientEmail}`, 12);
+          }
+          if (contractData.clientPhone && contractData.clientPhone.trim()) {
+            addText(`Phone: ${contractData.clientPhone}`, 12);
+          }
+          yPosition += 10;
+        }
       }
-      addText(`Email: ${contractData.clientEmail}`, 12);
-      if (contractData.clientPhone) {
-        addText(`Phone: ${contractData.clientPhone}`, 12);
-      }
-      yPosition += 10;
 
-      // Scope of Work
-      if (contractData.services) {
+      // Scope of Work - only if services or deliverables exist
+      if ((contractData.services && contractData.services.trim()) || 
+          (contractData.deliverables && contractData.deliverables.trim()) || 
+          (contractData.milestones && contractData.milestones.length > 0)) {
         addText('SCOPE OF WORK', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
         
-        addText('Services:', 14, 'bold');
-        yPosition += 2;
-        addText(contractData.services, 12);
-        yPosition += 8;
+        if (contractData.services && contractData.services.trim()) {
+          addText('Services:', 14, 'bold');
+          yPosition += 2;
+          addText(contractData.services, 12);
+          yPosition += 8;
+        }
+
+        if (contractData.deliverables && contractData.deliverables.trim()) {
+          addText('Deliverables:', 14, 'bold');
+          yPosition += 2;
+          addText(contractData.deliverables, 12);
+          yPosition += 8;
+        }
+
+        // Milestones - only if they exist
+        if (contractData.milestones && contractData.milestones.length > 0) {
+          addText('Milestones:', 14, 'bold');
+          yPosition += 2;
+          contractData.milestones.forEach((milestone, index) => {
+            if (milestone.title && milestone.title.trim()) {
+              addText(`${index + 1}. ${milestone.title}`, 12, 'bold');
+              if (milestone.description && milestone.description.trim()) {
+                addText(`   ${milestone.description}`, 12);
+              }
+              if (milestone.dueDate) {
+                addText(`   Due: ${new Date(milestone.dueDate).toLocaleDateString()}`, 12);
+              }
+              if (milestone.amount) {
+                addText(`   Amount: ₹${milestone.amount.toLocaleString()}`, 12);
+              }
+              yPosition += 3;
+            }
+          });
+          yPosition += 5;
+        }
       }
 
-      if (contractData.deliverables) {
-        addText('Deliverables:', 14, 'bold');
-        yPosition += 2;
-        addText(contractData.deliverables, 12);
-        yPosition += 8;
-      }
-
-      // Milestones
-      if (contractData.milestones && contractData.milestones.length > 0) {
-        addText('Milestones:', 14, 'bold');
-        yPosition += 2;
-        contractData.milestones.forEach((milestone, index) => {
-          addText(`${index + 1}. ${milestone.title}`, 12, 'bold');
-          addText(`   ${milestone.description}`, 12);
-          addText(`   Due: ${new Date(milestone.dueDate).toLocaleDateString()}`, 12);
-          if (milestone.amount) {
-            addText(`   Amount: ₹${milestone.amount.toLocaleString()}`, 12);
-          }
-          yPosition += 3;
-        });
+      // Payment Terms - only if payment info exists
+      if (contractData.rate > 0 || contractData.totalAmount || 
+          (contractData.paymentSchedule && contractData.paymentSchedule.length > 0)) {
+        addText('PAYMENT TERMS', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
-      }
 
-      // Payment Terms
-      addText('PAYMENT TERMS', 16, 'bold', contractData.primaryColor);
-      yPosition += 5;
+        if (contractData.paymentType === 'hourly' && contractData.rate > 0) {
+          addText(`Hourly Rate: ₹${contractData.rate?.toLocaleString()} per hour`, 12, 'bold');
+        } else if (contractData.totalAmount && contractData.totalAmount > 0) {
+          addText(`Total Project Amount: ₹${contractData.totalAmount?.toLocaleString()}`, 12, 'bold');
+        }
+        yPosition += 5;
 
-      if (contractData.paymentType === 'hourly') {
-        addText(`Hourly Rate: ₹${contractData.rate?.toLocaleString()} per hour`, 12, 'bold');
-      } else {
-        addText(`Total Project Amount: ₹${contractData.totalAmount?.toLocaleString()}`, 12, 'bold');
-      }
-      yPosition += 5;
-
-      // Payment Schedule
-      if (contractData.paymentType === 'fixed' && contractData.paymentSchedule && contractData.paymentSchedule.length > 0) {
-        addText('Payment Schedule:', 14, 'bold');
-        yPosition += 2;
-        contractData.paymentSchedule.forEach((payment, index) => {
-          const amount = contractData.totalAmount ? (contractData.totalAmount * payment.percentage) / 100 : 0;
-          addText(`${payment.description || `Payment ${index + 1}`}: ${payment.percentage}% - ₹${amount.toLocaleString()}`, 12);
-          if (payment.dueDate) {
-            addText(`Due: ${new Date(payment.dueDate).toLocaleDateString()}`, 12);
+        // Payment Schedule - only if exists and has valid entries
+        if (contractData.paymentType === 'fixed' && contractData.paymentSchedule && 
+            contractData.paymentSchedule.length > 0 && contractData.totalAmount) {
+          const validPayments = contractData.paymentSchedule.filter(p => p.percentage > 0);
+          if (validPayments.length > 0) {
+            addText('Payment Schedule:', 14, 'bold');
+            yPosition += 2;
+            validPayments.forEach((payment, index) => {
+              const amount = contractData.totalAmount ? (contractData.totalAmount * payment.percentage) / 100 : 0;
+              addText(`${payment.description || `Payment ${index + 1}`}: ${payment.percentage}% - ₹${amount.toLocaleString()}`, 12);
+              if (payment.dueDate) {
+                addText(`Due: ${new Date(payment.dueDate).toLocaleDateString()}`, 12);
+              }
+            });
+            yPosition += 8;
           }
-        });
-        yPosition += 8;
+        }
+
+        // Late Fee - only if enabled
+        if (contractData.lateFeeEnabled && contractData.lateFeeAmount && contractData.lateFeeAmount > 0) {
+          addText(`Late Fee: ₹${contractData.lateFeeAmount} per day for payments made after the due date.`, 12);
+          yPosition += 8;
+        }
       }
 
-      // Late Fee
-      if (contractData.lateFeeEnabled && contractData.lateFeeAmount) {
-        addText(`Late Fee: ₹${contractData.lateFeeAmount} per day for payments made after the due date.`, 12);
-        yPosition += 8;
-      }
-
-      // Project Timeline
+      // Project Timeline - only if dates exist
       if (contractData.startDate || contractData.endDate) {
         addText('PROJECT TIMELINE', 16, 'bold', contractData.primaryColor);
         yPosition += 5;
@@ -625,15 +654,44 @@ const ContractBuilder = () => {
         yPosition += 10;
       }
 
+      // Ongoing Work - only if retainer is enabled
+      if (contractData.isRetainer && contractData.retainerAmount && contractData.retainerAmount > 0) {
+        addText('ONGOING WORK TERMS', 16, 'bold', contractData.primaryColor);
+        yPosition += 5;
+        addText(`Monthly Retainer: ₹${contractData.retainerAmount.toLocaleString()}`, 12, 'bold');
+        if (contractData.renewalCycle) {
+          addText(`Renewal Cycle: ${contractData.renewalCycle}`, 12);
+        }
+        addText(`Auto Renewal: ${contractData.autoRenew ? 'Yes' : 'No'}`, 12);
+        yPosition += 10;
+      }
+
       // Service Level Agreement
       addText('SERVICE LEVEL AGREEMENT', 16, 'bold', contractData.primaryColor);
       yPosition += 5;
       addText(`Response Time: ${contractData.responseTime}`, 12);
       addText(`Revision Limit: ${contractData.revisionLimit} revisions included`, 12);
-      if (contractData.uptimeRequirement) {
+      if (contractData.uptimeRequirement && contractData.uptimeRequirement.trim()) {
         addText(`Uptime Requirement: ${contractData.uptimeRequirement}`, 12);
       }
       yPosition += 10;
+
+      // Confidentiality - only if NDA is included
+      if (contractData.includeNDA) {
+        addText('CONFIDENTIALITY & NON-DISCLOSURE', 16, 'bold', contractData.primaryColor);
+        yPosition += 5;
+        addText('Both parties agree to maintain confidentiality of all proprietary information shared during this engagement.', 12);
+        if (contractData.confidentialityScope && contractData.confidentialityScope.trim()) {
+          addText(`Scope: ${contractData.confidentialityScope}`, 12);
+        }
+        if (contractData.confidentialityDuration && contractData.confidentialityDuration.trim()) {
+          addText(`Duration: ${contractData.confidentialityDuration}`, 12);
+        }
+        if (contractData.breachPenalty && contractData.breachPenalty > 0) {
+          addText(`Breach Penalty: ₹${contractData.breachPenalty.toLocaleString()}`, 12);
+        }
+        yPosition += 10;
+      }
 
       // Intellectual Property
       addText('INTELLECTUAL PROPERTY RIGHTS', 16, 'bold', contractData.primaryColor);
@@ -649,20 +707,21 @@ const ContractBuilder = () => {
       // Termination & Dispute Resolution
       addText('TERMINATION & DISPUTE RESOLUTION', 16, 'bold', contractData.primaryColor);
       yPosition += 5;
-      addText(`Termination Conditions: ${contractData.terminationConditions}`, 12);
-      addText(`Notice Period: ${contractData.noticePeriod}`, 12);
-      addText(`Governing Jurisdiction: ${contractData.jurisdiction}`, 12);
+      if (contractData.terminationConditions && contractData.terminationConditions.trim()) {
+        addText(`Termination Conditions: ${contractData.terminationConditions}`, 12);
+      }
+      if (contractData.noticePeriod && contractData.noticePeriod.trim()) {
+        addText(`Notice Period: ${contractData.noticePeriod}`, 12);
+      }
+      if (contractData.jurisdiction && contractData.jurisdiction.trim()) {
+        addText(`Governing Jurisdiction: ${contractData.jurisdiction}`, 12);
+      }
       addText(`Arbitration: ${contractData.arbitrationClause ? 'Disputes subject to arbitration' : 'Standard legal proceedings apply'}`, 12);
       yPosition += 15;
 
       // Signature Section
       checkNewPage(60);
       
-      // Add signature line
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, yPosition + 40, pageWidth - margin, yPosition + 40);
-      yPosition += 15;
-
       addText('SIGNATURES', 16, 'bold', contractData.primaryColor);
       yPosition += 20;
 
@@ -671,12 +730,16 @@ const ContractBuilder = () => {
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(0, 0, 0);
       pdf.text('Service Provider:', margin, yPosition);
-      pdf.text(`${contractData.freelancerName}`, margin, yPosition + 15);
+      if (contractData.freelancerName) {
+        pdf.text(`${contractData.freelancerName}`, margin, yPosition + 15);
+      }
       pdf.text(`Date: ${contractData.signedDate ? new Date(contractData.signedDate).toLocaleDateString() : '_____________'}`, margin, yPosition + 25);
 
       // Client Signature
       pdf.text('Client:', pageWidth - margin - 80, yPosition);
-      pdf.text(`${contractData.clientName}`, pageWidth - margin - 80, yPosition + 15);
+      if (contractData.clientName) {
+        pdf.text(`${contractData.clientName}`, pageWidth - margin - 80, yPosition + 15);
+      }
       pdf.text(`Date: ${contractData.signedDate ? new Date(contractData.signedDate).toLocaleDateString() : '_____________'}`, pageWidth - margin - 80, yPosition + 25);
 
       // Download the PDF
