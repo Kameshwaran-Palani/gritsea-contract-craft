@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,9 +8,11 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LayoutDashboard, FileText, Bot, CreditCard, Settings, LogOut, Menu, User, Users, Bookmark, Zap, PanelLeft } from 'lucide-react';
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
+
 const DashboardLayout = ({
   children
 }: DashboardLayoutProps) => {
@@ -123,13 +126,15 @@ const DashboardLayout = ({
       </Sheet>
 
       <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <header className="flex h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
+        <header className="grid grid-cols-3 h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open sidebar</span>
             </Button>
-            
+          </div>
+
+          <div className="flex justify-center">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-sm font-heading">A</span>
@@ -138,7 +143,7 @@ const DashboardLayout = ({
             </Link>
           </div>
 
-          <div className="flex flex-1 justify-end items-center space-x-4">
+          <div className="flex items-center justify-end space-x-4">
             <Badge variant="outline" className="hidden sm:flex">
               3 free contracts left
             </Badge>
