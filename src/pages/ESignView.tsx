@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -212,40 +213,62 @@ const ESignView = () => {
   const handleDownloadPDF = async () => {
     setDownloadingPDF(true);
     try {
-      // Generate and download PDF
-      const element = document.getElementById('contract-preview');
-      if (element) {
-        const html2canvas = (await import('html2canvas')).default;
-        const jsPDF = (await import('jspdf')).default;
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your PDF...",
+      });
+
+      // Dynamically import libraries for PDF generation
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+      
+      // Get the paginated contract content
+      const pages = document.querySelectorAll('.page-break-after');
+      if (!pages.length) {
+        throw new Error('No pages found for PDF generation');
+      }
+
+      // Create PDF with A4 dimensions
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      // Process each page
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i] as HTMLElement;
         
-        const canvas = await html2canvas(element);
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Use html2canvas to convert page to image
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: page.offsetWidth,
+          height: page.offsetHeight,
+        });
+
         const imgData = canvas.toDataURL('image/png');
         
-        const pdf = new jsPDF();
-        const imgWidth = 210;
-        const pageHeight = 295;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
+        // Calculate dimensions to fit A4
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * pageWidth) / canvas.width;
         
-        let position = 0;
-        
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-        
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-        
-        pdf.save(`${contractData?.documentTitle || 'Contract'}.pdf`);
-        
-        toast({
-          title: "Download Complete",
-          description: "Contract PDF has been downloaded successfully."
-        });
+        // Add image to PDF
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pageHeight));
       }
+
+      // Download the PDF
+      const fileName = `${contractData?.documentTitle || 'Contract'}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: "Download Complete",
+        description: "Contract PDF has been downloaded successfully."
+      });
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
