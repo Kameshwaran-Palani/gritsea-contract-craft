@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Brush } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Brush, Copy } from 'lucide-react';
 import { ContractData, SectionDesign } from '@/pages/ContractBuilder';
+import { Button } from '@/components/ui/button';
 
 interface SectionSpecificStylingProps {
   data: ContractData;
@@ -30,10 +31,12 @@ interface SectionControlsProps {
     sectionId: string;
     data: ContractData;
     updateData: (updates: Partial<ContractData>) => void;
+    contentSections: typeof contentSections;
 }
 
-const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, updateData }) => {
+const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, updateData, contentSections }) => {
     const sectionStyle = data.sectionStyles?.[sectionId] || {};
+    const hasSpecificStyles = Object.keys(sectionStyle).length > 0;
 
     const handleUpdate = (updates: Partial<SectionDesign>) => {
         const updatePayload: Partial<ContractData> = {
@@ -50,6 +53,22 @@ const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, upda
             updatePayload.applyGlobalStyles = false;
         }
 
+        updateData(updatePayload);
+    };
+
+    const handleApplyToAll = () => {
+        if (!hasSpecificStyles) return;
+
+        const newSectionStyles: { [key: string]: SectionDesign } = {};
+        contentSections.forEach(section => {
+            newSectionStyles[section.id] = { ...sectionStyle };
+        });
+
+        const updatePayload: Partial<ContractData> = {
+            sectionStyles: newSectionStyles,
+            applyGlobalStyles: false,
+        };
+        
         updateData(updatePayload);
     };
 
@@ -126,6 +145,10 @@ const SectionControls: React.FC<SectionControlsProps> = ({ sectionId, data, upda
                     </div>
                 </div>
             </fieldset>
+            <Button onClick={handleApplyToAll} disabled={!hasSpecificStyles} variant="outline" size="sm" className="w-full mt-2">
+                <Copy className="h-4 w-4 mr-2" />
+                Apply These Styles to All Sections
+            </Button>
         </div>
     );
 };
@@ -149,6 +172,7 @@ const SectionSpecificStyling: React.FC<SectionSpecificStylingProps> = ({ data, u
                                 sectionId={section.id}
                                 data={data}
                                 updateData={updateData}
+                                contentSections={contentSections}
                             />
                         </AccordionContent>
                     </AccordionItem>
