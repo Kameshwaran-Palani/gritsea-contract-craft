@@ -69,10 +69,10 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
   const hasRetainerInfo = () => data.isRetainer && data.retainerAmount && data.retainerAmount > 0;
   const hasConfidentialityInfo = () => data.includeNDA;
   const hasAgreementIntro = () => data.agreementIntroText && data.agreementIntroText.trim();
-  const hasOngoingWork = () => data.isOngoing;
-  const hasSLA = () => data.slaResponseTime || data.slaAvailability;
+  const hasOngoingWork = () => data.paymentType === 'retainer';
+  const hasSLA = () => data.responseTime || data.availability;
   const hasIP = () => data.ipOwnership;
-  const hasTermination = () => data.terminationClause && data.terminationClause.trim();
+  const hasTermination = () => data.terminationNotice;
 
   const formatPaymentSchedule = () => {
     if (!data.paymentSchedule || data.paymentSchedule.length === 0) return null;
@@ -158,227 +158,254 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
         {/* Agreement Introduction */}
         {hasAgreementIntro() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-4 text-gray-900`}>
-              AGREEMENT INTRODUCTION
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-4`}>
-              <p className="leading-relaxed">{data.agreementIntroText}</p>
-              {data.effectiveDate && (
-                <p className="font-semibold text-gray-900">
-                  Effective Date: {new Date(data.effectiveDate).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-4 text-gray-900`}>
+                AGREEMENT INTRODUCTION
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-4`}>
+                <p className="leading-relaxed">{data.agreementIntroText}</p>
+                {data.effectiveDate && (
+                  <p className="font-semibold text-gray-900">
+                    Effective Date: {new Date(data.effectiveDate).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Parties Information */}
         {hasPartiesInfo() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              PARTIES TO THE AGREEMENT
-            </h3>
-            <div className="space-y-6">
-              {data.freelancerName && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
-                    SERVICE PROVIDER
-                  </h4>
-                  <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1 text-gray-700`}>
-                    <p><span className="font-semibold">Name:</span> {data.freelancerName}</p>
-                    {data.freelancerBusinessName && <p><span className="font-semibold">Business:</span> {data.freelancerBusinessName}</p>}
-                    {data.freelancerAddress && <p><span className="font-semibold">Address:</span> {data.freelancerAddress}</p>}
-                    {data.freelancerEmail && <p><span className="font-semibold">Email:</span> {data.freelancerEmail}</p>}
-                    {data.freelancerPhone && <p><span className="font-semibold">Phone:</span> {data.freelancerPhone}</p>}
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                PARTIES TO THE AGREEMENT
+              </h3>
+              <div className="grid grid-cols-2 gap-8">
+                {data.freelancerName && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                      SERVICE PROVIDER
+                    </h4>
+                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1 text-gray-700`}>
+                      <p><span className="font-semibold">Name:</span> {data.freelancerName}</p>
+                      {data.freelancerBusinessName && <p><span className="font-semibold">Business:</span> {data.freelancerBusinessName}</p>}
+                      {data.freelancerAddress && <p><span className="font-semibold">Address:</span> {data.freelancerAddress}</p>}
+                      {data.freelancerEmail && <p><span className="font-semibold">Email:</span> {data.freelancerEmail}</p>}
+                      {data.freelancerPhone && <p><span className="font-semibold">Phone:</span> {data.freelancerPhone}</p>}
+                    </div>
                   </div>
-                </div>
-              )}
-              {data.clientName && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
-                    CLIENT
-                  </h4>
-                  <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1 text-gray-700`}>
-                    <p><span className="font-semibold">Name:</span> {data.clientName}</p>
-                    {data.clientCompany && <p><span className="font-semibold">Company:</span> {data.clientCompany}</p>}
-                    {data.clientEmail && <p><span className="font-semibold">Email:</span> {data.clientEmail}</p>}
-                    {data.clientPhone && <p><span className="font-semibold">Phone:</span> {data.clientPhone}</p>}
+                )}
+                {data.clientName && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                      CLIENT
+                    </h4>
+                    <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1 text-gray-700`}>
+                      <p><span className="font-semibold">Name:</span> {data.clientName}</p>
+                      {data.clientCompany && <p><span className="font-semibold">Company:</span> {data.clientCompany}</p>}
+                      {data.clientEmail && <p><span className="font-semibold">Email:</span> {data.clientEmail}</p>}
+                      {data.clientPhone && <p><span className="font-semibold">Phone:</span> {data.clientPhone}</p>}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </section>
+                )}
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Scope of Work */}
         {hasScopeOfWork() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              SCOPE OF WORK
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6 text-gray-700`}>
-              {data.services && data.services.trim() && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
-                    SERVICES
-                  </h4>
-                  <p className="leading-relaxed">{data.services}</p>
-                </div>
-              )}
-              {data.deliverables && data.deliverables.trim() && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
-                    DELIVERABLES
-                  </h4>
-                  <p className="leading-relaxed">{data.deliverables}</p>
-                </div>
-              )}
-              {data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim()) && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900`}>
-                    MILESTONES
-                  </h4>
-                  <div className="space-y-3">
-                    {data.milestones.filter(m => m.title && m.title.trim()).map((milestone, index) => (
-                      <div key={index} className="border-l-4 border-gray-300 pl-4">
-                        <p className="font-semibold text-gray-900">{milestone.title}</p>
-                        {milestone.description && <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>}
-                        {milestone.dueDate && <p className="text-sm text-gray-600 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
-                        {milestone.amount && <p className="text-sm font-semibold text-gray-900 mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
-                      </div>
-                    ))}
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                SCOPE OF WORK
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6 text-gray-700`}>
+                {data.services && data.services.trim() && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                      SERVICES
+                    </h4>
+                    <p className="leading-relaxed">{data.services}</p>
                   </div>
-                </div>
-              )}
-            </div>
-          </section>
+                )}
+                {data.deliverables && data.deliverables.trim() && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                      DELIVERABLES
+                    </h4>
+                    <p className="leading-relaxed">{data.deliverables}</p>
+                  </div>
+                )}
+                {data.milestones && data.milestones.length > 0 && data.milestones.some(m => m.title && m.title.trim()) && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900`}>
+                      MILESTONES
+                    </h4>
+                    <div className="space-y-3">
+                      {data.milestones.filter(m => m.title && m.title.trim()).map((milestone, index) => (
+                        <div key={index} className="border-l-4 border-gray-300 pl-4">
+                          <p className="font-semibold text-gray-900">{milestone.title}</p>
+                          {milestone.description && <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>}
+                          {milestone.dueDate && <p className="text-sm text-gray-600 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>}
+                          {milestone.amount && <p className="text-sm font-semibold text-gray-900 mt-1">Amount: ₹{milestone.amount.toLocaleString()}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Payment Terms */}
         {hasPaymentTerms() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              PAYMENT TERMS
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
-              <div>
-                <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
-                  PAYMENT STRUCTURE
-                </h4>
-                {data.paymentType === 'hourly' && data.rate > 0 ? (
-                  <p className="text-lg font-bold text-gray-900">Hourly Rate: ₹{data.rate?.toLocaleString()}/hour</p>
-                ) : data.totalAmount && data.totalAmount > 0 ? (
-                  <p className="text-lg font-bold text-gray-900">Total Project Amount: ₹{data.totalAmount?.toLocaleString()}</p>
-                ) : null}
-              </div>
-
-              {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && data.totalAmount && (
-                <div>
-                  <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900`}>
-                    PAYMENT SCHEDULE
-                  </h4>
-                  <div className="space-y-2">
-                    {formatPaymentSchedule()}
-                  </div>
-                </div>
-              )}
-
-              {hasRetainerInfo() && (
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                PAYMENT TERMS
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-6`}>
                 <div>
                   <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
-                    RETAINER
+                    PAYMENT STRUCTURE
                   </h4>
-                  <p>Retainer Amount: ₹{data.retainerAmount?.toLocaleString()}</p>
+                  {data.paymentType === 'hourly' && data.rate > 0 ? (
+                    <p className="text-lg font-bold text-gray-900">Hourly Rate: ₹{data.rate?.toLocaleString()}/hour</p>
+                  ) : data.totalAmount && data.totalAmount > 0 ? (
+                    <p className="text-lg font-bold text-gray-900">Total Project Amount: ₹{data.totalAmount?.toLocaleString()}</p>
+                  ) : null}
                 </div>
-              )}
-            </div>
-          </section>
+
+                {data.paymentType === 'fixed' && data.paymentSchedule && data.paymentSchedule.length > 0 && data.totalAmount && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-4 text-gray-900`}>
+                      PAYMENT SCHEDULE
+                    </h4>
+                    <div className="space-y-2">
+                      {formatPaymentSchedule()}
+                    </div>
+                  </div>
+                )}
+
+                {hasRetainerInfo() && (
+                  <div>
+                    <h4 className={`${getSubHeaderFontSizeClass(data.subHeaderFontSize)} font-bold mb-3 text-gray-900`}>
+                      RETAINER
+                    </h4>
+                    <p>Retainer Amount: ₹{data.retainerAmount?.toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Project Timeline */}
         {hasProjectTimeline() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              PROJECT TIMELINE
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
-              {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
-              {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                PROJECT TIMELINE
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
+                {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
+                {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Ongoing Work */}
         {hasOngoingWork() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              ONGOING WORK
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-              <p>This is an ongoing work arrangement with flexible timeline and deliverables.</p>
-              {data.ongoingDetails && <p className="mt-2">{data.ongoingDetails}</p>}
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                ONGOING WORK
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+                <p>This is an ongoing work arrangement with flexible timeline and deliverables.</p>
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Service Level Agreement */}
         {hasSLA() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              SERVICE LEVEL AGREEMENT
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-2`}>
-              {data.slaResponseTime && <p><span className="font-bold">Response Time:</span> {data.slaResponseTime}</p>}
-              {data.slaAvailability && <p><span className="font-bold">Availability:</span> {data.slaAvailability}</p>}
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                SERVICE LEVEL AGREEMENT
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700 space-y-2`}>
+                {data.responseTime && <p><span className="font-bold">Response Time:</span> {data.responseTime}</p>}
+                {data.availability && <p><span className="font-bold">Availability:</span> {data.availability}</p>}
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Intellectual Property */}
         {hasIP() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              INTELLECTUAL PROPERTY
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-              <p><span className="font-bold">IP Ownership:</span> {data.ipOwnership}</p>
-              {data.ipDetails && <p className="mt-2">{data.ipDetails}</p>}
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                INTELLECTUAL PROPERTY
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+                <p><span className="font-bold">IP Ownership:</span> {data.ipOwnership}</p>
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Confidentiality */}
         {hasConfidentialityInfo() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              CONFIDENTIALITY
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-              <p>Both parties agree to maintain confidentiality of all proprietary and sensitive information shared during the course of this agreement.</p>
-              {data.ndaDetails && <p className="mt-2">{data.ndaDetails}</p>}
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                CONFIDENTIALITY
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+                <p>Both parties agree to maintain confidentiality of all proprietary and sensitive information shared during the course of this agreement.</p>
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Termination */}
         {hasTermination() && (
-          <section className="mb-8">
-            <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-              TERMINATION
-            </h3>
-            <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-              <p>{data.terminationClause}</p>
-            </div>
-          </section>
+          <>
+            <section className="mb-8">
+              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
+                TERMINATION
+              </h3>
+              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
+                <p>Either party may terminate this agreement with {data.terminationNotice} notice.</p>
+              </div>
+            </section>
+            <hr className="border-gray-300 my-8" />
+          </>
         )}
 
         {/* Signature Section - Only Freelancer */}
         <section className="border-t-2 border-gray-300 pt-12 mt-16">
           <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-8 text-gray-900`}>
-            SIGNATURES
+            DIGITAL SIGNATURE
           </h3>
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="max-w-md">
             <div className="text-center">
               <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
                 {data.freelancerSignature && (
@@ -389,16 +416,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 <p className="font-bold text-gray-900">SERVICE PROVIDER</p>
                 <p className="text-gray-700">{data.freelancerName}</p>
                 <p className="text-gray-600">Date: {data.signedDate ? new Date(data.signedDate).toLocaleDateString() : '_____________'}</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="border-b-2 border-gray-400 mb-4 h-20 flex items-end justify-center">
-                {/* Client signature will be added via e-sign */}
-              </div>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-1`}>
-                <p className="font-bold text-gray-900">CLIENT</p>
-                <p className="text-gray-700">{data.clientName}</p>
-                <p className="text-gray-600">Date: _____________</p>
               </div>
             </div>
           </div>
