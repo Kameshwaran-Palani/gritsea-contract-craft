@@ -10,7 +10,7 @@ import { ContractData } from '@/pages/ContractBuilder';
 
 interface SignatureStepProps {
   data: ContractData;
-  updateData: (updates: Partial<ContractData>) => void;
+  updateData: (field: keyof ContractData, value: any) => void;
   onNext: () => void;
   onPrev: () => void;
   isFirst: boolean;
@@ -41,28 +41,28 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   const clearFreelancerSignature = () => {
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
-      updateData({ freelancerSignature: '' });
+      updateData('freelancerSignature', '');
     }
   };
 
   const clearClientSignature = () => {
     if (clientSigRef.current) {
       clientSigRef.current.clear();
-      updateData({ clientSignature: '' });
+      updateData('clientSignature', '');
     }
   };
 
   const saveFreelancerSignature = () => {
     if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
       const signatureData = freelancerSigRef.current.toDataURL();
-      updateData({ freelancerSignature: signatureData });
+      updateData('freelancerSignature', signatureData);
     }
   };
 
   const saveClientSignature = () => {
     if (clientSigRef.current && !clientSigRef.current.isEmpty()) {
       const signatureData = clientSigRef.current.toDataURL();
-      updateData({ clientSignature: signatureData });
+      updateData('clientSignature', signatureData);
     }
   };
 
@@ -90,7 +90,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <Input
                 id="freelancerName"
                 value={data.freelancerName || ''}
-                onChange={(e) => updateData({ freelancerName: e.target.value })}
+                onChange={(e) => updateData('freelancerName', e.target.value)}
                 placeholder="Enter your full name"
               />
             </div>
@@ -138,7 +138,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
               <Input
                 id="clientSignatureName"
                 value={data.clientName || ''}
-                onChange={(e) => updateData({ clientName: e.target.value })}
+                onChange={(e) => updateData('clientName', e.target.value)}
                 placeholder="Client's full name"
               />
             </div>

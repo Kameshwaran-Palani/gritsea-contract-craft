@@ -125,16 +125,13 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
   onNext
 }) => {
   const handleTemplateSelect = (template: typeof TEMPLATES[0]) => {
-    const today = new Date().toISOString().split('T')[0];
-    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
     updateData({
       templateId: template.id,
       templateName: template.name,
       services: template.scope,
       paymentSchedule: [
-        { description: 'Initial payment', percentage: 50, dueDate: today },
-        { description: 'Final payment', percentage: 50, dueDate: futureDate }
+        { description: 'Initial payment', percentage: 50 },
+        { description: 'Final payment', percentage: 50 }
       ]
     });
     onNext();
