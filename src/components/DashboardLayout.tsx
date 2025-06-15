@@ -7,11 +7,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LayoutDashboard, FileText, Bot, CreditCard, Settings, LogOut, Menu, User, Users, Bookmark, Zap, PanelLeft } from 'lucide-react';
-
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
-
 const DashboardLayout = ({
   children
 }: DashboardLayoutProps) => {
@@ -126,7 +124,7 @@ const DashboardLayout = ({
 
       <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         <header className="grid grid-cols-3 h-16 shrink-0 items-center border-b bg-card/50 backdrop-blur-sm px-4 lg:px-8 sticky top-0 z-40">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-start ">
             <Button variant="ghost" size="sm" className="lg:hidden rounded-2xl" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open sidebar</span>
