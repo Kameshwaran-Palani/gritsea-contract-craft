@@ -160,7 +160,7 @@ const ContractDecisionPanel: React.FC<ContractDecisionPanelProps> = ({
                 />
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setDecision('none')}
@@ -172,7 +172,7 @@ const ContractDecisionPanel: React.FC<ContractDecisionPanelProps> = ({
                   disabled={loading || !rejectionReason.trim()}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
-                  {loading ? 'Sending...' : 'Submit Changes Request'}
+                  {loading ? 'Sending...' : 'Submit Request'}
                 </Button>
               </div>
             </CardContent>
