@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,9 +39,6 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
       <div className="text-center mb-6">
         <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
         <h2 className="text-2xl font-semibold mb-2">Document Headers & Branding</h2>
-        <p className="text-muted-foreground">
-          Customize the main title, subtitle, and brand logos of your contract
-        </p>
       </div>
 
       {/* Document Headers */}
@@ -60,9 +56,6 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
               placeholder="SERVICE AGREEMENT"
               className="text-center font-semibold"
             />
-            <p className="text-sm text-muted-foreground mt-1">
-              This will appear as the main heading of your contract
-            </p>
           </div>
 
           <div>
@@ -74,9 +67,6 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
               placeholder="PROFESSIONAL SERVICE CONTRACT"
               className="text-center"
             />
-            <p className="text-sm text-muted-foreground mt-1">
-              This will appear below the main title
-            </p>
           </div>
 
           <div className="bg-muted p-4 rounded-lg">

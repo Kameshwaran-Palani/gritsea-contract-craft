@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,12 +38,7 @@ const Confidentiality: React.FC<ConfidentialityProps> = ({
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
-              <div>
-                <Label>Include Confidentiality Clause</Label>
-                <p className="text-sm text-muted-foreground">
-                  Protect sensitive business information
-                </p>
-              </div>
+              <Label>Include Confidentiality Clause</Label>
               <Switch
                 checked={data.includeNDA}
                 onCheckedChange={(checked) => updateData({ includeNDA: checked })}
@@ -67,9 +61,6 @@ const Confidentiality: React.FC<ConfidentialityProps> = ({
                     placeholder="Business plans, customer data, proprietary processes, financial information, trade secrets..."
                     rows={4}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Define what information should be kept confidential
-                  </p>
                 </div>
 
                 <div>
@@ -88,9 +79,6 @@ const Confidentiality: React.FC<ConfidentialityProps> = ({
                       <SelectItem value="indefinite">Indefinite</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    How long the confidentiality obligation lasts
-                  </p>
                 </div>
 
                 <div>
@@ -102,9 +90,6 @@ const Confidentiality: React.FC<ConfidentialityProps> = ({
                     onChange={(e) => updateData({ breachPenalty: parseFloat(e.target.value) || 0 })}
                     placeholder="50000"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Financial penalty for violating confidentiality
-                  </p>
                 </div>
               </motion.div>
             )}

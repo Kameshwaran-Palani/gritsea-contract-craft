@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,9 +55,6 @@ const IntellectualProperty: React.FC<IntellectualPropertyProps> = ({
                         <User className="h-4 w-4" />
                         Client Owns IP (Most Common)
                       </label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Client owns all work created. Typical for custom projects, websites, and brand materials.
-                      </p>
                       <div className="mt-2 text-xs text-green-600">
                         ✅ Higher rates justified • ✅ Client has full control • ✅ No future restrictions
                       </div>
@@ -77,9 +73,6 @@ const IntellectualProperty: React.FC<IntellectualPropertyProps> = ({
                         <User className="h-4 w-4" />
                         Freelancer Retains IP
                       </label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        You keep ownership and license usage to client. Good for software tools or reusable assets.
-                      </p>
                       <div className="mt-2 text-xs text-orange-600">
                         ⚠️ Lower rates expected • ⚠️ Limited client control • ⚠️ Usage restrictions apply
                       </div>
@@ -98,9 +91,6 @@ const IntellectualProperty: React.FC<IntellectualPropertyProps> = ({
                         <Users className="h-4 w-4" />
                         Joint Ownership
                       </label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Both parties share ownership. Complex but fair for collaborative projects.
-                      </p>
                       <div className="mt-2 text-xs text-blue-600">
                         ℹ️ Shared revenue potential • ℹ️ Requires detailed terms • ℹ️ Complex to manage
                       </div>
@@ -137,9 +127,6 @@ const IntellectualProperty: React.FC<IntellectualPropertyProps> = ({
                   <SelectItem value="limited">Limited Rights (Use Only, No Modification)</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                What the client can do with the work you create
-              </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

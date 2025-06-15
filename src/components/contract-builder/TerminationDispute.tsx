@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,9 +46,6 @@ const TerminationDispute: React.FC<TerminationDisputeProps> = ({
                 placeholder="Either party may terminate this agreement with written notice for convenience, or immediately for breach of contract, non-payment, or violation of terms."
                 rows={4}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                When and how either party can end the contract
-              </p>
             </div>
 
             <div>
@@ -69,9 +65,6 @@ const TerminationDispute: React.FC<TerminationDisputeProps> = ({
                   <SelectItem value="60 days">60 days</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                How much notice is required before termination
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -91,12 +84,7 @@ const TerminationDispute: React.FC<TerminationDisputeProps> = ({
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
-              <div>
-                <Label>Include Arbitration Clause</Label>
-                <p className="text-sm text-muted-foreground">
-                  Resolve disputes through arbitration instead of courts
-                </p>
-              </div>
+              <Label>Include Arbitration Clause</Label>
               <Switch
                 checked={data.arbitrationClause}
                 onCheckedChange={(checked) => updateData({ arbitrationClause: checked })}
@@ -122,9 +110,6 @@ const TerminationDispute: React.FC<TerminationDisputeProps> = ({
                   <SelectItem value="Pune">Pune, Maharashtra</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                Which courts have jurisdiction over disputes
-              </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

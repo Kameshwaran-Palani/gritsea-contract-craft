@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,9 +71,6 @@ const ScopeOfWork: React.FC<ScopeOfWorkProps> = ({
                 placeholder="Describe in detail what services you will provide. Be specific about what's included and what's not."
                 rows={6}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Be as specific as possible to avoid scope creep
-              </p>
             </div>
             
             <div>
@@ -120,7 +116,6 @@ const ScopeOfWork: React.FC<ScopeOfWorkProps> = ({
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No milestones added yet</p>
-                <p className="text-sm">Add milestones to break down your project into manageable phases</p>
               </div>
             ) : (
               <div className="space-y-4">

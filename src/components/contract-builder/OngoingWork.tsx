@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,12 +37,7 @@ const OngoingWork: React.FC<OngoingWorkProps> = ({
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
-              <div>
-                <Label>This is a retainer/ongoing project</Label>
-                <p className="text-sm text-muted-foreground">
-                  Monthly or recurring work arrangement
-                </p>
-              </div>
+              <Label>This is a retainer/ongoing project</Label>
               <Switch
                 checked={data.isRetainer}
                 onCheckedChange={(checked) => updateData({ isRetainer: checked })}
@@ -86,12 +80,7 @@ const OngoingWork: React.FC<OngoingWorkProps> = ({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Auto-renewal</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Automatically renew contract unless cancelled
-                    </p>
-                  </div>
+                  <Label>Auto-renewal</Label>
                   <Switch
                     checked={data.autoRenew}
                     onCheckedChange={(checked) => updateData({ autoRenew: checked })}
@@ -113,10 +102,6 @@ const OngoingWork: React.FC<OngoingWorkProps> = ({
             <CardContent className="text-center py-12">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">One-time Project</h3>
-              <p className="text-muted-foreground">
-                This appears to be a one-time project. If you need ongoing work arrangements, 
-                enable the retainer option above.
-              </p>
             </CardContent>
           </Card>
         </motion.div>

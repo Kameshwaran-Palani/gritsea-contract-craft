@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,9 +53,6 @@ const ServiceLevelAgreement: React.FC<ServiceLevelAgreementProps> = ({
                   <SelectItem value="72 hours">72 hours</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                Maximum time to respond to client communications
-              </p>
             </div>
 
             <div>
@@ -67,9 +63,6 @@ const ServiceLevelAgreement: React.FC<ServiceLevelAgreementProps> = ({
                 onChange={(e) => updateData({ uptimeRequirement: e.target.value })}
                 placeholder="99.9% uptime (optional)"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Only applicable for hosting, SaaS, or ongoing technical services
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -105,9 +98,6 @@ const ServiceLevelAgreement: React.FC<ServiceLevelAgreementProps> = ({
                   <SelectItem value="0">Unlimited revisions</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                Additional revisions may incur extra charges
-              </p>
             </div>
           </CardContent>
         </Card>
