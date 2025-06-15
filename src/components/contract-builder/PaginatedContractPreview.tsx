@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -317,21 +318,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
               <div className={`${getFontSizeClass(data.bodyFontSize)} space-y-3`}>
                 {data.startDate && <p><span className="font-bold">Start Date:</span> {new Date(data.startDate).toLocaleDateString()}</p>}
                 {data.endDate && <p><span className="font-bold">End Date:</span> {new Date(data.endDate).toLocaleDateString()}</p>}
-              </div>
-            </section>
-            <hr className="border-gray-300 my-8" />
-          </>
-        )}
-
-        {/* Ongoing Work */}
-        {data.paymentType === 'ongoing' && (
-          <>
-            <section className="mb-8">
-              <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>
-                ONGOING WORK
-              </h3>
-              <div className={`${getFontSizeClass(data.bodyFontSize)} text-gray-700`}>
-                <p>This is an ongoing work arrangement with flexible timeline and deliverables.</p>
               </div>
             </section>
             <hr className="border-gray-300 my-8" />
