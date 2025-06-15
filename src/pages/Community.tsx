@@ -21,6 +21,7 @@ import {
   Upload
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import { UploadTemplateDialog } from '@/components/UploadTemplateDialog';
 
 const communityTemplates = [
   {
@@ -76,6 +77,7 @@ const Community = () => {
   const { user, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   if (loading) {
     return (
@@ -101,7 +103,7 @@ const Community = () => {
             <h1 className="text-3xl font-bold text-foreground font-heading">Community Templates</h1>
             <p className="text-muted-foreground">Discover and share contract templates with the community</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 rounded-2xl">
+          <Button className="bg-primary hover:bg-primary/90 rounded-2xl" onClick={() => setIsUploadDialogOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Upload Template
           </Button>
@@ -128,11 +130,15 @@ const Community = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 rounded-2xl">
+              <TabsList className="grid w-full grid-cols-5 rounded-2xl">
                 <TabsTrigger value="all" className="rounded-xl">All</TabsTrigger>
                 <TabsTrigger value="trending" className="rounded-xl">Trending</TabsTrigger>
                 <TabsTrigger value="recent" className="rounded-xl">Recent</TabsTrigger>
                 <TabsTrigger value="popular" className="rounded-xl">Popular</TabsTrigger>
+                <TabsTrigger value="contributors" className="rounded-xl">
+                  <Trophy className="mr-2 h-4 w-4 text-yellow-500" />
+                  Contributors
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="all" className="mt-6">
@@ -230,41 +236,41 @@ const Community = () => {
                   <p className="text-muted-foreground">All-time favorites from the community</p>
                 </div>
               </TabsContent>
+
+              <TabsContent value="contributors" className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {topContributors.map((contributor, index) => (
+                    <motion.div
+                      key={contributor.name}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="rounded-2xl h-full">
+                        <CardContent className="p-4 flex items-center space-x-4">
+                           <span className="text-lg font-bold text-muted-foreground w-6 text-center">
+                            #{index + 1}
+                          </span>
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="text-lg">{contributor.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-md font-semibold truncate">{contributor.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {contributor.uploads} uploads • {contributor.downloads} downloads
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Top Contributors */}
-            <Card className="rounded-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Trophy className="mr-2 h-5 w-5 text-yellow-500" />
-                  Top Contributors
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {topContributors.map((contributor, index) => (
-                  <div key={contributor.name} className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2 flex-1">
-                      <span className="text-sm font-medium text-muted-foreground w-4">
-                        #{index + 1}
-                      </span>
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">{contributor.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{contributor.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {contributor.uploads} uploads • {contributor.downloads} downloads
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
             {/* Upload Your Template */}
             <Card className="rounded-2xl border-2 border-dashed border-primary/20">
               <CardContent className="p-6 text-center">
@@ -273,7 +279,7 @@ const Community = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Help the community by sharing your contract templates
                 </p>
-                <Button className="w-full bg-primary hover:bg-primary/90 rounded-xl">
+                <Button className="w-full bg-primary hover:bg-primary/90 rounded-xl" onClick={() => setIsUploadDialogOpen(true)}>
                   Upload Template
                 </Button>
               </CardContent>
@@ -281,6 +287,7 @@ const Community = () => {
           </div>
         </div>
       </div>
+      <UploadTemplateDialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen} />
     </DashboardLayout>
   );
 };
