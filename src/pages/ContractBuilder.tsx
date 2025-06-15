@@ -35,6 +35,7 @@ export interface PaymentScheduleItem {
 
 export interface ContractData {
   template: string;
+  templateName?: string;
   documentTitle: string;
   documentSubtitle: string;
   effectiveDate: string;
@@ -48,6 +49,7 @@ export interface ContractData {
   clientEmail: string;
   clientPhone: string;
   agreementIntroText: string;
+  introductionClauses?: string[];
   services: string;
   deliverables: string;
   milestones: Milestone[];
@@ -84,6 +86,10 @@ export interface ContractData {
   sectionHeaderFontSize: string;
   bodyFontSize: string;
   lineSpacing: number;
+  headingStyle?: string;
+  listStyle?: string;
+  textAlignment?: string;
+  paragraphSpacing?: number;
   leftLogo: string;
   rightLogo: string;
   logoStyle: string;
@@ -91,6 +97,10 @@ export interface ContractData {
   scopeBold: boolean;
   partiesBold: boolean;
   paymentBold: boolean;
+  partiesBullets?: boolean;
+  scopeBullets?: boolean;
+  paymentBullets?: boolean;
+  termsBullets?: boolean;
   freelancerSignature: string;
   clientSignature: string;
   signedDate: string;
@@ -104,6 +114,7 @@ const ContractBuilder = () => {
   const [activeSection, setActiveSection] = useState<string>('template');
   const [contractData, setContractData] = useState<ContractData>({
     template: '',
+    templateName: '',
     documentTitle: 'Service Agreement',
     documentSubtitle: 'This Agreement contains the terms and conditions for services provided by [Service Provider] to [Client]',
     effectiveDate: new Date().toISOString().split('T')[0],
@@ -117,6 +128,7 @@ const ContractBuilder = () => {
     clientEmail: '',
     clientPhone: '',
     agreementIntroText: '',
+    introductionClauses: [],
     services: '',
     deliverables: '',
     milestones: [],
@@ -153,6 +165,10 @@ const ContractBuilder = () => {
     sectionHeaderFontSize: 'large',
     bodyFontSize: 'medium',
     lineSpacing: 1.5,
+    headingStyle: 'bold',
+    listStyle: 'bullet',
+    textAlignment: 'left',
+    paragraphSpacing: 1.2,
     leftLogo: '',
     rightLogo: '',
     logoStyle: 'square',
@@ -160,6 +176,10 @@ const ContractBuilder = () => {
     scopeBold: false,
     partiesBold: false,
     paymentBold: false,
+    partiesBullets: false,
+    scopeBullets: false,
+    paymentBullets: false,
+    termsBullets: false,
     freelancerSignature: '',
     clientSignature: '',
     signedDate: new Date().toISOString().split('T')[0],
