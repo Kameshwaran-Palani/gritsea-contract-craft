@@ -1,14 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, Users, TrendingUp, Eye, Edit, Calendar, DollarSign } from 'lucide-react';
+import { Plus, FileText, Users, TrendingUp, Eye, Edit, Calendar, DollarSign, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import SEOHead from '@/components/SEOHead';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
+import DashboardLayout from '@/components/DashboardLayout';
 
 interface Contract {
   id: string;
@@ -111,6 +114,10 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
+      <SEOHead 
+        title="Dashboard - Agrezy"
+        description="Manage your contracts and view your dashboard overview"
+      />
       <div className="space-y-8">
         {/* Header */}
         <motion.div
