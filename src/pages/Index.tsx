@@ -10,6 +10,7 @@ import UseCasesSection from "@/components/ui/use-cases";
 import AIPoweredSection from "@/components/ui/ai-powered";
 import BuiltForIndiaSection from "@/components/ui/built-for-india";
 import CommunitySection from "@/components/ui/community-section";
+import PricingSection from "@/components/ui/pricing-section";
 
 const Index = () => {
   return (
@@ -42,6 +43,7 @@ const Index = () => {
         <UseCasesSection />
         <AIPoweredSection />
         <BuiltForIndiaSection />
+        <PricingSection />
         <TestimonialsSection />
         <CommunitySection />
       </main>
