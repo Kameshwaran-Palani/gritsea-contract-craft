@@ -135,7 +135,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
       paginateContent();
     }, 100);
     return () => clearTimeout(timer);
-  }, [data]);
+  }, [data, data.freelancerSignature]); // Add freelancerSignature as dependency to re-render when signature changes
 
   return (
     <div className="contract-preview h-full overflow-x-auto bg-gray-100 p-8">
@@ -325,7 +325,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
         )}
 
         {/* Ongoing Work */}
-        {hasOngoingWork() && (
+        {data.paymentType === 'ongoing' && (
           <>
             <section className="mb-8">
               <h3 className={`${getSectionHeaderFontSizeClass(data.sectionHeaderFontSize)} font-bold mb-6 text-gray-900`}>

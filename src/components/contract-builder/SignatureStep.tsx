@@ -99,6 +99,11 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     }
   };
 
+  // Auto-save when draw signature ends
+  const handleDrawEnd = () => {
+    saveFreelancerSignature();
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -167,7 +172,7 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
                     height: 120,
                     className: 'signature-canvas w-full'
                   }}
-                  onEnd={saveFreelancerSignature}
+                  onEnd={handleDrawEnd}
                 />
               </div>
               <div className="flex gap-2 mt-2">
