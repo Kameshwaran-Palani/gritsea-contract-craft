@@ -1,29 +1,26 @@
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, ChevronLeft, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import TemplateSelection from '@/components/contract-builder/TemplateSelection';
-import ContractBuilder, { ContractData } from './ContractBuilder';
+import { ContractData } from '@/types/ContractData';
 
 const ContractNew = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showTemplateDialog, setShowTemplateDialog] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
   const handleTemplateSelect = async (templateData: Partial<ContractData>) => {
     if (!user) return;
 
     try {
-      // Create a new contract with template data
       const contractPayload = {
         user_id: user.id,
         title: templateData.templateName || 'New Contract',
@@ -81,7 +78,6 @@ const ContractNew = () => {
         description: "Your new contract has been created successfully."
       });
 
-      // Navigate to the edit page for the new contract
       navigate(`/contract/edit/${data.id}`);
     } catch (error) {
       console.error('Error creating contract:', error);
@@ -95,7 +91,6 @@ const ContractNew = () => {
 
   const handleStartFromScratch = () => {
     handleTemplateSelect({
-      templateId: undefined,
       templateName: 'Custom Contract'
     });
   };
@@ -114,7 +109,7 @@ const ContractNew = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Clean Header with Agrezy Branding */}
+      {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
@@ -128,7 +123,6 @@ const ContractNew = () => {
               Back to Contracts
             </Button>
             <div className="h-6 w-px bg-border" />
-            {/* Agrezy Branding */}
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">A</span>
@@ -161,7 +155,6 @@ const ContractNew = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Start from Scratch - Moved to top */}
             <Card className="cursor-pointer transition-all hover:shadow-lg border-dashed border-2 hover:border-primary/50">
               <CardContent className="p-4 text-center" onClick={handleStartFromScratch}>
                 <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -172,7 +165,6 @@ const ContractNew = () => {
               </CardContent>
             </Card>
 
-            {/* Template Selection */}
             <div className="mt-4">
               <TemplateSelection
                 data={{} as ContractData}
@@ -187,7 +179,6 @@ const ContractNew = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Placeholder content when dialog is open */}
       {showTemplateDialog && (
         <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
           <div className="text-center">
