@@ -110,16 +110,15 @@ const ContractPreview: React.FC<ContractPreviewProps> = ({ data }) => {
   return (
     <div className="contract-preview h-full overflow-auto bg-gray-100 p-6">
       <div 
-        className="mx-auto bg-white shadow-lg"
+        className="mx-auto bg-white shadow-lg p-12"
         style={{
           width: '210mm',
-          minHeight: '297mm',
+          minHeight: 'auto',
           fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : 
                      data.fontFamily === 'roboto' ? 'Roboto, sans-serif' : 
                      data.fontFamily === 'playfair' ? 'Playfair Display, serif' : 'Inter, sans-serif',
           lineHeight: data.lineSpacing || 1.6,
-          color: '#1a1a1a',
-          padding: '25mm'
+          color: '#1a1a1a'
         }}
       >
         {/* Header Section */}

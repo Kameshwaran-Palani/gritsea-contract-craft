@@ -26,29 +26,18 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
   isLast 
 }) => {
   const freelancerSigRef = useRef<SignatureCanvas>(null);
-  const clientSigRef = useRef<SignatureCanvas>(null);
 
   useEffect(() => {
-    // Load existing signatures if they exist
+    // Load existing signature if it exists
     if (data.freelancerSignature && freelancerSigRef.current) {
       freelancerSigRef.current.fromDataURL(data.freelancerSignature);
     }
-    if (data.clientSignature && clientSigRef.current) {
-      clientSigRef.current.fromDataURL(data.clientSignature);
-    }
-  }, [data.freelancerSignature, data.clientSignature]);
+  }, [data.freelancerSignature]);
 
   const clearFreelancerSignature = () => {
     if (freelancerSigRef.current) {
       freelancerSigRef.current.clear();
       updateData('freelancerSignature', '');
-    }
-  };
-
-  const clearClientSignature = () => {
-    if (clientSigRef.current) {
-      clientSigRef.current.clear();
-      updateData('clientSignature', '');
     }
   };
 
@@ -59,29 +48,22 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
     }
   };
 
-  const saveClientSignature = () => {
-    if (clientSigRef.current && !clientSigRef.current.isEmpty()) {
-      const signatureData = clientSigRef.current.toDataURL();
-      updateData('clientSignature', signatureData);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Digital Signatures</h2>
+        <h2 className="text-2xl font-bold mb-2">Your Digital Signature</h2>
         <p className="text-muted-foreground">
-          Add digital signatures to complete the contract signing process.
+          Add your digital signature to the contract. The client will sign when they receive the eSign link.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <div className="max-w-md">
         {/* Freelancer Signature */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PenTool className="h-5 w-5" />
-              Your Signature (Freelancer)
+              Your Signature (Service Provider)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -123,54 +105,14 @@ const SignatureStep: React.FC<SignatureStepProps> = ({
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Client Signature */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PenTool className="h-5 w-5" />
-              Client Signature
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="clientSignatureName">Client Name</Label>
-              <Input
-                id="clientSignatureName"
-                value={data.clientName || ''}
-                onChange={(e) => updateData('clientName', e.target.value)}
-                placeholder="Client's full name"
-              />
-            </div>
-            
-            <div>
-              <Label>Digital Signature</Label>
-              <div className="border rounded-lg p-4 bg-white">
-                <SignatureCanvas
-                  ref={clientSigRef}
-                  canvasProps={{
-                    width: 300,
-                    height: 150,
-                    className: 'signature-canvas w-full'
-                  }}
-                  onEnd={saveClientSignature}
-                />
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={clearClientSignature}
-                  className="flex items-center gap-1"
-                >
-                  <Trash2 className="h-3 w-3" />
-                  Clear
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-medium text-blue-900 mb-2">Client Signature Process:</h4>
+        <p className="text-sm text-blue-800">
+          Once you generate an eSign link, your client will be able to review the contract and add their signature digitally. 
+          They can also request revisions if needed before signing.
+        </p>
       </div>
 
       <div className="flex justify-between pt-4">
