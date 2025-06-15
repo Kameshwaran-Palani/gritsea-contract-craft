@@ -42,9 +42,9 @@ const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo'
   return (
     <nav className="fixed top-0 w-full z-50 glass-effect border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="grid grid-cols-3 items-center h-16">
           {/* Left section */}
-          <div className="flex items-center space-x-8">
+          <div className="justify-self-start">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
               <Link to="/" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
@@ -53,21 +53,23 @@ const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo'
                 <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
               </Link>
             </motion.div>
-            <div className="hidden md:flex items-center space-x-8">
-              {navigation.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-foreground hover:text-primary transition-colors duration-200"
-                >
-                  {item.name}
-                </a>
-              ))}
-            </div>
+          </div>
+
+          {/* Center section */}
+          <div className="hidden md:flex justify-self-center items-center space-x-8">
+            {navigation.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="text-foreground hover:text-primary transition-colors duration-200"
+              >
+                {item.name}
+              </a>
+            ))}
           </div>
 
           {/* Right section - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4 justify-self-end col-start-3">
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               {user ? (
                 <Button asChild>
@@ -87,7 +89,7 @@ const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo'
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center justify-self-end col-start-3">
             <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)} className="rounded-xl">
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -138,3 +140,4 @@ const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo'
 };
 
 export default Navbar;
+
