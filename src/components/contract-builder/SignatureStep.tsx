@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { ContractData } from '@/types/ContractData';
-import { ESignDialog } from './ESignDialog';
+import SignatureCanvas from 'react-signature-canvas';
+import { Trash2, PenTool } from 'lucide-react';
+import { ContractData } from '@/pages/ContractBuilder';
 
 interface SignatureStepProps {
   data: ContractData;
@@ -17,110 +17,121 @@ interface SignatureStepProps {
   isLast: boolean;
 }
 
-const SignatureStep: React.FC<SignatureStepProps> = ({
-  data,
-  updateData,
-  onNext,
-  onPrev,
-  isFirst,
-  isLast
+const SignatureStep: React.FC<SignatureStepProps> = ({ 
+  data, 
+  updateData, 
+  onNext, 
+  onPrev, 
+  isFirst, 
+  isLast 
 }) => {
-  const [showESignDialog, setShowESignDialog] = useState(false);
+  const freelancerSigRef = useRef<SignatureCanvas>(null);
 
-  const handleFreelancerSign = () => {
-    const signature = `${data.freelancerName} - ${new Date().toLocaleDateString()}`;
-    updateData('freelancerSignature', signature);
-    updateData('signedDate', new Date());
-    
-    // Show eSign dialog after freelancer signs
-    setShowESignDialog(true);
+  useEffect(() => {
+    // Load existing signature if it exists
+    if (data.freelancerSignature && freelancerSigRef.current) {
+      freelancerSigRef.current.fromDataURL(data.freelancerSignature);
+    }
+  }, [data.freelancerSignature]);
+
+  const clearFreelancerSignature = () => {
+    if (freelancerSigRef.current) {
+      freelancerSigRef.current.clear();
+      updateData('freelancerSignature', '');
+    }
   };
 
-  const handleESignShare = (authMethod: string, clientContact: string) => {
-    // Trigger share event for parent component
-    const event = new CustomEvent('shareContract', {
-      detail: { authMethod, clientContact }
-    });
-    window.dispatchEvent(event);
-    setShowESignDialog(false);
+  const saveFreelancerSignature = () => {
+    if (freelancerSigRef.current && !freelancerSigRef.current.isEmpty()) {
+      const signatureData = freelancerSigRef.current.toDataURL();
+      updateData('freelancerSignature', signatureData);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Signature</h2>
+        <h2 className="text-2xl font-bold mb-2">Your Digital Signature</h2>
         <p className="text-muted-foreground">
-          Complete the contract by adding your signature.
+          Add your digital signature to the contract. The client will sign when they receive the eSign link.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Signature</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="signature">Digital Signature</Label>
-            <Textarea
-              id="signature"
-              value={data.signature}
-              onChange={(e) => updateData('signature', e.target.value)}
-              placeholder="Enter your digital signature or agreement statement"
-              className="min-h-[100px]"
-            />
-          </div>
-          
-          {!data.freelancerSignature ? (
-            <Button 
-              onClick={handleFreelancerSign}
-              className="w-full"
-              disabled={!data.freelancerName}
-            >
-              Sign as {data.freelancerName || 'Freelancer'}
-            </Button>
-          ) : (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 font-medium">✓ Signed by {data.freelancerName}</p>
-              <p className="text-green-600 text-sm">{data.freelancerSignature}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {data.shareInfo && (
+      <div className="max-w-md">
+        {/* Freelancer Signature */}
         <Card>
           <CardHeader>
-            <CardTitle>Client Signature Status</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <PenTool className="h-5 w-5" />
+              Your Signature (Service Provider)
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 font-medium">eSign link sent to client</p>
-              <p className="text-blue-600 text-sm">
-                Awaiting signature from {data.clientName || 'client'}
-              </p>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="freelancerName">Full Name</Label>
+              <Input
+                id="freelancerName"
+                value={data.freelancerName || ''}
+                onChange={(e) => updateData('freelancerName', e.target.value)}
+                placeholder="Enter your full name"
+              />
+            </div>
+            
+            <div>
+              <Label>Digital Signature</Label>
+              <div className="border rounded-lg p-4 bg-white">
+                <SignatureCanvas
+                  ref={freelancerSigRef}
+                  canvasProps={{
+                    width: 300,
+                    height: 150,
+                    className: 'signature-canvas w-full'
+                  }}
+                  onEnd={saveFreelancerSignature}
+                />
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFreelancerSignature}
+                  className="flex items-center gap-1"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Clear
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
-
-      <div className="flex justify-between pt-4">
-        {!isFirst && (
-          <Button variant="outline" onClick={onPrev}>
-            Previous
-          </Button>
-        )}
-        <div className="flex-1" />
-        {!isLast && (
-          <Button onClick={onNext}>Next</Button>
-        )}
       </div>
 
-      <ESignDialog
-        open={showESignDialog}
-        onOpenChange={setShowESignDialog}
-        onShare={handleESignShare}
-        defaultEmail={data.clientEmail}
-      />
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-medium text-blue-900 mb-2">Client Signature Process:</h4>
+        <p className="text-sm text-blue-800">
+          Once you generate an eSign link, your client will be able to review the contract and add their signature digitally. 
+          They can also request revisions if needed before signing.
+        </p>
+      </div>
+
+      <div className="flex justify-between pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onPrev}
+          disabled={isFirst}
+        >
+          Previous
+        </Button>
+        <Button
+          type="button"
+          onClick={onNext}
+          disabled={isLast}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };
