@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -15,10 +14,10 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
+import { generateContractCardImage } from '@/utils/contractCardImageGenerator';
 
 interface Contract {
   id: string;
@@ -37,10 +36,43 @@ const ContractsTabbed = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('draft');
+  const [contractImages, setContractImages] = useState<{ [key: string]: string }>({});
+  const [imagesLoading, setImagesLoading] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     loadContracts();
   }, []);
+
+  useEffect(() => {
+    if (contracts.length > 0) {
+      generateImagesForContracts();
+    }
+  }, [contracts]);
+
+  const generateImagesForContracts = async () => {
+    const imagePromises = contracts.map(async (contract) => {
+      if (contractImages[contract.id] || !contract.clauses_json) {
+        return;
+      }
+      
+      setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
+      
+      try {
+        const imageDataUrl = await generateContractCardImage(contract.clauses_json);
+        if (imageDataUrl && imageDataUrl.length > 100) {
+          setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
+        } else {
+          console.error('Empty card image data for contract:', contract.id);
+        }
+      } catch (error) {
+        console.error(`Error generating card image for ${contract.id}:`, error);
+      } finally {
+        setImagesLoading(prev => ({ ...prev, [contract.id]: false }));
+      }
+    });
+
+    await Promise.all(imagePromises);
+  };
 
   const loadContracts = async () => {
     try {
@@ -132,81 +164,99 @@ const ContractsTabbed = () => {
   const ContractCard = ({ contract, showActions = true }: { contract: Contract; showActions?: boolean }) => (
     <Card 
       key={contract.id} 
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden"
       onClick={() => navigate(`/contract/view/${contract.id}`)}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg">{contract.title}</CardTitle>
-          <Badge className={getStatusColor(contract.status)}>
-            {contract.status === 'sent_for_signature' ? 'Pending' : 
-             contract.status === 'revision_requested' ? 'Revision' : 
-             contract.status}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <User className="h-4 w-4" />
-          <span>{contract.client_name || 'No client specified'}</span>
-        </div>
-        
-        {contract.contract_amount && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
-            <span>${contract.contract_amount.toLocaleString()}</span>
-          </div>
-        )}
-        
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          <span>Created {new Date(contract.created_at).toLocaleDateString()}</span>
+      <CardContent className="p-0">
+        <div className="aspect-[400/565] bg-gray-50 overflow-hidden border-b">
+          {imagesLoading[contract.id] ? (
+            <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                <span className="text-xs text-muted-foreground">Loading preview...</span>
+              </div>
+            </div>
+          ) : contractImages[contract.id] ? (
+            <img 
+              src={contractImages[contract.id]} 
+              alt={`${contract.title} preview`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground p-4 text-center">
+              <FileText className="h-12 w-12 mb-2" />
+              <span className="text-sm font-medium">{contract.title}</span>
+              <span className="text-xs mt-1">Preview not available</span>
+            </div>
+          )}
         </div>
 
-        {contract.signed_at && (
+        <div className="p-4 space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg truncate group-hover:text-primary transition-colors">
+                {contract.title}
+              </CardTitle>
+            </div>
+            <Badge className={getStatusColor(contract.status)}>
+              {contract.status === 'sent_for_signature' ? 'Pending' : 
+               contract.status === 'revision_requested' ? 'Revision' : 
+               contract.status}
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <User className="h-4 w-4" />
+            <span>{contract.client_name || 'No client specified'}</span>
+          </div>
+          
+          {contract.contract_amount && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <DollarSign className="h-4 w-4" />
+              <span>${contract.contract_amount.toLocaleString()}</span>
+            </div>
+          )}
+          
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Signed {new Date(contract.signed_at).toLocaleDateString()}</span>
+            <span>Created {new Date(contract.created_at).toLocaleDateString()}</span>
           </div>
-        )}
 
-        {showActions && (
-          <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate(`/contract/view/${contract.id}`)}
-              className="flex items-center gap-1"
-            >
-              <Eye className="h-3 w-3" />
-              View
-            </Button>
-            
-            {['draft', 'revision_requested'].includes(contract.status) && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate(`/contract/edit/${contract.id}`)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit className="h-3 w-3" />
-                  Edit
-                </Button>
-                
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDeleteContract(contract.id)}
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-3 w-3" />
-                  Delete
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+          {contract.signed_at && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>Signed {new Date(contract.signed_at).toLocaleDateString()}</span>
+            </div>
+          )}
+
+          {showActions && (
+            <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+              {['draft', 'revision_requested'].includes(contract.status) && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(`/contract/edit/${contract.id}`)}
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Edit
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteContract(contract.id)}
+                    className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Delete
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
