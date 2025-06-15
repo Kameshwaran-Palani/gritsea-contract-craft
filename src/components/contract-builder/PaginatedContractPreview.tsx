@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -135,7 +134,19 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
       paginateContent();
     }, 100);
     return () => clearTimeout(timer);
-  }, [data, data.freelancerSignature, data.signedDate]); // Added signedDate as dependency
+  }, [
+    data, 
+    data.freelancerSignature, 
+    data.signedDate, 
+    data.clientSignature,
+    data.freelancerName,
+    data.clientName,
+    data.documentTitle,
+    data.services,
+    data.deliverables,
+    data.totalAmount,
+    data.rate
+  ]); // Added all signature and content dependencies
 
   return (
     <div className="contract-preview h-full overflow-x-auto bg-gray-100 p-8">
@@ -424,7 +435,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
       {/* Horizontally Scrollable Paginated Display */}
       <div className="flex space-x-8 overflow-x-auto pb-4">
         {pages.map((page, index) => (
-          <div key={`${index}-${data.freelancerSignature}`} className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" style={{
+          <div key={`page-${index}-${data.freelancerSignature?.slice(-10) || 'nosig'}`} className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" style={{
             width: `${PAGE_WIDTH}px`,
             minHeight: `${PAGE_HEIGHT}px`,
             padding: `${PAGE_MARGIN}px`,
