@@ -12,9 +12,10 @@ interface ESignDialogProps {
   isOpen: boolean;
   onClose: () => void;
   contractId: string | null;
+  onSuccess?: (shareInfo: any) => void;
 }
 
-const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }) => {
+const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, onSuccess }) => {
   const { toast } = useToast();
   const [step, setStep] = useState<'setup' | 'generated'>('setup');
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
@@ -64,7 +65,7 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
           [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
           verification_email_required: authMethod === 'email',
           verification_phone_required: authMethod === 'phone',
-          is_locked: true, // Lock the contract when eSign link is generated
+          is_locked: true,
           locked_at: new Date().toISOString()
         })
         .eq('id', contractId);
@@ -74,6 +75,16 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId }
       const link = `${window.location.origin}/esign/${contractId}/${authMethod}`;
       setShareLink(link);
       setStep('generated');
+
+      // Pass share info back to parent
+      if (onSuccess) {
+        onSuccess({
+          link,
+          secretKey: generatedKey,
+          clientContact: contactInfo,
+          authMethod
+        });
+      }
 
       toast({
         title: "eSign Link Generated",

@@ -4,13 +4,13 @@ import { useParams, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, AlertCircle, Eye, PenTool } from 'lucide-react';
+import { CheckCircle, AlertCircle, Eye, PenTool, Share2, Send } from 'lucide-react';
 import ContractPreview from '@/components/contract-builder/ContractPreview';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 import RevisionRequestModal from '@/components/contract-builder/RevisionRequestModal';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
-import ContractAccessForm from '@/components/contract-builder/ContractAccessForm';
 import ContractDecisionPanel from '@/components/contract-builder/ContractDecisionPanel';
+import ESignDialog from '@/components/contract-builder/ESignDialog';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
 
@@ -23,23 +23,21 @@ const ContractView = () => {
   const [signing, setSigning] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
-  const [hasAccess, setHasAccess] = useState(false);
+  const [showESignDialog, setShowESignDialog] = useState(false);
   const [clientApproved, setClientApproved] = useState(false);
 
   useEffect(() => {
     if (id) {
-      checkPublicAccess(id);
+      loadContract(id);
     }
   }, [id]);
 
-  const checkPublicAccess = async (contractId: string) => {
+  const loadContract = async (contractId: string) => {
     try {
-      // First try to load contract without authentication (public access)
       const { data, error } = await supabase
         .from('contracts')
         .select('*')
         .eq('id', contractId)
-        .in('status', ['sent_for_signature', 'revision_requested'])
         .single();
       
       if (error || !data) {
@@ -51,7 +49,6 @@ const ContractView = () => {
       if (data.clauses_json) {
         setContractData(data.clauses_json as unknown as ContractData);
       }
-      setHasAccess(true);
     } catch (error) {
       console.error('Error loading contract:', error);
       toast({
@@ -62,14 +59,6 @@ const ContractView = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAccessGranted = (data: any) => {
-    setContract(data);
-    if (data.clauses_json) {
-      setContractData(data.clauses_json as ContractData);
-    }
-    setHasAccess(true);
   };
 
   const handleApprove = () => {
@@ -107,7 +96,7 @@ const ContractView = () => {
           client_signature_url: signatureData,
           signed_at: new Date().toISOString(),
           signed_by_name: contractData.clientName,
-          is_locked: false // Unlock contract after signing
+          is_locked: false
         })
         .eq('id', contract.id);
 
@@ -137,6 +126,15 @@ const ContractView = () => {
     setContract(prev => ({ ...prev, status: 'revision_requested' }));
   };
 
+  const handleESignSuccess = () => {
+    setContract(prev => ({ ...prev, status: 'sent_for_signature', is_locked: true }));
+    setShowESignDialog(false);
+    toast({
+      title: "eSign Link Generated",
+      description: "Contract has been shared with client for signing."
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -152,8 +150,8 @@ const ContractView = () => {
   return (
     <>
       <SEOHead 
-        title={`${contractData.documentTitle} - Contract Review`}
-        description="Review and sign your service contract"
+        title={`${contractData.documentTitle} - Contract View`}
+        description="View and manage your service contract"
       />
       <div className="min-h-screen bg-background">
         {/* Header */}
@@ -167,15 +165,36 @@ const ContractView = () => {
                 <span className="text-lg font-bold gradient-text">Agrezy</span>
               </div>
               <div className="h-6 w-px bg-border" />
-              <h1 className="text-lg font-semibold">Contract Review</h1>
+              <h1 className="text-lg font-semibold">Contract View</h1>
               <ContractStatusBadge status={contract.status} />
             </div>
 
             <div className="flex items-center space-x-4">
+              {contract.status === 'draft' && (
+                <Button
+                  onClick={() => setShowESignDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  Share for Signature
+                </Button>
+              )}
+              
+              {contract.status === 'revision_requested' && (
+                <Button
+                  onClick={() => setShowESignDialog(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Re-share Contract
+                </Button>
+              )}
+
               {contract.status === 'signed' && (
                 <div className="flex items-center gap-2 text-green-600">
                   <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">Signed</span>
+                  <span className="font-medium">Completed</span>
                 </div>
               )}
             </div>
@@ -191,85 +210,44 @@ const ContractView = () => {
                 <h3 className="font-medium">Revision Requested</h3>
               </div>
               <p className="text-sm text-orange-700 mt-1">
-                This contract is currently under revision. The contract owner will address your feedback soon.
+                Client has requested changes to this contract. Please review and make necessary updates.
               </p>
             </div>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Contract Preview - Takes 2/3 of the space */}
-            <div className="lg:col-span-2">
-              {showSignature ? (
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <SignatureStep
-                    data={contractData}
-                    updateData={() => {}}
-                    onNext={() => {}}
-                    onPrev={() => setShowSignature(false)}
-                    isFirst={false}
-                    isLast={true}
-                  />
-                  <div className="flex gap-3 mt-6">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowSignature(false)}
-                      className="flex-1"
-                    >
-                      Back to Review
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        if (contractData.freelancerSignature) {
-                          handleSignContract(contractData.freelancerSignature);
-                        }
-                      }}
-                      disabled={signing || !contractData.freelancerSignature}
-                      className="flex-1"
-                    >
-                      {signing ? 'Signing...' : 'Complete Signing'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg shadow-sm border">
-                  <ContractPreview data={contractData} />
-                </div>
-              )}
+          {contract.status === 'sent_for_signature' && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-800">
+                <Send className="h-5 w-5" />
+                <h3 className="font-medium">Awaiting Client Signature</h3>
+              </div>
+              <p className="text-sm text-blue-700 mt-1">
+                Contract has been shared with client. Waiting for their review and signature.
+              </p>
             </div>
+          )}
 
-            {/* Decision Panel - Takes 1/3 of the space */}
-            <div className="lg:col-span-1">
-              {contract.status === 'sent_for_signature' && !showSignature && (
-                <ContractDecisionPanel
-                  contractData={contract}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onSign={() => setShowSignature(true)}
-                />
-              )}
-
-              {clientApproved && !showSignature && (
-                <div className="mt-4">
-                  <Button
-                    onClick={() => setShowSignature(true)}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                  >
-                    <PenTool className="h-4 w-4 mr-2" />
-                    Sign Contract
-                  </Button>
-                </div>
-              )}
+          <div className="grid lg:grid-cols-1 gap-6">
+            {/* Contract Preview - Full width */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <ContractPreview data={contractData} />
             </div>
           </div>
         </div>
 
-        {/* Revision Request Modal */}
+        {/* Modals */}
         <RevisionRequestModal
           isOpen={showRevisionModal}
           onClose={() => setShowRevisionModal(false)}
           contractId={contract.id}
           onRevisionRequested={handleRevisionRequested}
+        />
+
+        <ESignDialog
+          isOpen={showESignDialog}
+          onClose={() => setShowESignDialog(false)}
+          contractId={contract.id}
+          onSuccess={handleESignSuccess}
         />
       </div>
     </>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send, Lock, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Eye, Sparkles, FileText, Download, Send, Lock, Clock, Copy, Mail, Phone, KeyRound } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -223,6 +223,12 @@ const ContractBuilder = () => {
   const [showESignDialog, setShowESignDialog] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [lockedAt, setLockedAt] = useState<string | null>(null);
+  const [shareInfo, setShareInfo] = useState<{
+    link: string;
+    secretKey: string;
+    clientContact: string;
+    authMethod: string;
+  } | null>(null);
 
   // Auto-save functionality with debounce
   const debouncedSave = useCallback(
@@ -540,6 +546,22 @@ const ContractBuilder = () => {
     setShowESignDialog(true);
   };
 
+  const handleESignSuccess = (shareData: any) => {
+    setShareInfo(shareData);
+    setIsLocked(true);
+    setLockedAt(new Date().toISOString());
+    setContractStatus('sent_for_signature');
+    setShowESignDialog(false);
+  };
+
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: `${type} copied to clipboard`
+    });
+  };
+
   // Add event listeners for navbar actions
   useEffect(() => {
     const handleDownloadEvent = () => {
@@ -579,7 +601,7 @@ const ContractBuilder = () => {
       />
       <div className="min-h-screen bg-background">
         <div className="flex h-[calc(100vh-64px)]">
-          {/* Left Panel - Reduced width from w-1/2 to w-2/5 */}
+          {/* Left Panel */}
           <div className="w-2/5 border-r bg-card p-6 overflow-y-auto">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -592,7 +614,76 @@ const ContractBuilder = () => {
                 )}
               </div>
 
-              {isLocked && (
+              {isLocked && shareInfo && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800 mb-3">
+                    <Send className="h-5 w-5" />
+                    <h3 className="font-medium">Contract Shared with Client</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-blue-700">Contract Link</label>
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          value={shareInfo.link}
+                          readOnly
+                          className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyToClipboard(shareInfo.link, 'Link')}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-blue-700">Secret Key</label>
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          value={shareInfo.secretKey}
+                          readOnly
+                          className="flex-1 px-3 py-2 text-sm bg-white border border-blue-200 rounded font-mono text-center"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyToClipboard(shareInfo.secretKey, 'Secret key')}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-blue-700">Client Contact</label>
+                      <div className="flex items-center gap-2 p-2 bg-white border border-blue-200 rounded mt-1">
+                        {shareInfo.authMethod === 'email' ? (
+                          <Mail className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <Phone className="h-4 w-4 text-blue-600" />
+                        )}
+                        <span className="text-sm">{shareInfo.clientContact}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-blue-100 border border-blue-200 rounded">
+                    <h4 className="font-medium text-blue-900 text-sm mb-2">Instructions for Client:</h4>
+                    <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
+                      <li>Click on the contract link</li>
+                      <li>Enter the secret key: <code className="bg-blue-200 px-1 rounded">{shareInfo.secretKey}</code></li>
+                      <li>Enter their {shareInfo.authMethod}: <code className="bg-blue-200 px-1 rounded">{shareInfo.clientContact}</code></li>
+                      <li>Review and sign the contract or request revisions</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {isLocked && !shareInfo && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2 text-red-800 mb-2">
                     <Lock className="h-5 w-5" />
@@ -726,13 +817,18 @@ const ContractBuilder = () => {
             </Tabs>
           </div>
 
-          {/* Right Panel - Increased width from w-1/2 to w-3/5 */}
+          {/* Right Panel */}
           <div className="w-3/5 bg-muted/20">
             <ContractPreview data={contractData} />
           </div>
         </div>
       </div>
-      <ESignDialog isOpen={showESignDialog} onClose={() => setShowESignDialog(false)} contractId={contractId} />
+      <ESignDialog 
+        isOpen={showESignDialog} 
+        onClose={() => setShowESignDialog(false)} 
+        contractId={contractId}
+        onSuccess={handleESignSuccess}
+      />
     </>
   );
 };

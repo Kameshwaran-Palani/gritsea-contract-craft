@@ -1,77 +1,72 @@
-
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, TrendingUp, Users, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import DashboardLayout from '@/components/DashboardLayout';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, FileText, Users, TrendingUp, Eye, Edit, Calendar, DollarSign } from 'lucide-react';
+import SEOHead from '@/components/SEOHead';
+import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 
 interface Contract {
   id: string;
   title: string;
-  status: 'draft' | 'sent' | 'signed' | 'cancelled';
-  client_name: string;
-  contract_amount: number;
+  client_name: string | null;
+  client_email: string | null;
+  status: 'draft' | 'sent' | 'signed' | 'cancelled' | 'sent_for_signature' | 'revision_requested';
   created_at: string;
-}
-
-interface DashboardStats {
-  totalContracts: number;
-  draftContracts: number;
-  signedContracts: number;
-  totalValue: number;
+  contract_amount: number | null;
+  clauses_json: any;
 }
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
+  const { toast } = useToast();
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalContracts: 0,
-    draftContracts: 0,
-    signedContracts: 0,
-    totalValue: 0
+  const [loadingContracts, setLoadingContracts] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    draft: 0,
+    signed: 0,
+    pending: 0
   });
-  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
+      fetchContracts();
     }
   }, [user]);
 
-  const fetchDashboardData = async () => {
+  const fetchContracts = async () => {
     try {
-      const { data: contractsData, error } = await supabase
+      const { data, error } = await supabase
         .from('contracts')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setContracts(contractsData || []);
-
+      setContracts(data || []);
+      
       // Calculate stats
-      const totalContracts = contractsData?.length || 0;
-      const draftContracts = contractsData?.filter(c => c.status === 'draft').length || 0;
-      const signedContracts = contractsData?.filter(c => c.status === 'signed').length || 0;
-      const totalValue = contractsData?.reduce((sum, c) => sum + (c.contract_amount || 0), 0) || 0;
-
-      setStats({
-        totalContracts,
-        draftContracts,
-        signedContracts,
-        totalValue
-      });
+      const total = data?.length || 0;
+      const draft = data?.filter(c => c.status === 'draft').length || 0;
+      const signed = data?.filter(c => c.status === 'signed').length || 0;
+      const pending = data?.filter(c => ['sent_for_signature', 'revision_requested'].includes(c.status)).length || 0;
+      
+      setStats({ total, draft, signed, pending });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching contracts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch contracts",
+        variant: "destructive"
+      });
     } finally {
-      setLoadingData(false);
+      setLoadingContracts(false);
     }
   };
 
@@ -148,7 +143,7 @@ const Dashboard = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalContracts}</div>
+              <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
@@ -159,7 +154,7 @@ const Dashboard = () => {
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.draftContracts}</div>
+              <div className="text-2xl font-bold">{stats.draft}</div>
               <p className="text-xs text-muted-foreground">Need attention</p>
             </CardContent>
           </Card>
@@ -170,19 +165,19 @@ const Dashboard = () => {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.signedContracts}</div>
+              <div className="text-2xl font-bold">{stats.signed}</div>
               <p className="text-xs text-muted-foreground">Completed</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Pending Contracts</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{stats.totalValue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">All contracts</p>
+              <div className="text-2xl font-bold">{stats.pending}</div>
+              <p className="text-xs text-muted-foreground">Pending</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -206,7 +201,7 @@ const Dashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {loadingData ? (
+              {loadingContracts ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center space-x-4">
