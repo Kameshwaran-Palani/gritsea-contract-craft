@@ -11,6 +11,7 @@ import SignatureStep from '@/components/contract-builder/SignatureStep';
 import ContractDecisionPanel from '@/components/contract-builder/ContractDecisionPanel';
 import ESignDialog from '@/components/contract-builder/ESignDialog';
 import ContractMilestone from '@/components/contract-builder/ContractMilestone';
+import ESignDetails from '@/components/contract-builder/ESignDetails';
 import SEOHead from '@/components/SEOHead';
 import { ContractData } from '@/pages/ContractBuilder';
 import html2canvas from 'html2canvas';
@@ -406,66 +407,78 @@ const ContractView = () => {
         <div className="max-w-7xl mx-auto p-6">
           <div className="flex flex-col gap-6">
             {/* Contract Milestones */}
-            <div>
-              <ContractMilestone 
-                contractId={contract?.id || ''} 
-                status={contract?.status || 'draft'}
-                shareInfo={shareInfo}
-              />
-            </div>
+            <ContractMilestone 
+              contractId={contract?.id || ''} 
+              status={contract?.status || 'draft'}
+            />
 
-            {/* Main Content - Contract Preview */}
-            <div>
-              {contract?.status === 'revision_requested' && revisionRequests.length > 0 && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-orange-800 mb-3">
-                    <AlertCircle className="h-5 w-5" />
-                    <h3 className="font-medium">Revision Requests</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {revisionRequests.map((request) => (
-                      <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="text-sm font-medium">{request.client_name}</div>
-                          <Button
-                            size="sm"
-                            onClick={() => markRevisionAsResolved(request.id)}
-                            className="text-xs"
-                          >
-                            Mark Resolved
-                          </Button>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{request.message}</p>
-                        <div className="text-xs text-muted-foreground mt-2">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {contract?.status === 'sent_for_signature' && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-800">
-                    <Send className="h-5 w-5" />
-                    <h3 className="font-medium">Awaiting Client Signature</h3>
-                  </div>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Contract has been shared with client. Waiting for their review and signature.
-                  </p>
-                </div>
-              )}
-
-              <div className="bg-white rounded-lg shadow-sm border">
-                {contractData && (
-                  <ContractPreview 
-                    data={{ 
-                      ...contractData, 
-                      clientSignedDate: contract.status === 'signed' ? contract.signed_at : null 
-                    }} 
+            {/* Main Content Area */}
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+              {/* eSign Details Column */}
+              {shareInfo && (
+                <div className="lg:w-[400px] w-full flex-shrink-0">
+                  <ESignDetails
+                    contractId={contract.id}
+                    shareInfo={shareInfo}
                   />
-                )}
+                </div>
+              )}
+              
+              {/* Contract Preview Column */}
+              <div className="flex-1 w-full min-w-0">
+                <div className="flex flex-col gap-6">
+                  {contract?.status === 'revision_requested' && revisionRequests.length > 0 && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-orange-800 mb-3">
+                        <AlertCircle className="h-5 w-5" />
+                        <h3 className="font-medium">Revision Requests</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {revisionRequests.map((request) => (
+                          <div key={request.id} className="p-3 bg-white border border-orange-200 rounded">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="text-sm font-medium">{request.client_name}</div>
+                              <Button
+                                size="sm"
+                                onClick={() => markRevisionAsResolved(request.id)}
+                                className="text-xs"
+                              >
+                                Mark Resolved
+                              </Button>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{request.message}</p>
+                            <div className="text-xs text-muted-foreground mt-2">
+                              {new Date(request.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {contract?.status === 'sent_for_signature' && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <Send className="h-5 w-5" />
+                        <h3 className="font-medium">Awaiting Client Signature</h3>
+                      </div>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Contract has been shared with client. Waiting for their review and signature.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="bg-white rounded-lg shadow-sm border">
+                    {contractData && (
+                      <ContractPreview 
+                        data={{ 
+                          ...contractData, 
+                          clientSignedDate: contract.status === 'signed' ? contract.signed_at : null 
+                        }} 
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
