@@ -467,30 +467,27 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           </section>
         </div>
 
-        <div className={cn("p-8", 
-            isVerticalView 
-              ? "flex flex-col items-center space-y-8" 
-              : "flex space-x-8"
-          )}
-        >
-          {pages.map((page, index) => (
-            <div 
-              key={`page-${index}-${signatureUpdateKey}`} 
-              className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" 
-              style={{
-                width: `${PAGE_WIDTH}px`,
-                minHeight: `${PAGE_HEIGHT}px`,
-                padding: `${PAGE_MARGIN}px`,
-                fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'serif' ? 'Times, serif' : data.fontFamily === 'sans' ? 'Arial, sans-serif' : data.fontFamily === 'mono' ? 'Courier, monospace' : 'Inter, sans-serif',
-                lineHeight: data.lineSpacing || 1.6,
-                color: data.contentColor || '#1f2937',
-                pageBreakAfter: 'always'
-              }} 
-              dangerouslySetInnerHTML={{
-                __html: page.innerHTML
-              }} 
-            />
-          ))}
+        <div className={cn("p-8", isVerticalView ? "w-full flex justify-center" : "")}>
+          <div className={cn(isVerticalView ? "flex flex-col space-y-8" : "flex space-x-8")}>
+            {pages.map((page, index) => (
+              <div 
+                key={`page-${index}-${signatureUpdateKey}`} 
+                className="flex-shrink-0 bg-white shadow-lg border border-gray-200 page-break-after" 
+                style={{
+                  width: `${PAGE_WIDTH}px`,
+                  minHeight: `${PAGE_HEIGHT}px`,
+                  padding: `${PAGE_MARGIN}px`,
+                  fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'serif' ? 'Times, serif' : data.fontFamily === 'sans' ? 'Arial, sans-serif' : data.fontFamily === 'mono' ? 'Courier, monospace' : 'Inter, sans-serif',
+                  lineHeight: data.lineSpacing || 1.6,
+                  color: data.contentColor || '#1f2937',
+                  pageBreakAfter: 'always'
+                }} 
+                dangerouslySetInnerHTML={{
+                  __html: page.innerHTML
+                }} 
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
