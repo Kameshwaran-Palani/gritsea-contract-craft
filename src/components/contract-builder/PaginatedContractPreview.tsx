@@ -166,7 +166,9 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
 
   return (
     <div className="contract-preview h-full overflow-x-auto bg-gray-100 p-8">
-      <div ref={contentRef} className="hidden" style={{
+      <div ref={contentRef} style={{
+        position: 'absolute',
+        left: '-9999px',
         width: `${CONTENT_WIDTH}px`,
         fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'serif' ? 'Times, serif' : data.fontFamily === 'sans' ? 'Arial, sans-serif' : data.fontFamily === 'mono' ? 'Courier, monospace' : 'Inter, sans-serif',
         lineHeight: data.lineSpacing || 1.6,
