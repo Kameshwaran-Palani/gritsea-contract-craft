@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -159,8 +160,8 @@ const ContractBuilder = () => {
     }
   };
 
-  const updateData = (field: keyof ContractData, value: any) => {
-    setData(prev => ({ ...prev, [field]: value }));
+  const updateData = (updates: Partial<ContractData>) => {
+    setData(prev => ({ ...prev, ...updates }));
   };
 
   const nextStep = () => {
@@ -356,8 +357,8 @@ const ContractBuilder = () => {
             data={data}
             updateData={updateData}
             onNext={nextStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
+            isFirst={true}
+            isLast={false}
           />
         );
       case 1:
@@ -367,8 +368,8 @@ const ContractBuilder = () => {
             updateData={updateData}
             onNext={nextStep}
             onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
+            isFirst={false}
+            isLast={false}
           />
         );
       case 2:
@@ -378,8 +379,8 @@ const ContractBuilder = () => {
             updateData={updateData}
             onNext={nextStep}
             onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
+            isFirst={false}
+            isLast={false}
           />
         );
       case 3:
@@ -389,8 +390,8 @@ const ContractBuilder = () => {
             updateData={updateData}
             onNext={nextStep}
             onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
+            isFirst={false}
+            isLast={false}
           />
         );
       case 4:
@@ -400,8 +401,8 @@ const ContractBuilder = () => {
             updateData={updateData}
             onNext={nextStep}
             onPrev={prevStep}
-            isFirst={currentStep === 0}
-            isLast={currentStep === totalSteps - 1}
+            isFirst={false}
+            isLast={true}
           />
         );
       default:
