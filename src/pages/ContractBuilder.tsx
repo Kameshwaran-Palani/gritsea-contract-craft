@@ -235,7 +235,7 @@ const ContractBuilder = () => {
   const debouncedSave = useCallback(
     debounce(() => {
       if (contractData && user && !isLocked) {
-        saveProgress();
+        saveProgress(true); // Pass true to indicate this is an auto-save
       }
     }, 2000), // Save after 2 seconds of no changes
     [contractData, user, isLocked]
@@ -367,7 +367,7 @@ const ContractBuilder = () => {
     }
   };
 
-  const saveProgress = async () => {
+  const saveProgress = async (isAutoSave = false) => {
     if (!user || isLocked) return;
     
     setSaving(true);
@@ -403,10 +403,11 @@ const ContractBuilder = () => {
         navigate(`/contract/edit/${data.id}`, { replace: true });
       }
       
-      if (!isLocked) {
+      // Only show toast for manual saves, not auto-saves
+      if (!isAutoSave && !isLocked) {
         toast({
-          title: "Auto-saved",
-          description: "Your changes have been saved automatically.",
+          title: "Saved",
+          description: "Your contract has been saved successfully.",
           duration: 2000
         });
       }
@@ -571,8 +572,8 @@ const ContractBuilder = () => {
                 <ContractStatusBadge status={contractStatus} />
                 {saving && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    Saving...
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                    <span className="text-xs">Saving...</span>
                   </div>
                 )}
               </div>
