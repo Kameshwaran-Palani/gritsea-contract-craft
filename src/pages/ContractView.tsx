@@ -458,7 +458,14 @@ const ContractView = () => {
               )}
 
               <div className="bg-white rounded-lg shadow-sm border">
-                {contractData && <ContractPreview data={contractData} />}
+                {contractData && (
+                  <ContractPreview 
+                    data={{ 
+                      ...contractData, 
+                      clientSignedDate: contract.status === 'signed' ? contract.signed_at : null 
+                    }} 
+                  />
+                )}
               </div>
             </div>
           </div>
