@@ -72,7 +72,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground mb-4 md:mb-0">
-            © 2025 Agrezy. All rights reserved.
+            © 2024 Agrezy. All rights reserved.
           </p>
           
           <div className="flex items-center space-x-6 text-sm text-muted-foreground">
