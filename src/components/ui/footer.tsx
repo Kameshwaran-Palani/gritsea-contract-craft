@@ -77,7 +77,6 @@ const Footer = () => {
           
           <div className="flex items-center space-x-6 text-sm text-muted-foreground">
             <span>🇮🇳 Made in India</span>
-            <span>🔒 ISO 27001 Certified</span>
             <span>⚖️ Legally Compliant</span>
           </div>
         </div>
