@@ -429,7 +429,6 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   <p>Either party may terminate this agreement with 30 days written notice. Upon termination, all outstanding payments for completed work shall be made within 15 days.</p>
                 </div>
               </section>
-              <hr className="border-gray-300 my-4" />
             </>
           )}
 
