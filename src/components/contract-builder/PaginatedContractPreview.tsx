@@ -211,6 +211,7 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
             <h2 className="font-medium" style={getHeaderStyle('sub')}>
               {data.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'}
             </h2>
+            <hr className="border-gray-300 my-4" />
           </div>
 
           {hasAgreementIntro() && (
