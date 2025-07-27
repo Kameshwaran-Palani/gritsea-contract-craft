@@ -21,6 +21,8 @@ import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import AIAssistant from "./pages/AIAssistant";
 import AIPrompt from "./pages/AIPrompt";
+import DocumentUpload from "./pages/DocumentUpload";
+import DocumentEdit from "./pages/DocumentEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ function App() {
               <Route path="/community" element={<Community />} />
               <Route path="/ai-assistant" element={<AIAssistant />} />
               <Route path="/ai-prompt" element={<AIPrompt />} />
+              <Route path="/document-upload" element={<DocumentUpload />} />
+              <Route path="/document-edit/:id" element={<DocumentEdit />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

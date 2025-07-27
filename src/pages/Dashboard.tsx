@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle, Upload } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 
@@ -103,10 +103,20 @@ const Dashboard = () => {
                 Welcome back! Here's what's happening with your contracts.
               </p>
             </div>
-            <Button onClick={() => navigate('/contract/new')} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Contract
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/document-upload')} 
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Get eSign
+              </Button>
+              <Button onClick={() => navigate('/contract/new')} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Contract
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}
