@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import ESignDetails from '@/components/contract-builder/ESignDetails';
+import PDFViewer from '@/components/contract-builder/PDFViewer';
 import { 
   ArrowLeft, 
   FileText, 
@@ -50,6 +51,7 @@ const DocumentEdit = () => {
   const [emailVerification, setEmailVerification] = useState(true);
   const [phoneVerification, setPhoneVerification] = useState(false);
   const [shareInfo, setShareInfo] = useState<any>(null);
+  const [signaturePositions, setSignaturePositions] = useState<any[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -73,6 +75,7 @@ const DocumentEdit = () => {
       setClientPhone(data.client_phone || '');
       setEmailVerification(data.verification_email_required);
       setPhoneVerification(data.verification_phone_required);
+      setSignaturePositions(Array.isArray(data.signature_positions) ? data.signature_positions : []);
     } catch (error: any) {
       console.error('Error fetching document:', error);
       toast({
@@ -116,6 +119,36 @@ const DocumentEdit = () => {
       toast({
         title: "Save failed",
         description: error.message || "Failed to save document",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSignaturePositions = async () => {
+    if (!document || !user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('uploaded_documents')
+        .update({
+          signature_positions: signaturePositions
+        })
+        .eq('id', document.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Signature positions saved",
+        description: "Signature positions have been saved successfully"
+      });
+    } catch (error: any) {
+      console.error('Save signature positions error:', error);
+      toast({
+        title: "Save failed",
+        description: error.message || "Failed to save signature positions",
         variant: "destructive"
       });
     } finally {
@@ -232,33 +265,42 @@ const DocumentEdit = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Document Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                Document Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="border rounded-lg p-4 bg-muted/50 text-center">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="font-medium">{document.original_filename}</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {document.file_type.includes('pdf') ? 'PDF Document' : 'Word Document'}
-                </p>
-                <Button variant="outline" size="sm">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Mark Signature Position
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Click to add signature boxes where the client should sign
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* PDF Viewer - Full Width */}
+        {document.file_type.includes('pdf') ? (
+          <div className="mb-8">
+            <PDFViewer
+              fileUrl={document.file_url}
+              signaturePositions={signaturePositions}
+              onSignaturePositionsChange={setSignaturePositions}
+              onSave={handleSaveSignaturePositions}
+            />
+          </div>
+        ) : (
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Document Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-lg p-4 bg-muted/50 text-center">
+                  <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="font-medium">{document.original_filename}</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Word Document - PDF preview not available
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Signature positions can be added after uploading a PDF version
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Client Information */}
           <Card>
             <CardHeader>
