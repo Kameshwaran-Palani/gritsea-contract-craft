@@ -101,7 +101,8 @@ const DocumentEdit = () => {
           client_email: clientEmail.trim() || null,
           client_phone: clientPhone.trim() || null,
           verification_email_required: emailVerification,
-          verification_phone_required: phoneVerification
+          verification_phone_required: phoneVerification,
+          signature_positions: signaturePositions
         })
         .eq('id', document.id);
 

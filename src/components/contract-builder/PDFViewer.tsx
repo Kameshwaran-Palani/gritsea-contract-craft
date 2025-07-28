@@ -10,7 +10,8 @@ import {
   RotateCw, 
   MapPin, 
   Trash2,
-  Save
+  Save,
+  MousePointer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,6 +50,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -92,7 +94,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     canvasRef.current.style.position = 'absolute';
     canvasRef.current.style.top = '0';
     canvasRef.current.style.left = '0';
-    canvasRef.current.style.pointerEvents = isAddingSignature ? 'auto' : 'none';
+    canvasRef.current.style.pointerEvents = 'auto';
 
     // Initialize Fabric canvas
     const canvas = new FabricCanvas(canvasRef.current, {

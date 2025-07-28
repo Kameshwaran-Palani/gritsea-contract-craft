@@ -6,8 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, Edit, Trash2 } from 'lucide-react';
+import { Plus, FileText, Edit, Trash2, Upload } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 import { generateContractCoverImage } from '@/utils/contractImageGenerator';
@@ -46,20 +47,77 @@ interface Contract {
   logo_style?: string;
 }
 
+interface UploadedDocument {
+  id: string;
+  title: string;
+  original_filename: string;
+  file_url: string;
+  status: 'draft' | 'sent_for_signature' | 'signed';
+  client_name?: string;
+  client_email?: string;
+  signature_positions: any[];
+  created_at: string;
+  updated_at: string;
+}
+
 const Contracts = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [contractsLoading, setContractsLoading] = useState(true);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
   const [contractImages, setContractImages] = useState<{[key: string]: string}>({});
   const [imagesLoading, setImagesLoading] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     if (user) {
       loadContracts();
+      loadUploadedDocuments();
     }
   }, [user]);
+
+  const loadUploadedDocuments = async () => {
+    try {
+      setDocumentsLoading(true);
+      console.log('📡 Loading uploaded documents for user:', user?.id);
+      
+      const { data, error } = await supabase
+        .from('uploaded_documents')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        console.log('📋 Loaded', data.length, 'uploaded documents from database');
+        const mappedDocuments = data.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          original_filename: doc.original_filename,
+          file_url: doc.file_url,
+          status: doc.status as 'draft' | 'sent_for_signature' | 'signed',
+          client_name: doc.client_name || undefined,
+          client_email: doc.client_email || undefined,
+          signature_positions: Array.isArray(doc.signature_positions) ? doc.signature_positions : [],
+          created_at: doc.created_at,
+          updated_at: doc.updated_at
+        }));
+        setUploadedDocuments(mappedDocuments);
+      }
+    } catch (error) {
+      console.error('❌ Error loading uploaded documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load uploaded documents",
+        variant: "destructive"
+      });
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
 
   // Generate images for contracts when they're loaded
   useEffect(() => {
@@ -240,157 +298,306 @@ const Contracts = () => {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">My Contracts</h1>
-              <p className="text-muted-foreground mt-1">Manage all your contracts in one place</p>
+              <h1 className="text-3xl font-bold text-foreground">My Documents</h1>
+              <p className="text-muted-foreground mt-1">Manage all your contracts and documents in one place</p>
             </div>
-            <Button
-              onClick={() => navigate('/contract/new')}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              Create New Contract
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate('/document/upload')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Upload Document
+              </Button>
+              <Button
+                onClick={() => navigate('/contract/new')}
+                className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+              >
+                <Plus className="h-4 w-4" />
+                Create Contract
+              </Button>
+            </div>
           </div>
 
-          {contractsLoading ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="aspect-[794/1123] bg-muted rounded mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-muted rounded w-3/4"></div>
-                      <div className="h-3 bg-muted rounded w-1/2"></div>
-                      <div className="flex gap-2">
-                        <div className="h-8 bg-muted rounded flex-1"></div>
-                        <div className="h-8 bg-muted rounded flex-1"></div>
-                      </div>
-                    </div>
+          <Tabs defaultValue="contracts" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="contracts">
+                Built Contracts ({contracts.length})
+              </TabsTrigger>
+              <TabsTrigger value="documents">
+                Uploaded Documents ({uploadedDocuments.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="contracts" className="space-y-4">
+              {contractsLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {[...Array(6)].map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="aspect-[794/1123] bg-muted rounded mb-4"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted rounded w-3/4"></div>
+                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                          <div className="flex gap-2">
+                            <div className="h-8 bg-muted rounded flex-1"></div>
+                            <div className="h-8 bg-muted rounded flex-1"></div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : contracts.length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No contracts yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Create your first professional contract to get started
+                    </p>
+                    <Button
+                      onClick={() => navigate('/contract/new')}
+                      className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create Your First Contract
+                    </Button>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          ) : contracts.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No contracts yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Create your first professional contract to get started
-                </p>
-                <Button
-                  onClick={() => navigate('/contract/new')}
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Your First Contract
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {contracts.map((contract) => (
-                <motion.div
-                  key={contract.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
-                    <CardContent className="p-0">
-                      {/* Optimized Contract Card Image */}
-                      <div 
-                        className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b" 
-                        onClick={() => navigate(`/contract/${contract.id}`)}
-                      >
-                        {imagesLoading[contract.id] ? (
-                          <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
-                            <div className="text-center">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                              <span className="text-xs text-muted-foreground">Loading preview...</span>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {contracts.map((contract) => (
+                    <motion.div
+                      key={contract.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
+                        <CardContent className="p-0">
+                          {/* Contract Card Image */}
+                          <div 
+                            className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b" 
+                            onClick={() => navigate(`/contract/${contract.id}`)}
+                          >
+                            {imagesLoading[contract.id] ? (
+                              <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
+                                <div className="text-center">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                                  <span className="text-xs text-muted-foreground">Loading preview...</span>
+                                </div>
+                              </div>
+                            ) : contractImages[contract.id] ? (
+                              <img 
+                                src={contractImages[contract.id]} 
+                                alt={`${contract.title} preview`}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                                <FileText className="h-12 w-12 mb-2" />
+                                <span className="text-sm font-medium">{contract.title}</span>
+                                <span className="text-xs">Click to view contract</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Contract Info */}
+                          <div className="p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                                  {contract.title}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Client: {contract.client_name || 'Not specified'}
+                                </p>
+                              </div>
+                              <Badge className={getStatusColor(contract.status)}>
+                                {contract.status}
+                              </Badge>
+                            </div>
+
+                            <div className="text-sm space-y-1">
+                              <div>
+                                <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
+                              </div>
+                              <div className="text-muted-foreground">
+                                Created: {new Date(contract.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => handleEdit(contract.id, e)}
+                                className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => deleteContract(contract.id, e)}
+                                className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </Button>
                             </div>
                           </div>
-                        ) : contractImages[contract.id] ? (
-                          <img 
-                            src={contractImages[contract.id]} 
-                            alt={`${contract.title} preview`}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              console.error('❌ Error loading contract card image:', contract.id);
-                              e.currentTarget.style.display = 'none';
-                              const fallback = e.currentTarget.parentElement?.querySelector('.fallback-content');
-                              if (fallback) {
-                                (fallback as HTMLElement).style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        
-                        {/* Fallback content */}
-                        {!imagesLoading[contract.id] && !contractImages[contract.id] && (
-                          <div className="fallback-content w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
-                            <FileText className="h-12 w-12 mb-2" />
-                            <span className="text-sm font-medium">{contract.title}</span>
-                            <span className="text-xs">Click to view contract</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Contract Info */}
-                      <div className="p-4 space-y-3">
-                        {/* Title and Status */}
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
-                              {contract.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Client: {contract.client_name || 'Not specified'}
-                            </p>
-                          </div>
-                          <Badge className={getStatusColor(contract.status)}>
-                            {contract.status}
-                          </Badge>
-                        </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-                        {/* Amount and Date */}
-                        <div className="text-sm space-y-1">
-                          <div>
-                            <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
-                          </div>
-                          <div className="text-muted-foreground">
-                            Created: {new Date(contract.created_at).toLocaleDateString()}
+            <TabsContent value="documents" className="space-y-4">
+              {documentsLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {[...Array(6)].map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="aspect-[400/565] bg-muted rounded mb-4"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted rounded w-3/4"></div>
+                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                          <div className="flex gap-2">
+                            <div className="h-8 bg-muted rounded flex-1"></div>
+                            <div className="h-8 bg-muted rounded flex-1"></div>
                           </div>
                         </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => handleEdit(contract.id, e)}
-                            className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : uploadedDocuments.length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No documents yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Upload your first document to get started with eSignatures
+                    </p>
+                    <Button
+                      onClick={() => navigate('/document/upload')}
+                      className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Your First Document
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {uploadedDocuments.map((document) => (
+                    <motion.div
+                      key={document.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
+                        <CardContent className="p-0">
+                          {/* Document Preview */}
+                          <div 
+                            className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b flex items-center justify-center" 
+                            onClick={() => navigate(`/document-edit/${document.id}`)}
                           >
-                            <Edit className="h-4 w-4" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => deleteContract(contract.id, e)}
-                            className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
+                            <div className="text-center p-6">
+                              <FileText className="h-16 w-16 text-primary mx-auto mb-4" />
+                              <span className="text-sm font-medium text-muted-foreground">PDF Document</span>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {document.signature_positions.length} signature{document.signature_positions.length !== 1 ? 's' : ''} marked
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Document Info */}
+                          <div className="p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                                  {document.title}
+                                </h3>
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {document.original_filename}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Client: {document.client_name || 'Not specified'}
+                                </p>
+                              </div>
+                              <Badge className={getStatusColor(document.status === 'sent_for_signature' ? 'shared' : document.status)}>
+                                {document.status === 'sent_for_signature' ? 'shared' : document.status}
+                              </Badge>
+                            </div>
+
+                            <div className="text-sm space-y-1">
+                              <div className="text-muted-foreground">
+                                Created: {new Date(document.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/document-edit/${document.id}`);
+                                }}
+                                className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Configure
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    const { error } = await supabase
+                                      .from('uploaded_documents')
+                                      .delete()
+                                      .eq('id', document.id);
+                                    
+                                    if (error) throw error;
+                                    
+                                    setUploadedDocuments(prev => prev.filter(doc => doc.id !== document.id));
+                                    toast({
+                                      title: "Document Deleted",
+                                      description: "Document has been deleted successfully."
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to delete document",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
+                                className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </DashboardLayout>
     </>
