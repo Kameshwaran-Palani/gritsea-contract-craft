@@ -123,48 +123,6 @@ const Contracts = () => {
   useEffect(() => {
     if (contracts.length > 0) {
       console.log('📋 Contracts loaded, generating images for', contracts.length, 'contracts');
-      generateImagesForContracts();
-    }
-  }, [contracts]);
-
-  const generateImagesForContracts = async () => {
-    console.log('🎨 Starting batch image generation for all contracts');
-    
-    // Generate images one by one to avoid overwhelming the browser
-    for (const contract of contracts) {
-      if (contractImages[contract.id]) {
-        console.log('⏭️ Image already exists for contract:', contract.id);
-        continue;
-      }
-      
-      console.log('🔄 Generating image for contract:', contract.id, '- Title:', contract.title);
-      setImagesLoading(prev => ({ ...prev, [contract.id]: true }));
-      
-      try {
-        // Add a small delay between generations to prevent browser lock-up
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        const imageDataUrl = await generateContractCoverImage(contract);
-        if (imageDataUrl && imageDataUrl.length > 100) {
-          console.log('✅ Image generated successfully for contract:', contract.id, 'Size:', imageDataUrl.length);
-          setContractImages(prev => ({ ...prev, [contract.id]: imageDataUrl }));
-        } else {
-          console.error('❌ Empty or invalid image data URL for contract:', contract.id);
-        }
-      } catch (error) {
-        console.error(`❌ Error generating image for contract ${contract.id}:`, error);
-      } finally {
-        setImagesLoading(prev => ({ ...prev, [contract.id]: false }));
-      }
-    }
-    
-    console.log('🏁 Batch image generation completed');
-  };
-
-  // Generate optimized card images when contracts are loaded
-  useEffect(() => {
-    if (contracts.length > 0) {
-      console.log('📋 Contracts loaded, generating FAST card images for', contracts.length, 'contracts');
       generateCardImagesForContracts();
     }
   }, [contracts]);
@@ -276,6 +234,92 @@ const Contracts = () => {
     }
   };
 
+  const renderContractCard = (contract: Contract) => (
+    <motion.div
+      key={contract.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
+        <CardContent className="p-0">
+          {/* Contract Card Image */}
+          <div 
+            className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b" 
+            onClick={() => navigate(`/contract/${contract.id}`)}
+          >
+            {imagesLoading[contract.id] ? (
+              <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                  <span className="text-xs text-muted-foreground">Loading preview...</span>
+                </div>
+              </div>
+            ) : contractImages[contract.id] ? (
+              <img 
+                src={contractImages[contract.id]} 
+                alt={`${contract.title} preview`}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                <FileText className="h-12 w-12 mb-2" />
+                <span className="text-sm font-medium">{contract.title}</span>
+                <span className="text-xs">Click to view contract</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Contract Info */}
+          <div className="p-4 space-y-3">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                  {contract.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Client: {contract.client_name || 'Not specified'}
+                </p>
+              </div>
+              <Badge className={getStatusColor(contract.status)}>
+                {contract.status}
+              </Badge>
+            </div>
+
+            <div className="text-sm space-y-1">
+              <div>
+                <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
+              </div>
+              <div className="text-muted-foreground">
+                Created: {new Date(contract.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => handleEdit(contract.id, e)}
+                className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => deleteContract(contract.id, e)}
+                className="px-3 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -320,17 +364,24 @@ const Contracts = () => {
             </div>
           </div>
 
-          <Tabs defaultValue="contracts" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="contracts">
-                Built Contracts ({contracts.length})
+          <Tabs defaultValue="draft" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="draft">
+                Draft ({contracts.filter(c => c.status === 'draft').length})
               </TabsTrigger>
-              <TabsTrigger value="documents">
-                Uploaded Documents ({uploadedDocuments.length})
+              <TabsTrigger value="signed">
+                Signed ({contracts.filter(c => c.status === 'signed').length})
+              </TabsTrigger>
+              <TabsTrigger value="expired">
+                Expired (0)
+              </TabsTrigger>
+              <TabsTrigger value="uploaded">
+                Uploaded ({uploadedDocuments.length})
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="contracts" className="space-y-4">
+            {/* Draft Contracts Tab */}
+            <TabsContent value="draft" className="space-y-4">
               {contractsLoading ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {[...Array(6)].map((_, i) => (
@@ -349,11 +400,11 @@ const Contracts = () => {
                     </Card>
                   ))}
                 </div>
-              ) : contracts.length === 0 ? (
+              ) : contracts.filter(c => c.status === 'draft').length === 0 ? (
                 <Card className="text-center py-12">
                   <CardContent>
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No contracts yet</h3>
+                    <h3 className="text-lg font-semibold mb-2">No draft contracts</h3>
                     <p className="text-muted-foreground mb-4">
                       Create your first professional contract to get started
                     </p>
@@ -368,109 +419,57 @@ const Contracts = () => {
                 </Card>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {contracts.map((contract) => (
-                    <motion.div
-                      key={contract.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer overflow-hidden">
-                        <CardContent className="p-0">
-                          {/* Contract Card Image */}
-                          <div 
-                            className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b" 
-                            onClick={() => navigate(`/contract/${contract.id}`)}
-                          >
-                            {imagesLoading[contract.id] ? (
-                              <div className="w-full h-full flex items-center justify-center bg-muted animate-pulse">
-                                <div className="text-center">
-                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                                  <span className="text-xs text-muted-foreground">Loading preview...</span>
-                                </div>
-                              </div>
-                            ) : contractImages[contract.id] ? (
-                              <img 
-                                src={contractImages[contract.id]} 
-                                alt={`${contract.title} preview`}
-                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
-                                <FileText className="h-12 w-12 mb-2" />
-                                <span className="text-sm font-medium">{contract.title}</span>
-                                <span className="text-xs">Click to view contract</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Contract Info */}
-                          <div className="p-4 space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
-                                  {contract.title}
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                  Client: {contract.client_name || 'Not specified'}
-                                </p>
-                              </div>
-                              <Badge className={getStatusColor(contract.status)}>
-                                {contract.status}
-                              </Badge>
-                            </div>
-
-                            <div className="text-sm space-y-1">
-                              <div>
-                                <span className="font-medium">Amount:</span> ₹{contract.contract_amount?.toLocaleString() || 0}
-                              </div>
-                              <div className="text-muted-foreground">
-                                Created: {new Date(contract.created_at).toLocaleDateString()}
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-2 pt-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => handleEdit(contract.id, e)}
-                                className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
-                              >
-                                <Edit className="h-4 w-4" />
-                                Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => deleteContract(contract.id, e)}
-                                className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
+                  {contracts.filter(c => c.status === 'draft').map(renderContractCard)}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="documents" className="space-y-4">
+            {/* Signed Contracts Tab */}
+            <TabsContent value="signed" className="space-y-4">
+              {contracts.filter(c => c.status === 'signed').length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No signed contracts</h3>
+                    <p className="text-muted-foreground">
+                      Signed contracts will appear here
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {contracts.filter(c => c.status === 'signed').map(renderContractCard)}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Expired Contracts Tab */}
+            <TabsContent value="expired" className="space-y-4">
+              <Card className="text-center py-12">
+                <CardContent>
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No expired contracts</h3>
+                  <p className="text-muted-foreground">
+                    Expired contracts will appear here
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Uploaded Documents Tab */}
+            <TabsContent value="uploaded" className="space-y-4">
               {documentsLoading ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {[...Array(6)].map((_, i) => (
+                  {[...Array(3)].map((_, i) => (
                     <Card key={i} className="animate-pulse">
                       <CardContent className="p-4">
-                        <div className="aspect-[400/565] bg-muted rounded mb-4"></div>
+                        <div className="aspect-[3/4] bg-muted rounded mb-4"></div>
                         <div className="space-y-2">
                           <div className="h-4 bg-muted rounded w-3/4"></div>
                           <div className="h-3 bg-muted rounded w-1/2"></div>
                           <div className="flex gap-2">
                             <div className="h-8 bg-muted rounded flex-1"></div>
-                            <div className="h-8 bg-muted rounded flex-1"></div>
+                            <div className="h-8 bg-muted rounded w-8"></div>
                           </div>
                         </div>
                       </CardContent>
@@ -481,7 +480,7 @@ const Contracts = () => {
                 <Card className="text-center py-12">
                   <CardContent>
                     <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No documents yet</h3>
+                    <h3 className="text-lg font-semibold mb-2">No uploaded documents</h3>
                     <p className="text-muted-foreground mb-4">
                       Upload your first document to get started with eSignatures
                     </p>
@@ -507,14 +506,16 @@ const Contracts = () => {
                         <CardContent className="p-0">
                           {/* Document Preview */}
                           <div 
-                            className="cursor-pointer aspect-[400/565] bg-gray-50 overflow-hidden border-b flex items-center justify-center" 
-                            onClick={() => navigate(`/document-edit/${document.id}`)}
+                            className="cursor-pointer aspect-[3/4] bg-gray-50 overflow-hidden border-b flex items-center justify-center"
+                            onClick={() => navigate(`/document/edit/${document.id}`)}
                           >
-                            <div className="text-center p-6">
-                              <FileText className="h-16 w-16 text-primary mx-auto mb-4" />
-                              <span className="text-sm font-medium text-muted-foreground">PDF Document</span>
+                            <div className="text-center p-4">
+                              <FileText className="h-16 w-16 text-primary mx-auto mb-2" />
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {document.original_filename}
+                              </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                {document.signature_positions.length} signature{document.signature_positions.length !== 1 ? 's' : ''} marked
+                                {document.signature_positions?.length || 0} signature{(document.signature_positions?.length || 0) !== 1 ? 's' : ''} marked
                               </p>
                             </div>
                           </div>
@@ -526,9 +527,6 @@ const Contracts = () => {
                                 <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                                   {document.title}
                                 </h3>
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {document.original_filename}
-                                </p>
                                 <p className="text-sm text-muted-foreground">
                                   Client: {document.client_name || 'Not specified'}
                                 </p>
@@ -550,7 +548,7 @@ const Contracts = () => {
                                 variant="outline"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/document-edit/${document.id}`);
+                                  navigate(`/document/edit/${document.id}`);
                                 }}
                                 className="flex items-center gap-2 flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
                               >
@@ -570,12 +568,13 @@ const Contracts = () => {
                                     
                                     if (error) throw error;
                                     
-                                    setUploadedDocuments(prev => prev.filter(doc => doc.id !== document.id));
+                                    setUploadedDocuments(prev => prev.filter(d => d.id !== document.id));
                                     toast({
                                       title: "Document Deleted",
                                       description: "Document has been deleted successfully."
                                     });
                                   } catch (error) {
+                                    console.error('Error deleting document:', error);
                                     toast({
                                       title: "Error",
                                       description: "Failed to delete document",
@@ -583,10 +582,9 @@ const Contracts = () => {
                                     });
                                   }
                                 }}
-                                className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+                                className="px-3 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
                               >
                                 <Trash2 className="h-4 w-4" />
-                                Delete
                               </Button>
                             </div>
                           </div>

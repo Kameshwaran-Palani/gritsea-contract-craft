@@ -94,14 +94,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     canvasRef.current.style.position = 'absolute';
     canvasRef.current.style.top = '0';
     canvasRef.current.style.left = '0';
-    canvasRef.current.style.pointerEvents = 'auto';
+    canvasRef.current.style.pointerEvents = readonly ? 'none' : 'auto';
+    canvasRef.current.style.zIndex = '10';
 
     // Initialize Fabric canvas
     const canvas = new FabricCanvas(canvasRef.current, {
       width: rect.width,
       height: rect.height,
       backgroundColor: 'transparent',
-      selection: !readonly
+      selection: !readonly,
+      interactive: !readonly
     });
 
     fabricCanvasRef.current = canvas;
@@ -117,6 +119,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         const pointer = canvas.getPointer(e.e);
         addSignatureBox(pointer.x, pointer.y);
         setIsAddingSignature(false);
+      });
+
+      // Handle object modifications
+      canvas.on('object:modified', () => {
+        updateSignaturePositions();
       });
     }
   };
