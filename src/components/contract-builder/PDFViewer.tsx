@@ -70,10 +70,27 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const onPageLoadSuccess = () => {
-    // Initialize or update fabric canvas after page loads
-    setTimeout(() => {
-      initializeFabricCanvas();
-    }, 500); // Increased timeout for better reliability
+    // Use MutationObserver to detect when PDF canvas is fully rendered
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && pageRef.current) {
+          const pdfCanvas = pageRef.current.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement;
+          if (pdfCanvas && pdfCanvas.width > 0) {
+            observer.disconnect();
+            initializeFabricCanvas();
+          }
+        }
+      });
+    });
+
+    if (pageRef.current) {
+      observer.observe(pageRef.current, { childList: true, subtree: true });
+      // Fallback timeout
+      setTimeout(() => {
+        observer.disconnect();
+        initializeFabricCanvas();
+      }, 1000);
+    }
   };
 
   const initializeFabricCanvas = () => {
@@ -90,44 +107,62 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
     const pageElement = pageRef.current.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement;
     if (!pageElement) {
-      console.log('PDF page element not found');
-      // Retry after a short delay
-      setTimeout(() => initializeFabricCanvas(), 200);
+      console.log('PDF page element not found, retrying...');
+      // Retry with exponential backoff
+      setTimeout(() => initializeFabricCanvas(), 300);
       return;
     }
 
-    // Get PDF page dimensions
+    // Wait for the canvas to be fully loaded
+    if (pageElement.width === 0 || pageElement.height === 0) {
+      console.log('PDF canvas not ready, retrying...');
+      setTimeout(() => initializeFabricCanvas(), 300);
+      return;
+    }
+
+    // Get PDF page dimensions with proper positioning
     const pdfRect = pageElement.getBoundingClientRect();
-    const parentRect = pageRef.current.getBoundingClientRect();
+    const containerRect = containerRef.current?.getBoundingClientRect();
     
-    // Calculate relative position
-    const offsetX = pdfRect.left - parentRect.left;
-    const offsetY = pdfRect.top - parentRect.top;
+    if (!containerRect) {
+      console.log('Container rect not available');
+      return;
+    }
 
-    // Set canvas dimensions and position to exactly match PDF
-    canvasRef.current.width = pdfRect.width;
-    canvasRef.current.height = pdfRect.height;
-    canvasRef.current.style.position = 'absolute';
-    canvasRef.current.style.top = `${offsetY}px`;
-    canvasRef.current.style.left = `${offsetX}px`;
-    canvasRef.current.style.pointerEvents = readonly ? 'none' : 'auto';
-    canvasRef.current.style.zIndex = '10';
-    canvasRef.current.style.border = '1px solid transparent'; // Debug border
+    // Calculate exact positioning relative to the container
+    const offsetX = pdfRect.left - containerRect.left;
+    const offsetY = pdfRect.top - containerRect.top;
 
-    console.log('Canvas initialized:', {
-      width: pdfRect.width,
-      height: pdfRect.height,
+    // Set canvas to exact dimensions and position
+    const fabricCanvas = canvasRef.current;
+    fabricCanvas.width = pageElement.width;
+    fabricCanvas.height = pageElement.height;
+    fabricCanvas.style.position = 'absolute';
+    fabricCanvas.style.top = `${offsetY}px`;
+    fabricCanvas.style.left = `${offsetX}px`;
+    fabricCanvas.style.width = `${pdfRect.width}px`;
+    fabricCanvas.style.height = `${pdfRect.height}px`;
+    fabricCanvas.style.pointerEvents = readonly ? 'none' : 'auto';
+    fabricCanvas.style.zIndex = '10';
+    fabricCanvas.style.cursor = isAddingSignature ? 'crosshair' : 'default';
+
+    console.log('Canvas positioning:', {
+      pdfWidth: pageElement.width,
+      pdfHeight: pageElement.height,
+      displayWidth: pdfRect.width,
+      displayHeight: pdfRect.height,
       offsetX,
       offsetY
     });
 
-    // Initialize Fabric canvas
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: pdfRect.width,
-      height: pdfRect.height,
+    // Initialize Fabric canvas with exact dimensions
+    const canvas = new FabricCanvas(fabricCanvas, {
+      width: pageElement.width,
+      height: pageElement.height,
       backgroundColor: 'transparent',
       selection: !readonly,
-      interactive: !readonly
+      interactive: !readonly,
+      preserveObjectStacking: true
     });
 
     fabricCanvasRef.current = canvas;
@@ -144,6 +179,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         console.log('Adding signature at:', pointer);
         addSignatureBox(pointer.x, pointer.y);
         setIsAddingSignature(false);
+        
+        toast({
+          title: "Signature box added",
+          description: `Added signature box at page ${currentPage}`
+        });
       });
 
       // Handle object modifications
@@ -155,6 +195,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       // Handle object selection
       canvas.on('selection:created', () => {
         console.log('Object selected');
+      });
+
+      // Handle object movement
+      canvas.on('object:moving', () => {
+        canvas.renderAll();
       });
     }
 
@@ -388,7 +433,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         </div>
 
         {/* PDF Viewer */}
-        <div className="border rounded-lg bg-gray-50 p-4 overflow-auto max-h-[600px]">
+        <div ref={containerRef} className="border rounded-lg bg-gray-50 p-4 overflow-auto max-h-[600px] relative">
           <div className="flex justify-center">
             <div ref={pageRef} className="relative">
               <Document
@@ -397,11 +442,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 loading={
                   <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Loading PDF...</span>
                   </div>
                 }
                 error={
                   <div className="text-center p-8">
                     <p className="text-destructive">Failed to load PDF</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Please check the file format and try again
+                    </p>
                   </div>
                 }
               >
@@ -413,11 +462,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                   loading={
                     <div className="flex items-center justify-center h-64">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      <span className="ml-2">Loading page...</span>
                     </div>
                   }
+                  onRenderSuccess={() => {
+                    console.log('Page rendered successfully');
+                  }}
                 />
               </Document>
-              <canvas ref={canvasRef} className="absolute top-0 left-0" />
+              <canvas ref={canvasRef} className="absolute top-0 left-0 pointer-events-auto" />
             </div>
           </div>
         </div>
