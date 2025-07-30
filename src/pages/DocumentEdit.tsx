@@ -266,15 +266,152 @@ const DocumentEdit = () => {
           </div>
         </div>
 
-        {/* PDF Viewer - Full Width */}
+        {/* Two Panel Layout for Document Editing */}
         {document.file_type.includes('pdf') ? (
-          <div className="mb-8">
-            <PDFViewer
-              fileUrl={document.file_url}
-              signaturePositions={signaturePositions}
-              onSignaturePositionsChange={setSignaturePositions}
-              onSave={handleSaveSignaturePositions}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* Left Panel - Signature Tools & Client Info */}
+            <div className="space-y-6">
+              {/* Signature Tools */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Signature Placement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    Add signature boxes where clients need to sign. Click "Add Signature" then click on the PDF to place signature areas.
+                  </div>
+                  
+                  {signaturePositions.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Signature Positions ({signaturePositions.length})</h4>
+                      <div className="max-h-32 overflow-y-auto space-y-1">
+                        {signaturePositions.map((pos) => (
+                          <div key={pos.id} className="text-xs p-2 bg-muted rounded flex justify-between items-center">
+                            <span>Page {pos.page} - Position: {Math.round(pos.x)}, {Math.round(pos.y)}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const updatedPositions = signaturePositions.filter(p => p.id !== pos.id);
+                                setSignaturePositions(updatedPositions);
+                              }}
+                              className="h-6 w-6 p-0"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Client Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Client Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="clientName">Client Name *</Label>
+                    <Input
+                      id="clientName"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Enter client's full name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientEmail">Client Email *</Label>
+                    <Input
+                      id="clientEmail"
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      placeholder="client@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientPhone">Client Phone</Label>
+                    <Input
+                      id="clientPhone"
+                      type="tel"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      placeholder="+1 234 567 8900"
+                    />
+                  </div>
+
+                  {/* Verification Settings */}
+                  <div className="space-y-3 pt-4 border-t">
+                    <h4 className="font-medium">Verification Settings</h4>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Email Verification</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Require email verification before signing
+                        </p>
+                      </div>
+                      <Switch
+                        checked={emailVerification}
+                        onCheckedChange={setEmailVerification}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Phone Verification</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Require phone verification before signing
+                        </p>
+                      </div>
+                      <Switch
+                        checked={phoneVerification}
+                        onCheckedChange={setPhoneVerification}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="w-full"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Draft
+                    </Button>
+                    <Button
+                      onClick={handleSendForSignature}
+                      disabled={saving || !clientName.trim() || !clientEmail.trim()}
+                      className="w-full"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send for Signature
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Panel - PDF Viewer */}
+            <div className="lg:col-span-2">
+              <PDFViewer
+                fileUrl={document.file_url}
+                signaturePositions={signaturePositions}
+                onSignaturePositionsChange={setSignaturePositions}
+                onSave={handleSaveSignaturePositions}
+              />
+            </div>
           </div>
         ) : (
           <div className="mb-8">
@@ -298,102 +435,71 @@ const DocumentEdit = () => {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Client Information for non-PDF documents */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Client Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="clientName">Client Name *</Label>
+                    <Input
+                      id="clientName"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Enter client's full name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientEmail">Client Email *</Label>
+                    <Input
+                      id="clientEmail"
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      placeholder="client@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientPhone">Client Phone</Label>
+                    <Input
+                      id="clientPhone"
+                      type="tel"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      placeholder="+1 234 567 8900"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex-1"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Draft
+                    </Button>
+                    <Button
+                      onClick={handleSendForSignature}
+                      disabled={saving || !clientName.trim() || !clientEmail.trim()}
+                      className="flex-1"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send for Signature
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Client Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Client Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="clientName">Client Name *</Label>
-                <Input
-                  id="clientName"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Enter client's full name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="clientEmail">Client Email *</Label>
-                <Input
-                  id="clientEmail"
-                  type="email"
-                  value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
-                  placeholder="client@example.com"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="clientPhone">Client Phone</Label>
-                <Input
-                  id="clientPhone"
-                  type="tel"
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  placeholder="+1 234 567 8900"
-                />
-              </div>
-
-              {/* Verification Settings */}
-              <div className="space-y-3 pt-4 border-t">
-                <h4 className="font-medium">Verification Settings</h4>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Email Verification</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Require email verification before signing
-                    </p>
-                  </div>
-                  <Switch
-                    checked={emailVerification}
-                    onCheckedChange={setEmailVerification}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Phone Verification</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Require phone verification before signing
-                    </p>
-                  </div>
-                  <Switch
-                    checked={phoneVerification}
-                    onCheckedChange={setPhoneVerification}
-                  />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Draft
-                </Button>
-                <Button
-                  onClick={handleSendForSignature}
-                  disabled={saving || !clientName.trim() || !clientEmail.trim()}
-                  className="flex-1"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Send for Signature
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Share Details */}
         {shareInfo && (

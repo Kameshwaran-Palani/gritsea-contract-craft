@@ -73,34 +73,58 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     // Initialize or update fabric canvas after page loads
     setTimeout(() => {
       initializeFabricCanvas();
-    }, 100);
+    }, 500); // Increased timeout for better reliability
   };
 
   const initializeFabricCanvas = () => {
-    if (!canvasRef.current || !pageRef.current) return;
+    if (!canvasRef.current || !pageRef.current) {
+      console.log('Canvas refs not ready');
+      return;
+    }
 
     // Clean up existing canvas
     if (fabricCanvasRef.current) {
       fabricCanvasRef.current.dispose();
+      fabricCanvasRef.current = null;
     }
 
     const pageElement = pageRef.current.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement;
-    if (!pageElement) return;
+    if (!pageElement) {
+      console.log('PDF page element not found');
+      // Retry after a short delay
+      setTimeout(() => initializeFabricCanvas(), 200);
+      return;
+    }
 
-    // Set canvas dimensions to match PDF page
-    const rect = pageElement.getBoundingClientRect();
-    canvasRef.current.width = rect.width;
-    canvasRef.current.height = rect.height;
+    // Get PDF page dimensions
+    const pdfRect = pageElement.getBoundingClientRect();
+    const parentRect = pageRef.current.getBoundingClientRect();
+    
+    // Calculate relative position
+    const offsetX = pdfRect.left - parentRect.left;
+    const offsetY = pdfRect.top - parentRect.top;
+
+    // Set canvas dimensions and position to exactly match PDF
+    canvasRef.current.width = pdfRect.width;
+    canvasRef.current.height = pdfRect.height;
     canvasRef.current.style.position = 'absolute';
-    canvasRef.current.style.top = '0';
-    canvasRef.current.style.left = '0';
+    canvasRef.current.style.top = `${offsetY}px`;
+    canvasRef.current.style.left = `${offsetX}px`;
     canvasRef.current.style.pointerEvents = readonly ? 'none' : 'auto';
     canvasRef.current.style.zIndex = '10';
+    canvasRef.current.style.border = '1px solid transparent'; // Debug border
+
+    console.log('Canvas initialized:', {
+      width: pdfRect.width,
+      height: pdfRect.height,
+      offsetX,
+      offsetY
+    });
 
     // Initialize Fabric canvas
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: rect.width,
-      height: rect.height,
+      width: pdfRect.width,
+      height: pdfRect.height,
       backgroundColor: 'transparent',
       selection: !readonly,
       interactive: !readonly
@@ -117,15 +141,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         if (!isAddingSignature) return;
 
         const pointer = canvas.getPointer(e.e);
+        console.log('Adding signature at:', pointer);
         addSignatureBox(pointer.x, pointer.y);
         setIsAddingSignature(false);
       });
 
       // Handle object modifications
       canvas.on('object:modified', () => {
+        console.log('Object modified, updating positions');
         updateSignaturePositions();
       });
+
+      // Handle object selection
+      canvas.on('selection:created', () => {
+        console.log('Object selected');
+      });
     }
+
+    canvas.renderAll();
   };
 
   const loadSignaturePositions = () => {
@@ -257,9 +290,26 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const handlePageChange = (newPage: number) => {
-    updateSignaturePositions();
+    if (fabricCanvasRef.current) {
+      updateSignaturePositions();
+    }
     setCurrentPage(newPage);
   };
+
+  // Add resize observer to handle dynamic resizing
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (fabricCanvasRef.current) {
+        setTimeout(() => initializeFabricCanvas(), 100);
+      }
+    });
+
+    if (pageRef.current) {
+      resizeObserver.observe(pageRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [currentPage, scale, rotation]);
 
   const getCurrentPageSignatures = () => {
     return signaturePositions.filter(pos => pos.page === currentPage);
@@ -372,28 +422,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           </div>
         </div>
 
-        {/* Signature Positions List */}
-        {!readonly && getCurrentPageSignatures().length > 0 && (
-          <div className="mt-4">
-            <h4 className="font-medium mb-2">Signature Positions on Page {currentPage}</h4>
-            <div className="space-y-2">
-              {getCurrentPageSignatures().map((pos) => (
-                <div key={pos.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="text-sm">
-                    Position: {Math.round(pos.x)}, {Math.round(pos.y)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeSignatureBox(pos.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {isAddingSignature && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
