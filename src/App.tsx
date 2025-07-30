@@ -23,7 +23,6 @@ import AIAssistant from "./pages/AIAssistant";
 import AIPrompt from "./pages/AIPrompt";
 import DocumentUpload from "./pages/DocumentUpload";
 import DocumentEdit from "./pages/DocumentEdit";
-import DocumentSign from "./pages/DocumentSign";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,7 +54,6 @@ function App() {
               <Route path="/ai-prompt" element={<AIPrompt />} />
               <Route path="/document-upload" element={<DocumentUpload />} />
               <Route path="/document-edit/:id" element={<DocumentEdit />} />
-              <Route path="/document-sign/:id" element={<DocumentSign />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
