@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Canvas as FabricCanvas, Rect } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,7 @@ import {
   MousePointer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -47,19 +47,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [scale, setScale] = useState<number>(1.0);
   const [rotation, setRotation] = useState<number>(0);
   const [isAddingSignature, setIsAddingSignature] = useState<boolean>(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const [draggedBox, setDraggedBox] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const pageRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    return () => {
-      if (fabricCanvasRef.current) {
-        fabricCanvasRef.current.dispose();
-      }
-    };
-  }, []);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -69,211 +60,65 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     });
   };
 
-  const onPageLoadSuccess = () => {
-    // Initialize or update fabric canvas after page loads
-    setTimeout(() => {
-      initializeFabricCanvas();
-    }, 500); // Increased timeout for better reliability
-  };
+  const handlePDFClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isAddingSignature || readonly) return;
 
-  const initializeFabricCanvas = () => {
-    if (!canvasRef.current || !pageRef.current) {
-      console.log('Canvas refs not ready');
-      return;
-    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    // Clean up existing canvas
-    if (fabricCanvasRef.current) {
-      fabricCanvasRef.current.dispose();
-      fabricCanvasRef.current = null;
-    }
-
-    const pageElement = pageRef.current.querySelector('.react-pdf__Page__canvas') as HTMLCanvasElement;
-    if (!pageElement) {
-      console.log('PDF page element not found');
-      // Retry after a short delay
-      setTimeout(() => initializeFabricCanvas(), 200);
-      return;
-    }
-
-    // Get PDF page dimensions
-    const pdfRect = pageElement.getBoundingClientRect();
-    const parentRect = pageRef.current.getBoundingClientRect();
-    
-    // Calculate relative position
-    const offsetX = pdfRect.left - parentRect.left;
-    const offsetY = pdfRect.top - parentRect.top;
-
-    // Set canvas dimensions and position to exactly match PDF
-    canvasRef.current.width = pdfRect.width;
-    canvasRef.current.height = pdfRect.height;
-    canvasRef.current.style.position = 'absolute';
-    canvasRef.current.style.top = `${offsetY}px`;
-    canvasRef.current.style.left = `${offsetX}px`;
-    canvasRef.current.style.pointerEvents = readonly ? 'none' : 'auto';
-    canvasRef.current.style.zIndex = '10';
-    canvasRef.current.style.border = '1px solid transparent'; // Debug border
-
-    console.log('Canvas initialized:', {
-      width: pdfRect.width,
-      height: pdfRect.height,
-      offsetX,
-      offsetY
-    });
-
-    // Initialize Fabric canvas
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: pdfRect.width,
-      height: pdfRect.height,
-      backgroundColor: 'transparent',
-      selection: !readonly,
-      interactive: !readonly
-    });
-
-    fabricCanvasRef.current = canvas;
-
-    // Load existing signature positions for current page
-    loadSignaturePositions();
-
-    if (!readonly) {
-      // Handle adding new signature boxes
-      canvas.on('mouse:down', (e) => {
-        if (!isAddingSignature) return;
-
-        const pointer = canvas.getPointer(e.e);
-        console.log('Adding signature at:', pointer);
-        addSignatureBox(pointer.x, pointer.y);
-        setIsAddingSignature(false);
-      });
-
-      // Handle object modifications
-      canvas.on('object:modified', () => {
-        console.log('Object modified, updating positions');
-        updateSignaturePositions();
-      });
-
-      // Handle object selection
-      canvas.on('selection:created', () => {
-        console.log('Object selected');
-      });
-    }
-
-    canvas.renderAll();
-  };
-
-  const loadSignaturePositions = () => {
-    if (!fabricCanvasRef.current) return;
-
-    const canvas = fabricCanvasRef.current;
-    canvas.clear();
-
-    const pagePositions = signaturePositions.filter(pos => pos.page === currentPage);
-    
-    pagePositions.forEach(pos => {
-      const rect = new Rect({
-        left: pos.x,
-        top: pos.y,
-        width: pos.width,
-        height: pos.height,
-        fill: 'rgba(59, 130, 246, 0.2)',
-        stroke: '#3b82f6',
-        strokeWidth: 2,
-        cornerStyle: 'circle',
-        cornerColor: '#3b82f6',
-        cornerSize: 8,
-        transparentCorners: false,
-        selectable: !readonly,
-        hasControls: !readonly,
-        hasBorders: !readonly
-      });
-
-      rect.set('signatureId', pos.id);
-      canvas.add(rect);
-    });
-
-    canvas.renderAll();
-  };
-
-  const addSignatureBox = (x: number, y: number) => {
-    if (!fabricCanvasRef.current) return;
-
-    const canvas = fabricCanvasRef.current;
-    const signatureId = `sig_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    const rect = new Rect({
-      left: x - 50,
-      top: y - 15,
-      width: 100,
-      height: 30,
-      fill: 'rgba(59, 130, 246, 0.2)',
-      stroke: '#3b82f6',
-      strokeWidth: 2,
-      cornerStyle: 'circle',
-      cornerColor: '#3b82f6',
-      cornerSize: 8,
-      transparentCorners: false,
-      selectable: true,
-      hasControls: true,
-      hasBorders: true
-    });
-
-    rect.set('signatureId', signatureId);
-    canvas.add(rect);
-
-    // Add to signature positions
-    const newPosition: SignaturePosition = {
-      id: signatureId,
+    const newSignature: SignaturePosition = {
+      id: `sig_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       page: currentPage,
-      x: x - 50,
-      y: y - 15,
-      width: 100,
-      height: 30
+      x: x - 75, // Center the box
+      y: y - 25,
+      width: 150,
+      height: 50
     };
 
-    onSignaturePositionsChange([...signaturePositions, newPosition]);
-    canvas.renderAll();
+    onSignaturePositionsChange([...signaturePositions, newSignature]);
+    setIsAddingSignature(false);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, signatureId: string) => {
+    if (readonly) return;
+    
+    e.stopPropagation();
+    setDraggedBox(signatureId);
+    
+    const signature = signaturePositions.find(s => s.id === signatureId);
+    if (signature) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!draggedBox || readonly) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - dragOffset.x;
+    const y = e.clientY - rect.top - dragOffset.y;
+
+    const updatedPositions = signaturePositions.map(sig => 
+      sig.id === draggedBox 
+        ? { ...sig, x: Math.max(0, x), y: Math.max(0, y) }
+        : sig
+    );
+
+    onSignaturePositionsChange(updatedPositions);
+  };
+
+  const handleMouseUp = () => {
+    setDraggedBox(null);
+    setDragOffset({ x: 0, y: 0 });
   };
 
   const removeSignatureBox = (signatureId: string) => {
-    if (!fabricCanvasRef.current) return;
-
-    const canvas = fabricCanvasRef.current;
-    const objects = canvas.getObjects();
-    
-    objects.forEach(obj => {
-      if (obj.get('signatureId') === signatureId) {
-        canvas.remove(obj);
-      }
-    });
-
-    // Remove from signature positions
     const updatedPositions = signaturePositions.filter(pos => pos.id !== signatureId);
-    onSignaturePositionsChange(updatedPositions);
-    canvas.renderAll();
-  };
-
-  const updateSignaturePositions = () => {
-    if (!fabricCanvasRef.current) return;
-
-    const canvas = fabricCanvasRef.current;
-    const objects = canvas.getObjects();
-    
-    const updatedPositions = signaturePositions.filter(pos => pos.page !== currentPage);
-    
-    objects.forEach(obj => {
-      const signatureId = obj.get('signatureId');
-      if (signatureId) {
-        updatedPositions.push({
-          id: signatureId,
-          page: currentPage,
-          x: obj.left || 0,
-          y: obj.top || 0,
-          width: obj.width || 100,
-          height: obj.height || 30
-        });
-      }
-    });
-
     onSignaturePositionsChange(updatedPositions);
   };
 
@@ -290,30 +135,42 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const handlePageChange = (newPage: number) => {
-    if (fabricCanvasRef.current) {
-      updateSignaturePositions();
-    }
     setCurrentPage(newPage);
   };
-
-  // Add resize observer to handle dynamic resizing
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(() => {
-      if (fabricCanvasRef.current) {
-        setTimeout(() => initializeFabricCanvas(), 100);
-      }
-    });
-
-    if (pageRef.current) {
-      resizeObserver.observe(pageRef.current);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, [currentPage, scale, rotation]);
 
   const getCurrentPageSignatures = () => {
     return signaturePositions.filter(pos => pos.page === currentPage);
   };
+
+  const SignatureBox = ({ signature }: { signature: SignaturePosition }) => (
+    <div
+      className="absolute border-2 border-blue-500 bg-blue-100/30 backdrop-blur-sm rounded flex items-center justify-center text-xs font-medium text-blue-700 cursor-move select-none group hover:bg-blue-100/50 transition-colors"
+      style={{
+        top: signature.y,
+        left: signature.x,
+        width: signature.width,
+        height: signature.height,
+        zIndex: 10,
+        pointerEvents: readonly ? 'none' : 'auto'
+      }}
+      onMouseDown={(e) => handleMouseDown(e, signature.id)}
+    >
+      <span className="pointer-events-none">
+        {readonly ? 'Signature Required' : 'Sign Here'}
+      </span>
+      {!readonly && (
+        <button
+          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
+          onClick={(e) => {
+            e.stopPropagation();
+            removeSignatureBox(signature.id);
+          }}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <Card className="w-full">
@@ -390,44 +247,78 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         {/* PDF Viewer */}
         <div className="border rounded-lg bg-gray-50 p-4 overflow-auto max-h-[600px]">
           <div className="flex justify-center">
-            <div ref={pageRef} className="relative">
-              <Document
-                file={fileUrl}
-                onLoadSuccess={onDocumentLoadSuccess}
-                loading={
-                  <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                }
-                error={
-                  <div className="text-center p-8">
-                    <p className="text-destructive">Failed to load PDF</p>
-                  </div>
-                }
+            <Document
+              file={fileUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              }
+              error={
+                <div className="text-center p-8">
+                  <p className="text-destructive">Failed to load PDF</p>
+                </div>
+              }
+            >
+              <div
+                ref={pageRef}
+                className="relative w-fit"
+                onClick={handlePDFClick}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                style={{ cursor: isAddingSignature ? 'crosshair' : 'default' }}
               >
                 <Page
                   pageNumber={currentPage}
                   scale={scale}
                   rotate={rotation}
-                  onLoadSuccess={onPageLoadSuccess}
                   loading={
                     <div className="flex items-center justify-center h-64">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                     </div>
                   }
                 />
-              </Document>
-              <canvas ref={canvasRef} className="absolute top-0 left-0" />
-            </div>
+                
+                {/* Render signature boxes for current page */}
+                {getCurrentPageSignatures().map((signature) => (
+                  <SignatureBox key={signature.id} signature={signature} />
+                ))}
+              </div>
+            </Document>
           </div>
         </div>
-
 
         {isAddingSignature && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
+              <MousePointer className="h-4 w-4 inline mr-2" />
               Click anywhere on the PDF to place a signature box
             </p>
+          </div>
+        )}
+
+        {/* Signature positions list for current page */}
+        {!readonly && getCurrentPageSignatures().length > 0 && (
+          <div className="mt-4">
+            <h4 className="font-medium text-sm mb-2">
+              Signatures on Page {currentPage} ({getCurrentPageSignatures().length})
+            </h4>
+            <div className="space-y-2">
+              {getCurrentPageSignatures().map((sig) => (
+                <div key={sig.id} className="flex items-center justify-between text-xs p-2 bg-muted rounded">
+                  <span>Position: {Math.round(sig.x)}, {Math.round(sig.y)} | Size: {sig.width}×{sig.height}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSignatureBox(sig.id)}
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

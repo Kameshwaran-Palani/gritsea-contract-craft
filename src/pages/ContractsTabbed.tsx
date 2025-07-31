@@ -30,10 +30,24 @@ interface Contract {
   clauses_json: any;
 }
 
+interface UploadedDocument {
+  id: string;
+  title: string;
+  original_filename: string;
+  file_url: string;
+  file_type: string;
+  status: string;
+  client_name?: string;
+  client_email?: string;
+  created_at: string;
+  signature_positions: any;
+}
+
 const ContractsTabbed = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('draft');
   const [contractImages, setContractImages] = useState<{ [key: string]: string }>({});
@@ -41,6 +55,7 @@ const ContractsTabbed = () => {
 
   useEffect(() => {
     loadContracts();
+    loadUploadedDocuments();
 
     const channel = supabase
       .channel('contracts-tabbed-realtime')
@@ -146,6 +161,25 @@ const ContractsTabbed = () => {
     }
   };
 
+  const loadUploadedDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('uploaded_documents')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setUploadedDocuments(data || []);
+    } catch (error) {
+      console.error('Error loading uploaded documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load uploaded documents",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDeleteContract = async (contractId: string) => {
     if (!window.confirm('Are you sure you want to delete this contract?')) {
       return;
@@ -198,7 +232,7 @@ const ContractsTabbed = () => {
   };
 
   const filterContractsByStatus = (status: string) => {
-    return contracts.filter(contract => {
+    const filteredContracts = contracts.filter(contract => {
       if (status === 'draft') {
         return ['draft', 'revision_requested', 'sent_for_signature'].includes(contract.status);
       }
@@ -210,7 +244,69 @@ const ContractsTabbed = () => {
       }
       return false;
     });
+
+    const filteredDocuments = uploadedDocuments.filter(doc => {
+      if (status === 'draft') {
+        return ['draft', 'sent_for_signature'].includes(doc.status);
+      }
+      if (status === 'signed') {
+        return doc.status === 'signed';
+      }
+      return false;
+    });
+
+    return { contracts: filteredContracts, documents: filteredDocuments };
   };
+
+  const DocumentCard = ({ document }: { document: UploadedDocument }) => (
+    <Card 
+      key={document.id} 
+      className="hover:shadow-lg transition-all duration-200 group cursor-pointer"
+      onClick={() => navigate(`/document-edit/${document.id}`)}
+    >
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg truncate group-hover:text-primary transition-colors">
+              {document.title}
+            </CardTitle>
+          </div>
+          <Badge className={getStatusColor(document.status)}>
+            {document.status === 'sent_for_signature' ? 'Pending' : document.status}
+          </Badge>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <FileText className="h-4 w-4" />
+          <span>{document.original_filename}</span>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <User className="h-4 w-4" />
+          <span>{document.client_name || 'No client specified'}</span>
+        </div>
+        
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>Uploaded {new Date(document.created_at).toLocaleDateString()}</span>
+        </div>
+
+        <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+          {document.status === 'draft' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate(`/document-edit/${document.id}`)}
+              className="flex items-center gap-1"
+            >
+              <Edit className="h-3 w-3" />
+              Configure & Send
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const ContractCard = ({ contract, showActions = true }: { contract: Contract; showActions?: boolean }) => (
     <Card 
@@ -322,9 +418,13 @@ const ContractsTabbed = () => {
     );
   }
 
-  const draftContracts = filterContractsByStatus('draft');
-  const signedContracts = filterContractsByStatus('signed');
-  const expiredContracts = filterContractsByStatus('expired');
+  const draftData = filterContractsByStatus('draft');
+  const signedData = filterContractsByStatus('signed');
+  const expiredData = filterContractsByStatus('expired');
+  
+  const totalDrafts = draftData.contracts.length + draftData.documents.length;
+  const totalSigned = signedData.contracts.length + signedData.documents.length;
+  const totalExpired = expiredData.contracts.length;
 
   return (
     <>
@@ -341,69 +441,120 @@ const ContractsTabbed = () => {
                 Manage your contracts across different stages
               </p>
             </div>
-            <Button onClick={() => navigate('/contract/new')} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Contract
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/contract/new')} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Contract
+              </Button>
+              <Button 
+                onClick={() => navigate('/document-upload')} 
+                variant="outline" 
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Upload Document
+              </Button>
+            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="draft" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Draft ({draftContracts.length})
+                Draft ({totalDrafts})
               </TabsTrigger>
               <TabsTrigger value="signed" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Signed ({signedContracts.length})
+                Signed ({totalSigned})
               </TabsTrigger>
               <TabsTrigger value="expired" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Expired ({expiredContracts.length})
+                Expired ({totalExpired})
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="draft" className="space-y-4">
-              {draftContracts.length === 0 ? (
+              {totalDrafts === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold">No draft contracts</h3>
+                  <h3 className="text-lg font-semibold">No draft contracts or documents</h3>
                   <p className="text-muted-foreground mb-4">
-                    Create your first contract to get started
+                    Create a contract or upload a document to get started
                   </p>
-                  <Button onClick={() => navigate('/contract/new')}>
-                    Create Contract
-                  </Button>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={() => navigate('/contract/new')}>
+                      Create Contract
+                    </Button>
+                    <Button onClick={() => navigate('/document-upload')} variant="outline">
+                      Upload Document
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {draftContracts.map(contract => (
-                    <ContractCard key={contract.id} contract={contract} showActions={true} />
-                  ))}
+                <div className="space-y-6">
+                  {draftData.contracts.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Built Contracts ({draftData.contracts.length})</h3>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {draftData.contracts.map(contract => (
+                          <ContractCard key={contract.id} contract={contract} showActions={true} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {draftData.documents.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Uploaded Documents ({draftData.documents.length})</h3>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {draftData.documents.map(document => (
+                          <DocumentCard key={document.id} document={document} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="signed" className="space-y-4">
-              {signedContracts.length === 0 ? (
+              {totalSigned === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold">No signed contracts</h3>
+                  <h3 className="text-lg font-semibold">No signed contracts or documents</h3>
                   <p className="text-muted-foreground">
-                    Contracts that have been signed will appear here
+                    Contracts and documents that have been signed will appear here
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {signedContracts.map(contract => (
-                    <ContractCard key={contract.id} contract={contract} showActions={false} />
-                  ))}
+                <div className="space-y-6">
+                  {signedData.contracts.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Signed Contracts ({signedData.contracts.length})</h3>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {signedData.contracts.map(contract => (
+                          <ContractCard key={contract.id} contract={contract} showActions={false} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {signedData.documents.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Signed Documents ({signedData.documents.length})</h3>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {signedData.documents.map(document => (
+                          <DocumentCard key={document.id} document={document} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="expired" className="space-y-4">
-              {expiredContracts.length === 0 ? (
+              {totalExpired === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold">No expired contracts</h3>
@@ -413,7 +564,7 @@ const ContractsTabbed = () => {
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {expiredContracts.map(contract => (
+                  {expiredData.contracts.map(contract => (
                     <ContractCard key={contract.id} contract={contract} showActions={false} />
                   ))}
                 </div>
