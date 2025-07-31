@@ -13,7 +13,7 @@ import {
   MousePointer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
