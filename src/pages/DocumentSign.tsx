@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, AlertCircle, Shield, KeyRound, Mail, Phone, Download } from 'lucide-react';
+import { CheckCircle, Shield, KeyRound, Mail, Download } from 'lucide-react';
 import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
 import SignatureStep from '@/components/contract-builder/SignatureStep';
 import PDFViewer from '@/components/contract-builder/PDFViewer';
@@ -24,9 +24,7 @@ interface UploadedDocument {
   status: 'draft' | 'sent_for_signature' | 'signed' | 'cancelled';
   client_name?: string;
   client_email?: string;
-  client_phone?: string;
   verification_email_required: boolean;
-  verification_phone_required: boolean;
   public_link_id: string;
   signature_positions: any;
   user_id: string;
@@ -45,7 +43,6 @@ const DocumentSign = () => {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [credentials, setCredentials] = useState({
     email: '',
-    phone: '',
     secretKey: secretKey
   });
   const [ownerName, setOwnerName] = useState('');
@@ -75,15 +72,12 @@ const DocumentSign = () => {
           .eq('public_link_id', publicLinkId)
           .single();
 
-        if (error || !data) {
-          console.error('Error fetching document owner:', error);
-          return;
-        }
+        if (error || !data) return;
 
         const profile = data.profiles as any;
         setOwnerName(profile?.full_name || '');
-      } catch (error) {
-        console.error('Error fetching document owner:', error);
+      } catch {
+        // do nothing
       } finally {
         setCreatorLoading(false);
       }
@@ -102,13 +96,10 @@ const DocumentSign = () => {
       return;
     }
 
-    const authMethod = document?.verification_email_required ? 'email' : 'phone';
-    const contactInfo = authMethod === 'email' ? credentials.email : credentials.phone;
-    
-    if (!contactInfo) {
+    if (!credentials.email) {
       toast({
-        title: `${authMethod === 'email' ? 'Email' : 'Phone'} Required`,
-        description: `Please enter your ${authMethod} address`,
+        title: "Email Required",
+        description: "Please enter your email address",
         variant: "destructive"
       });
       return;
@@ -132,12 +123,11 @@ const DocumentSign = () => {
         return;
       }
 
-      // Verify contact information matches
-      const expectedContact = authMethod === 'email' ? data.client_email : data.client_phone;
-      if (expectedContact && expectedContact !== contactInfo) {
+      const expectedEmail = data.client_email;
+      if (expectedEmail && expectedEmail !== credentials.email) {
         toast({
           title: "Authentication Failed",
-          description: `The ${authMethod} address doesn't match our records`,
+          description: `The email doesn't match our records`,
           variant: "destructive"
         });
         return;
@@ -145,9 +135,9 @@ const DocumentSign = () => {
 
       setDocument({
         ...data,
-        status: data.status as 'draft' | 'sent_for_signature' | 'signed' | 'cancelled',
+        status: data.status as UploadedDocument['status'],
         signature_positions: Array.isArray(data.signature_positions) ? data.signature_positions : []
-      } as UploadedDocument);
+      });
       setHasAccess(true);
 
       toast({
@@ -170,8 +160,7 @@ const DocumentSign = () => {
     if (!document) return;
 
     try {
-      // Create signature record for client
-      const { error: signatureError } = await supabase
+      await supabase
         .from('uploaded_document_signatures')
         .insert({
           document_id: document.id,
@@ -179,17 +168,13 @@ const DocumentSign = () => {
           signer_name: document.client_name || 'Client',
           signer_email: document.client_email,
           signature_image_url: signatureData,
-          client_verified_name: credentials.email || credentials.phone,
-          client_verified_email: document.verification_email_required ? credentials.email : null,
-          client_verified_phone: document.verification_phone_required ? credentials.phone : null,
-          ip_address: 'client-ip' // Placeholder for IP address
+          client_verified_name: credentials.email,
+          client_verified_email: credentials.email,
+          ip_address: 'client-ip' // TODO: Replace with real IP capture if needed
         });
-
-      if (signatureError) throw signatureError;
 
       const signedAtDate = new Date().toISOString();
 
-      // Update document status
       const { data: updatedDocument, error: statusError } = await supabase
         .from('uploaded_documents')
         .update({ 
@@ -204,9 +189,9 @@ const DocumentSign = () => {
 
       setDocument({
         ...updatedDocument,
-        status: updatedDocument.status as 'draft' | 'sent_for_signature' | 'signed' | 'cancelled',
+        status: updatedDocument.status as UploadedDocument['status'],
         signature_positions: Array.isArray(updatedDocument.signature_positions) ? updatedDocument.signature_positions : []
-      } as UploadedDocument);
+      });
       setClientSignature(signatureData);
       
       toast({
@@ -234,15 +219,13 @@ const DocumentSign = () => {
         description: "Please wait while we generate your PDF...",
       });
 
-      // For now, just download the original PDF
-      // In a full implementation, you would overlay the signature on the PDF
-      const link = window.document.createElement('a');
+      const link = document.createElement('a');
       link.href = document!.file_url;
       link.download = `Signed_${document!.original_filename}`;
-      window.document.body.appendChild(link);
+      document.body.appendChild(link);
       link.click();
-      window.document.body.removeChild(link);
-      
+      document.body.removeChild(link);
+
       toast({
         title: "Download Complete",
         description: "Document PDF has been downloaded successfully."
@@ -259,13 +242,9 @@ const DocumentSign = () => {
     }
   };
 
-  if (!publicLinkId) {
-    return <Navigate to="/404" replace />;
-  }
+  if (!publicLinkId) return <Navigate to="/404" replace />;
 
   if (!hasAccess) {
-    const authMethod = document?.verification_email_required !== false ? 'email' : 'phone';
-    
     return (
       <div className="flex flex-col min-h-screen bg-background">
         <Navbar variant="centered-logo" />
@@ -292,17 +271,14 @@ const DocumentSign = () => {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  {authMethod === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-                  {authMethod === 'email' ? 'Email Address' : 'Phone Number'}
+                  <Mail className="h-4 w-4" />
+                  Email Address
                 </Label>
                 <Input
-                  type={authMethod === 'email' ? 'email' : 'tel'}
-                  value={authMethod === 'email' ? credentials.email : credentials.phone}
-                  onChange={(e) => setCredentials(prev => ({ 
-                    ...prev, 
-                    [authMethod]: e.target.value 
-                  }))}
-                  placeholder={authMethod === 'email' ? 'your@email.com' : '+1234567890'}
+                  type="email"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="your@email.com"
                 />
               </div>
 
@@ -330,9 +306,7 @@ const DocumentSign = () => {
               </Button>
 
               <div className="text-center text-xs text-muted-foreground">
-                <p>
-                  This is a secure document signing portal. Your information is protected and used only for authentication purposes.
-                </p>
+                <p>This is a secure document signing portal. Your information is protected and used only for authentication purposes.</p>
               </div>
             </CardContent>
           </Card>
@@ -349,7 +323,6 @@ const DocumentSign = () => {
         description="Review and sign your document"
       />
       <div className="min-h-screen bg-background flex flex-col">
-        {/* Header */}
         <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="grid grid-cols-3 h-16 items-center px-6">
             <div className="flex items-center space-x-4">
@@ -385,29 +358,23 @@ const DocumentSign = () => {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-grow w-full">
           <div className="max-w-7xl mx-auto p-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-              {/* Document Preview */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white rounded-lg shadow-sm border" id="document-preview">
                   {document?.file_type.includes('pdf') ? (
                     <PDFViewer
                       fileUrl={document.file_url}
                       signaturePositions={Array.isArray(document.signature_positions) ? document.signature_positions : []}
-                      onSignaturePositionsChange={() => {}} // Read-only mode
-                      onSave={() => {}} // Read-only mode
-                      readonly={true}
+                      onSignaturePositionsChange={() => {}}
+                      onSave={() => {}}
+                      readonly
                     />
                   ) : (
                     <div className="p-8 text-center">
                       <p className="text-muted-foreground">Document preview not available for this file type.</p>
-                      <Button 
-                        onClick={handleDownloadPDF}
-                        variant="outline"
-                        className="mt-4"
-                      >
+                      <Button onClick={handleDownloadPDF} variant="outline" className="mt-4">
                         <Download className="h-4 w-4 mr-2" />
                         Download Document
                       </Button>
@@ -423,7 +390,7 @@ const DocumentSign = () => {
                         clientName: document?.client_name || 'Client',
                         clientEmail: document?.client_email || '',
                         clientSignature: clientSignature
-                      } as any}
+                      }}
                       updateData={(updates) => {
                         if (updates.clientSignature) {
                           setClientSignature(updates.clientSignature);
@@ -436,19 +403,11 @@ const DocumentSign = () => {
                       signerType="client"
                     />
                     <div className="flex gap-3 mt-6">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowSignature(false)}
-                        className="flex-1"
-                      >
+                      <Button variant="outline" onClick={() => setShowSignature(false)} className="flex-1">
                         Back to Review
                       </Button>
-                      <Button 
-                        onClick={() => {
-                          if (clientSignature) {
-                            handleSignDocument(clientSignature);
-                          }
-                        }}
+                      <Button
+                        onClick={() => clientSignature && handleSignDocument(clientSignature)}
                         disabled={!clientSignature}
                         className="flex-1"
                       >
@@ -459,7 +418,6 @@ const DocumentSign = () => {
                 )}
               </div>
 
-              {/* Decision Panel */}
               <div className="lg:col-span-1">
                 {document?.status === 'sent_for_signature' && !showSignature && (
                   <Card>
@@ -470,21 +428,13 @@ const DocumentSign = () => {
                       <p className="text-sm text-muted-foreground">
                         Please review the document carefully. Once you're ready, you can sign it digitally.
                       </p>
-                      
+
                       <div className="space-y-3">
-                        <Button 
-                          onClick={() => setShowSignature(true)}
-                          className="w-full"
-                          size="lg"
-                        >
+                        <Button onClick={() => setShowSignature(true)} className="w-full" size="lg">
                           Sign Document
                         </Button>
-                        
-                        <Button 
-                          variant="outline"
-                          onClick={handleDownloadPDF}
-                          className="w-full"
-                        >
+
+                        <Button variant="outline" onClick={handleDownloadPDF} className="w-full">
                           <Download className="h-4 w-4 mr-2" />
                           Download for Review
                         </Button>
@@ -497,7 +447,6 @@ const DocumentSign = () => {
           </div>
         </main>
 
-        {/* Download Dialog */}
         <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
           <DialogContent>
             <DialogHeader>
@@ -507,9 +456,7 @@ const DocumentSign = () => {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>
-                Close
-              </Button>
+              <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>Close</Button>
               <Button onClick={handleDownloadPDF} disabled={downloadingPDF}>
                 <Download className="h-4 w-4 mr-2" />
                 {downloadingPDF ? 'Downloading...' : 'Download Signed Document'}
