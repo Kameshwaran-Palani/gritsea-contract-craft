@@ -153,7 +153,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const SignatureBox = ({ signature }: { signature: SignaturePosition }) => (
-    <div
+    {/* <div
       className="absolute border-2 border-blue-500 bg-blue-100/30 backdrop-blur-sm rounded flex items-center justify-center text-xs font-medium text-blue-700 cursor-move select-none group hover:bg-blue-100/50 transition-colors"
       style={{
         top: signature.y,
@@ -164,9 +164,45 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         pointerEvents: readonly ? 'none' : 'auto'
       }}
       onMouseDown={(e) => handleMouseDown(e, signature.id)}
-    >
+    >*/}
 
-      {readonly && signature.image ? (
+    <div
+  className="absolute"
+  style={{
+    top: signature.y,
+    left: signature.x,
+    width: signature.width,
+    height: signature.height,
+    zIndex: 10,
+    pointerEvents: readonly ? 'none' : 'auto',
+  }}
+>
+  {readonly && signature.image ? (
+    <img
+      src={signature.image}
+      alt="Signature"
+      className="w-full h-full object-contain pointer-events-none"
+      style={{ backgroundColor: 'transparent' }}
+    />
+  ) : (
+    <span
+      className="pointer-events-none text-xs text-blue-600"
+      style={{
+        border: '1px dashed #3B82F6',
+        backgroundColor: '#EFF6FF',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      {readonly ? 'Signature Required' : 'Sign Here'}
+    </span>
+  )}
+
+
+  {/*  {readonly && signature.image ? (
   <img
     src={signature.image}
     alt="Signature"
@@ -176,7 +212,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   <span className="pointer-events-none">
     {readonly ? 'Signature Required' : 'Sign Here'}
   </span>
-)}
+)/*/}
       {!readonly && (
         <button
           className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
