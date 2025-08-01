@@ -18,6 +18,15 @@ import { useToast } from '@/hooks/use-toast';
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+/*interface SignaturePosition {
+  id: string;
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}*/
+
 interface SignaturePosition {
   id: string;
   page: number;
@@ -25,6 +34,7 @@ interface SignaturePosition {
   y: number;
   width: number;
   height: number;
+  image?: string; // <-- add this
 }
 
 interface PDFViewerProps {
@@ -155,9 +165,18 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       }}
       onMouseDown={(e) => handleMouseDown(e, signature.id)}
     >
-      <span className="pointer-events-none">
-        {readonly ? 'Signature Required' : 'Sign Here'}
-      </span>
+
+      {readonly && signature.image ? (
+  <img
+    src={signature.image}
+    alt="Signature"
+    className="h-full w-auto object-contain pointer-events-none"
+  />
+) : (
+  <span className="pointer-events-none">
+    {readonly ? 'Signature Required' : 'Sign Here'}
+  </span>
+)}
       {!readonly && (
         <button
           className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
