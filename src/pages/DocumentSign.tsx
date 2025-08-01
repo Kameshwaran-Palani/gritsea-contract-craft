@@ -187,11 +187,22 @@ const DocumentSign = () => {
 
       if (statusError) throw statusError;
 
-      setDocument({
+      {/*setDocument({
         ...updatedDocument,
         status: updatedDocument.status as UploadedDocument['status'],
         signature_positions: Array.isArray(updatedDocument.signature_positions) ? updatedDocument.signature_positions : []
-      });
+      });*/}
+
+      const signedPositions = (updatedDocument.signature_positions || []).map((pos: any) => ({
+  ...pos,
+  image: signatureData // inject the actual base64 signature
+}));
+
+setDocument({
+  ...updatedDocument,
+  status: updatedDocument.status as UploadedDocument['status'],
+  signature_positions: signedPositions
+});
       setClientSignature(signatureData);
       
       toast({
