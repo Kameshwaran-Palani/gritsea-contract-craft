@@ -198,11 +198,18 @@ const DocumentSign = () => {
   image: signatureData // inject the actual base64 signature
 }));
 
-setDocument({
+      setDocument({
   ...updatedDocument,
   status: updatedDocument.status as UploadedDocument['status'],
-  signature_positions: signedPositions
+  signature_positions: Array.isArray(updatedDocument.signature_positions)
+    ? updatedDocument.signature_positions.map((sig) => ({
+        ...sig,
+        image: signatureData // ✅ inject the captured signature into all signature boxes
+      }))
+    : []
 });
+
+      
       setClientSignature(signatureData);
       
       toast({
