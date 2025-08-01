@@ -166,7 +166,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       onMouseDown={(e) => handleMouseDown(e, signature.id)}
     >*/}
 
-    <div
+    
+
+  {/*  {readonly && signature.image ? (
+  <img
+    src={signature.image}
+    alt="Signature"
+    cl<div
   className="absolute"
   style={{
     top: signature.y,
@@ -200,19 +206,55 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       {readonly ? 'Signature Required' : 'Sign Here'}
     </span>
   )}
-
-
-  {/*  {readonly && signature.image ? (
-  <img
-    src={signature.image}
-    alt="Signature"
-    className="h-full w-auto object-contain pointer-events-none"
+assName="h-full w-auto object-contain pointer-events-none"
   />
 ) : (
   <span className="pointer-events-none">
     {readonly ? 'Signature Required' : 'Sign Here'}
   </span>
 )/*/}
+
+  <div
+  className="absolute"
+  style={{
+    top: signature.y,
+    left: signature.x,
+    width: signature.width,
+    height: signature.height,
+    zIndex: 10,
+    pointerEvents: readonly ? 'none' : 'auto',
+    backgroundColor: 'transparent'
+  }}
+  onMouseDown={(e) => !readonly && handleMouseDown(e, signature.id)}
+>
+  {signature.image ? (
+    <img
+      src={signature.image}
+      alt="Signature"
+      className="w-full h-full object-contain pointer-events-none"
+    />
+  ) : (
+    !readonly && (
+      <div
+        className="w-full h-full border border-dashed border-gray-400 bg-white/60 text-xs text-gray-600 flex items-center justify-center"
+      >
+        Sign Here
+      </div>
+    )
+  )}
+
+  {!readonly && (
+    <button
+      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600"
+      onClick={(e) => {
+        e.stopPropagation();
+        removeSignatureBox(signature.id);
+      }}
+    >
+      ×
+    </button>
+  )}
+</div>
       {!readonly && (
         <button
           className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
