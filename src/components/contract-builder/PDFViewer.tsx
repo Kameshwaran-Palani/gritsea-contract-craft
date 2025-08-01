@@ -254,7 +254,7 @@ assName="h-full w-auto object-contain pointer-events-none"
       ×
     </button>
   )}
-</div>
+
       {!readonly && (
         <button
           className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
