@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Users, 
@@ -22,7 +23,14 @@ import {
   Layout,
   Settings,
   UserCog,
-  Download
+  Download,
+  TrendingUp,
+  Calendar,
+  PieChart,
+  Activity,
+  Building,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -38,7 +46,13 @@ const AdminDashboard = () => {
     totalContracts: 0,
     totalDocuments: 0,
     signedContracts: 0,
-    activeUsers: 0
+    activeUsers: 0,
+    monthlyUsers: 0,
+    yearlyUsers: 0,
+    pendingContracts: 0,
+    uploadedDocuments: 0,
+    eSignRequests: 0,
+    contractsByIndustry: [] as { industry: string; count: number }[]
   });
   
   const [users, setUsers] = useState<any[]>([]);
@@ -58,14 +72,34 @@ const AdminDashboard = () => {
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
 
   useEffect(() => {
-    // Check if user is admin (you may want to implement proper role checking)
-    if (user?.email !== 'admin@agrezy.com') {
-      navigate('/dashboard');
+    if (!user) {
+      navigate('/agrezyadmin/login');
       return;
     }
     
-    loadAdminData();
+    checkAdminAccess();
   }, [user, navigate]);
+
+  const checkAdminAccess = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      // Temporary check - will be replaced with proper admin column check
+      if (!profile) {
+        navigate('/agrezyadmin/login');
+        return;
+      }
+      
+      loadAdminData();
+    } catch (error) {
+      console.error('Error checking admin access:', error);
+      navigate('/agrezyadmin/login');
+    }
+  };
 
   const loadAdminData = async () => {
     try {
@@ -80,7 +114,7 @@ const AdminDashboard = () => {
       // Load contracts
       const { data: contractsData } = await supabase
         .from('contracts')
-        .select('*, profiles(full_name, email)')
+        .select('*, profiles(full_name, email, company_name)')
         .order('created_at', { ascending: false });
       
       // Load uploaded documents
@@ -89,29 +123,54 @@ const AdminDashboard = () => {
         .select('*, profiles(full_name, email)')
         .order('created_at', { ascending: false });
       
-      // Load templates - skip for now until table types are updated
+      // Load templates - temporarily disabled until database sync
       let templatesData: any[] = [];
-      try {
-        // Templates will be loaded once the database types are refreshed
-        console.log('Templates functionality will be available after database sync');
-      } catch (error) {
-        console.log('Templates table not available yet');
-      }
+      // const { data: templatesData } = await supabase
+      //   .from('admin_templates')
+      //   .select('*')
+      //   .order('created_at', { ascending: false });
 
       setUsers(usersData || []);
       setContracts(contractsData || []);
       setDocuments(documentsData || []);
       setTemplates(templatesData || []);
       
-      // Calculate stats
+      // Calculate advanced stats
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      
+      // Industry analysis based on company names
+      const industryMap = new Map<string, number>();
+      contractsData?.forEach(contract => {
+        const company = contract.profiles?.company_name || 'Other';
+        industryMap.set(company, (industryMap.get(company) || 0) + 1);
+      });
+      
+      const contractsByIndustry = Array.from(industryMap.entries())
+        .map(([industry, count]) => ({ industry, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      
       setStats({
         totalUsers: usersData?.length || 0,
         totalContracts: contractsData?.length || 0,
         totalDocuments: documentsData?.length || 0,
         signedContracts: contractsData?.filter(c => c.status === 'signed').length || 0,
+        pendingContracts: contractsData?.filter(c => c.status === 'sent_for_signature').length || 0,
         activeUsers: usersData?.filter(u => 
-          new Date(u.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        ).length || 0
+          new Date(u.created_at) > thirtyDaysAgo
+        ).length || 0,
+        monthlyUsers: usersData?.filter(u => 
+          new Date(u.created_at) > thirtyDaysAgo
+        ).length || 0,
+        yearlyUsers: usersData?.filter(u => 
+          new Date(u.created_at) > oneYearAgo
+        ).length || 0,
+        uploadedDocuments: documentsData?.length || 0,
+        eSignRequests: (contractsData?.filter(c => c.status === 'sent_for_signature').length || 0) + 
+                      (documentsData?.filter(d => d.status === 'sent_for_signature').length || 0),
+        contractsByIndustry
       });
       
     } catch (error) {
@@ -180,26 +239,46 @@ const AdminDashboard = () => {
 
   const createTemplate = async () => {
     try {
-      // Template functionality will be available after database types sync
+      if (!newTemplate.name || !newTemplate.content) {
+        toast({
+          title: "Error",
+          description: "Name and content are required",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Temporarily disabled until database sync
       toast({
         title: "Info",
         description: "Template functionality will be available after database sync"
       });
       return;
-      
-      toast({
-        title: "Success",
-        description: "Template created successfully"
-      });
-      
-      setNewTemplate({ name: '', description: '', category: '', content: '', isPublic: true });
-      setShowTemplateDialog(false);
-      loadAdminData();
     } catch (error) {
       console.error('Error creating template:', error);
       toast({
         title: "Error",
         description: "Failed to create template",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteTemplate = async (templateId: string) => {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    
+    try {
+      // Temporarily disabled until database sync
+      toast({
+        title: "Info",
+        description: "Template functionality will be available after database sync"
+      });
+      return;
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete template",
         variant: "destructive"
       });
     }
@@ -255,7 +334,8 @@ const AdminDashboard = () => {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+              {/* Key Metrics */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -263,6 +343,9 @@ const AdminDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.monthlyUsers} this month
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -273,16 +356,98 @@ const AdminDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stats.totalContracts}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.signedContracts} signed
+                    </p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Pending Contracts</CardTitle>
+                    <Activity className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalDocuments}</div>
+                    <div className="text-2xl font-bold">{stats.pendingContracts}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Awaiting signature
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">eSign Requests</CardTitle>
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.eSignRequests}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Total sent
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* User Analytics */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      User Growth
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Monthly Users</span>
+                        <span className="font-medium">{stats.monthlyUsers}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Yearly Users</span>
+                        <span className="font-medium">{stats.yearlyUsers}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Active Users (30d)</span>
+                        <span className="font-medium">{stats.activeUsers}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-4 w-4" />
+                      Top Industries
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {stats.contractsByIndustry.map((industry, index) => (
+                        <div key={index} className="flex justify-between">
+                          <span className="text-sm truncate">{industry.industry}</span>
+                          <span className="font-medium">{industry.count}</span>
+                        </div>
+                      ))}
+                      {stats.contractsByIndustry.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No data available</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Document Analytics */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Uploaded Documents</CardTitle>
+                    <Download className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.uploadedDocuments}</div>
                   </CardContent>
                 </Card>
 
@@ -298,11 +463,11 @@ const AdminDashboard = () => {
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Users (30d)</CardTitle>
-                    <UserCog className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Templates</CardTitle>
+                    <Layout className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stats.activeUsers}</div>
+                    <div className="text-2xl font-bold">{templates.length}</div>
                   </CardContent>
                 </Card>
               </div>
@@ -320,7 +485,9 @@ const AdminDashboard = () => {
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Company</TableHead>
+                        <TableHead>Phone</TableHead>
                         <TableHead>Plan</TableHead>
+                        <TableHead>Admin</TableHead>
                         <TableHead>Created</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -328,10 +495,35 @@ const AdminDashboard = () => {
                       {users.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell>{user.full_name || 'N/A'}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.company_name || 'N/A'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-3 w-3 text-muted-foreground" />
+                              {user.email}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Building className="h-3 w-3 text-muted-foreground" />
+                              {user.company_name || 'N/A'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {user.phone ? (
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-3 w-3 text-muted-foreground" />
+                                {user.phone}
+                              </div>
+                            ) : (
+                              'N/A'
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="secondary">{user.plan || 'free'}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              User
+                            </Badge>
                           </TableCell>
                           <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                         </TableRow>

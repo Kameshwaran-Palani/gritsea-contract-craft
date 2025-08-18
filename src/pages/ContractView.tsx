@@ -353,14 +353,32 @@ const ContractView = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button
-                onClick={downloadPDF}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Download PDF
-              </Button>
+                <Button
+                  onClick={downloadPDF}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </Button>
+
+                {contract?.status === 'signed' && (
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to terminate this contract? This action requires mutual agreement.')) {
+                        toast({
+                          title: "Termination Request",
+                          description: "Contract termination request has been sent to the client for approval."
+                        });
+                      }
+                    }}
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    Request Termination
+                  </Button>
+                )}
 
               {(contract?.status === 'draft' || contract?.status === 'revision_requested') && (
                 <Button
