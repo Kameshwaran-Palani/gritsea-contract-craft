@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import ContractBuilder from "./pages/ContractBuilder";
 import ContractEdit from "./pages/ContractEdit";
 import ContractNew from "./pages/ContractNew";
@@ -40,6 +41,7 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/contracts" element={<ContractsTabbed />} />
               <Route path="/contract/new" element={<ContractNew />} />
               <Route path="/contract/builder/:id" element={<ContractBuilder />} />
