@@ -25,13 +25,7 @@ interface UploadedDocument {
   client_name?: string;
   client_email?: string;
   client_phone?: string;
-  signature_positions: Array<{
-    page: number;
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  }>;
+  signature_positions: any[];
   verification_email_required: boolean;
   verification_phone_required: boolean;
 }
@@ -73,7 +67,11 @@ const DocumentSign = () => {
       if (error) throw error;
 
       if (data) {
-        setDocument(data as UploadedDocument);
+        const processedData = {
+          ...data,
+          signature_positions: Array.isArray(data.signature_positions) ? data.signature_positions : []
+        };
+        setDocument(processedData as UploadedDocument);
         // Pre-fill client info if available
         if (data.client_name) setClientName(data.client_name);
         if (data.client_email) setClientEmail(data.client_email);
