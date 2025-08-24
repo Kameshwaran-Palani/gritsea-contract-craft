@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowDown, FileText, Edit3, Share2 } from 'lucide-react';
+import { ArrowDown, FileText, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -12,48 +11,25 @@ const HeroSection = () => {
       <div className="absolute inset-0 opacity-10">
         <motion.div 
           className="absolute top-20 left-20 w-32 h-32 bg-primary rounded-2xl"
-          animate={{ 
-            y: [0, -20, 0],
-            rotate: [0, 5, 0]
-          }}
-          transition={{ 
-            duration: 4, 
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div 
           className="absolute bottom-32 right-32 w-24 h-24 bg-secondary rounded-2xl"
-          animate={{ 
-            y: [0, 15, 0],
-            rotate: [0, -3, 0]
-          }}
-          transition={{ 
-            duration: 3, 
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
+          animate={{ y: [0, 15, 0], rotate: [0, -3, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         />
         <motion.div 
           className="absolute top-1/2 left-1/4 w-16 h-16 bg-accent rounded-2xl"
-          animate={{ 
-            scale: [1, 1.1, 1],
-            rotate: [0, 10, 0]
-          }}
-          transition={{ 
-            duration: 2.5, 
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.5
-          }}
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 10, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
         />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-screen">
+        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
           {/* Left Side - Text Content */}
-          <div className="text-left lg:pr-8">
+          <div className="text-left lg:pr-8 max-w-xl">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -63,37 +39,22 @@ const HeroSection = () => {
               <div className="relative mb-8">
                 <motion.div
                   className="absolute -top-8 -left-8 text-primary/20"
-                  animate={{ 
-                    y: [0, -10, 0],
-                    rotate: [0, 5, 0]
-                  }}
-                  transition={{ 
-                    duration: 3, 
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
+                  animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <FileText size={48} />
                 </motion.div>
                 <motion.div
                   className="absolute -top-4 -right-12 text-secondary/20"
-                  animate={{ 
-                    y: [0, 8, 0],
-                    rotate: [0, -3, 0]
-                  }}
-                  transition={{ 
-                    duration: 4, 
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1
-                  }}
+                  animate={{ y: [0, 8, 0], rotate: [0, -3, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 >
                   <Edit3 size={32} />
                 </motion.div>
               </div>
 
               <motion.h1 
-                className="text-4xl md:text-6xl font-bold mb-6 font-heading"
+                className="text-4xl md:text-6xl font-bold mb-4 font-heading"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -105,7 +66,7 @@ const HeroSection = () => {
               </motion.h1>
               
               <motion.p 
-                className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed"
+                className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -114,7 +75,7 @@ const HeroSection = () => {
               </motion.p>
 
               <motion.div 
-                className="flex flex-col sm:flex-row gap-4 mb-12"
+                className="flex flex-col sm:flex-row gap-4 mb-10"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
@@ -124,10 +85,7 @@ const HeroSection = () => {
                     size="lg" 
                     className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-4 text-lg rounded-2xl group"
                   >
-                    <motion.span
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
+                    <motion.span whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       Create Free Contract
                     </motion.span>
                     <motion.div
@@ -172,17 +130,19 @@ const HeroSection = () => {
           </div>
 
           {/* Right Side - Logo Image */}
-          <div className="flex justify-center lg:justify-end">
+          <div className="flex justify-center lg:justify-center">
             <motion.div
               initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="max-w-md w-full"
+              className="max-w-sm w-full"
             >
-              <img 
+              <motion.img 
                 src="/lovable-uploads/logo.png" 
                 alt="Agrezy Logo - Contract and Document Management" 
                 className="w-full h-auto object-contain"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
             </motion.div>
           </div>
