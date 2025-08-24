@@ -27,9 +27,7 @@ const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo'
               className="flex items-center space-x-2"
             >
               <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-sm font-heading">A</span>
-                </div>
+                <img src="/lovable-uploads/logo.png" alt="Agrezy Logo" className="w-8 h-8 object-contain" />
                 <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
               </Link>
             </motion.div>
@@ -47,9 +45,7 @@ const Navbar = ({ variant = 'default' }: { variant?: 'default' | 'centered-logo'
           <div className="justify-self-start">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
               <Link to="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-sm font-heading">A</span>
-                </div>
+                <img src="/lovable-uploads/logo.png" alt="Agrezy Logo" className="w-8 h-8 object-contain" />
                 <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
               </Link>
             </motion.div>

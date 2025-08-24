@@ -135,9 +135,7 @@ const DashboardLayout = ({
               <span className="sr-only">Open sidebar</span>
             </Button>
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center">
-                <span className="text-white font-bold text-sm font-heading">A</span>
-              </div>
+              <img src="/lovable-uploads/logo.png" alt="Agrezy Logo" className="w-8 h-8 object-contain" />
               <span className="text-xl font-bold gradient-text font-heading">Agrezy</span>
             </Link>
           </div>

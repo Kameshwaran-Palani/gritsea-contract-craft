@@ -129,14 +129,15 @@ const Auth = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <motion.h1 
-            className="text-4xl font-bold gradient-text mb-2"
+          <motion.div 
+            className="flex items-center justify-center gap-3 mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            Agrezy
-          </motion.h1>
+            <img src="/lovable-uploads/logo.png" alt="Agrezy Logo" className="w-10 h-10 object-contain" />
+            <h1 className="text-4xl font-bold gradient-text">Agrezy</h1>
+          </motion.div>
           <p className="text-muted-foreground">Your AI-powered contract companion</p>
         </div>
 
