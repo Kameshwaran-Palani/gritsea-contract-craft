@@ -27,9 +27,9 @@ const HeroSection = () => {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-[2fr,1fr] gap-8 items-center max-w-6xl mx-auto">
           {/* Left Side - Text Content */}
-          <div className="text-center lg:text-left lg:pr-6">
+          <div className="text-center lg:pr-6">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -66,7 +66,7 @@ const HeroSection = () => {
               </motion.h1>
               
               <motion.p 
-                className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed max-w-2xl mx-auto lg:mx-0"
+                className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed max-w-3xl mx-auto"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -75,7 +75,7 @@ const HeroSection = () => {
               </motion.p>
 
               <motion.div 
-                className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start"
+                className="flex flex-col sm:flex-row gap-4 mb-8 justify-center"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
@@ -108,7 +108,7 @@ const HeroSection = () => {
 
               {/* Trust Indicators */}
               <motion.div 
-                className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground"
+                className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.8 }}
@@ -130,12 +130,12 @@ const HeroSection = () => {
           </div>
 
           {/* Right Side - Logo Image */}
-          <div className="flex justify-center lg:justify-end">
+          <div className="flex justify-center">
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="max-w-md w-full"
+              className="max-w-lg w-full"
             >
               <motion.img 
                 src="/lovable-uploads/logo.png" 
