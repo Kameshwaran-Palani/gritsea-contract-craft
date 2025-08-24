@@ -29,7 +29,7 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
           {/* Left Side - Text Content */}
-          <div className="text-left lg:pr-8 max-w-xl">
+          <div className="text-center lg:pr-8 max-w-xl">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
