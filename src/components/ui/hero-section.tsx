@@ -180,7 +180,7 @@ const HeroSection = () => {
               className="max-w-md w-full"
             >
               <img 
-                src="/lovable-uploads/28f6cb02-0f45-48d9-9295-f187807f2538.png" 
+                src="/lovable-uploads/logo.png" 
                 alt="Agrezy Logo - Contract and Document Management" 
                 className="w-full h-auto object-contain"
               />
