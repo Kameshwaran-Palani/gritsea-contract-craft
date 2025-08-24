@@ -83,7 +83,7 @@ const HeroSection = () => {
                 <Link to="/contract/new">
                   <Button 
                     size="lg" 
-                    className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-4 text-lg rounded-2xl group"
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-4 text-lg rounded-2 group"
                   >
                     <motion.span whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       Create Free Contract
