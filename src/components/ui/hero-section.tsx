@@ -27,34 +27,34 @@ const HeroSection = () => {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
+        <div className="grid lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
           {/* Left Side - Text Content */}
-          <div className="text-center lg:pr-8 max-w-xl">
+          <div className="text-center lg:text-left lg:pr-6">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               {/* Floating Contract Icons */}
-              <div className="relative mb-8">
+              <div className="relative mb-6">
                 <motion.div
-                  className="absolute -top-8 -left-8 text-primary/20"
+                  className="absolute -top-6 -left-6 text-primary/20 hidden lg:block"
                   animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <FileText size={48} />
+                  <FileText size={40} />
                 </motion.div>
                 <motion.div
-                  className="absolute -top-4 -right-12 text-secondary/20"
+                  className="absolute -top-4 -right-8 text-secondary/20 hidden lg:block"
                   animate={{ y: [0, 8, 0], rotate: [0, -3, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 >
-                  <Edit3 size={32} />
+                  <Edit3 size={28} />
                 </motion.div>
               </div>
 
               <motion.h1 
-                className="text-4xl md:text-6xl font-bold mb-4 font-heading"
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 font-heading leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -66,7 +66,7 @@ const HeroSection = () => {
               </motion.h1>
               
               <motion.p 
-                className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed"
+                className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed max-w-2xl mx-auto lg:mx-0"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -75,7 +75,7 @@ const HeroSection = () => {
               </motion.p>
 
               <motion.div 
-                className="flex flex-col sm:flex-row gap-4 mb-10"
+                className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
@@ -108,7 +108,7 @@ const HeroSection = () => {
 
               {/* Trust Indicators */}
               <motion.div 
-                className="flex flex-wrap items-center gap-8 text-sm text-muted-foreground"
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.8 }}
@@ -130,12 +130,12 @@ const HeroSection = () => {
           </div>
 
           {/* Right Side - Logo Image */}
-          <div className="flex justify-center lg:justify-center">
+          <div className="flex justify-center lg:justify-end">
             <motion.div
-              initial={{ opacity: 0, x: 100 }}
+              initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="max-w-sm w-full"
+              className="max-w-md w-full"
             >
               <motion.img 
                 src="/lovable-uploads/logo.png" 
