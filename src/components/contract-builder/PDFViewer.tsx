@@ -14,8 +14,12 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Set up PDF.js worker - Use jsdelivr CDN which has better CORS support
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Set up PDF.js worker from local bundle (same-origin) to avoid CORS issues
+// Vite will resolve this to a hashed asset under the same origin
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 interface SignaturePosition {
   id: string;
