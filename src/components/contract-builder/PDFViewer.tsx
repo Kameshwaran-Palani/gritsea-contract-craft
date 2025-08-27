@@ -13,9 +13,12 @@ import {
   MousePointer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 // Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+//pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface SignaturePosition {
   id: string;
