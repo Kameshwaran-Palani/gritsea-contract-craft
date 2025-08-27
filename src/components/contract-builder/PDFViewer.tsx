@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +14,11 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Set up PDF.js worker with a reliable CDN that has proper CORS headers
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`;
+// ✅ Use Vite-compatible worker bundle instead of public path
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url
+).toString();
 
 interface SignaturePosition {
   id: string;
@@ -86,14 +89,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     e.stopPropagation();
     setDraggedBox(signatureId);
     
-    const signature = signaturePositions.find(s => s.id === signatureId);
-    if (signature) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      });
-    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
