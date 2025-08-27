@@ -13,12 +13,9 @@ import {
   MousePointer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-
-// Set up PDF.js worker
-//pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Set up PDF.js worker with a reliable CDN that has proper CORS headers
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface SignaturePosition {
   id: string;
