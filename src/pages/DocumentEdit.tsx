@@ -240,31 +240,36 @@ const DocumentEdit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10 flex flex-col">
       <SEOHead 
         title={`Edit ${document.title} - Agrezy`}
         description="Configure signature settings and client information for your uploaded document."
       />
       
-      <div className="container mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <div className="flex items-center gap-3">
-            <FileText className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold">{document.title}</h1>
-              <p className="text-muted-foreground">Configure eSign settings</p>
+      {/* Header */}
+      <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div className="flex items-center gap-3">
+              <FileText className="h-6 w-6 text-primary" />
+              <div>
+                <h1 className="text-xl font-bold">{document.title}</h1>
+                <p className="text-sm text-muted-foreground">Configure eSign settings</p>
+              </div>
             </div>
           </div>
         </div>
+      </header>
+      
+      <div className="container mx-auto py-8 px-4 flex-1">
 
         {/* Two Panel Layout for Document Editing */}
         {document.file_type.includes('pdf') ? (
@@ -511,6 +516,15 @@ const DocumentEdit = () => {
           </div>
         )}
       </div>
+      
+      {/* Footer */}
+      <footer className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/50 mt-auto">
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center text-sm text-muted-foreground">
+            © 2024 Agrezy. All rights reserved. | Secure document management and e-signature platform.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
