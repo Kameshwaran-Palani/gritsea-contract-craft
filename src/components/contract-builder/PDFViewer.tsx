@@ -15,7 +15,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 // Set up PDF.js worker with a reliable CDN that has proper CORS headers
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`;
 
 interface SignaturePosition {
   id: string;
