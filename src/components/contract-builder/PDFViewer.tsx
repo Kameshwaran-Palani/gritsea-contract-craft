@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,9 +14,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// ✅ Load worker from public/ to avoid CORS
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
-
+// Set up PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface SignaturePosition {
   id: string;
@@ -87,11 +86,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     e.stopPropagation();
     setDraggedBox(signatureId);
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
+    const signature = signaturePositions.find(s => s.id === signatureId);
+    if (signature) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Plus, Upload, TrendingUp, Users, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle, Upload } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import SEOHead from '@/components/SEOHead';
 
@@ -95,59 +95,28 @@ const Dashboard = () => {
         description="Your contract management dashboard"
       />
       <DashboardLayout>
-        <div className="space-y-8">
-          {/* Hero Section */}
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold gradient-text">Welcome to Agrezy</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Create professional contracts and get documents signed digitally in minutes
-            </p>
-          </div>
-
-          {/* Main Action Cards */}
-          <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
-            <Card className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-200 hover:shadow-lg">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <Plus className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Create Contract</CardTitle>
-                <p className="text-muted-foreground">
-                  Build professional contracts with our easy-to-use builder
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={() => navigate('/contract/new')} 
-                  className="w-full h-12 text-lg"
-                  size="lg"
-                >
-                  Create New Contract
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-blue-200 hover:border-blue-300 transition-all duration-200 hover:shadow-lg">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Upload className="h-8 w-8 text-blue-600" />
-                </div>
-                <CardTitle className="text-2xl">Upload & Get eSign</CardTitle>
-                <p className="text-muted-foreground">
-                  Upload any document and get it signed digitally
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={() => navigate('/document-upload')} 
-                  variant="outline"
-                  className="w-full h-12 text-lg border-blue-200 hover:bg-blue-50"
-                  size="lg"
-                >
-                  Upload Document
-                </Button>
-              </CardContent>
-            </Card>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Dashboard</h1>
+              <p className="text-muted-foreground">
+                Welcome back! Here's what's happening with your contracts.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/document-upload')} 
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Get eSign
+              </Button>
+              <Button onClick={() => navigate('/contract/new')} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Contract
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -230,7 +199,7 @@ const Dashboard = () => {
                   {recentContracts.map((contract) => (
                     <div
                       key={contract.id}
-                      className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => navigate(`/contract/view/${contract.id}`)}
                     >
                       <div className="space-y-1">

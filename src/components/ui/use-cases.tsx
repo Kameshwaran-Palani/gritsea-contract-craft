@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Code, Palette, PenTool, Megaphone, Search, Users, Video, Smartphone, Languages, Briefcase } from 'lucide-react';
-import AnimatedPen from '@/components/ui/animated-pen';
 
 const useCases = [
   {
@@ -132,10 +131,9 @@ const UseCasesSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <AnimatedPen 
-            text="Built for Every Freelancer" 
-            className="text-4xl md:text-5xl font-bold mb-6 gradient-text font-heading" 
-          />
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text font-heading">
+            Built for Every Freelancer
+          </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Discover how professionals in your field use Agrezy to create winning contracts
           </p>

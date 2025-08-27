@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Edit, Share } from 'lucide-react';
-import AnimatedPen from '@/components/ui/animated-pen';
 
 const steps = [
   {
@@ -38,10 +37,9 @@ const HowItWorksSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <AnimatedPen 
-            text="How It Works" 
-            className="text-4xl md:text-5xl font-bold mb-6 gradient-text font-heading" 
-          />
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text font-heading">
+            How It Works
+          </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Create professional contracts in three simple steps. No legal expertise required.
           </p>
