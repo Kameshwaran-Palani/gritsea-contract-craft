@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,12 +14,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Extend window interface for PDF.js
-declare global {
-  interface Window {
-    pdfjsLib: any;
-  }
-}
+// Set up PDF.js worker with a reliable CDN that has proper CORS headers
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface SignaturePosition {
   id: string;
@@ -52,103 +49,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [isAddingSignature, setIsAddingSignature] = useState<boolean>(false);
   const [draggedBox, setDraggedBox] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const pdfDocRef = useRef<any>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Load PDF.js library and PDF document
-  useEffect(() => {
-    const loadPDFJS = async () => {
-      if (!window.pdfjsLib) {
-        // Load PDF.js from CDN
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-        script.async = true;
-        
-        script.onload = () => {
-          if (window.pdfjsLib) {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            loadPDF();
-          }
-        };
-        
-        script.onerror = () => {
-          setError('Failed to load PDF library');
-          setIsLoading(false);
-        };
-        
-        document.head.appendChild(script);
-      } else {
-        loadPDF();
-      }
-    };
-
-    const loadPDF = async () => {
-      if (!fileUrl || !window.pdfjsLib) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const loadingTask = window.pdfjsLib.getDocument(fileUrl);
-        const pdf = await loadingTask.promise;
-        
-        pdfDocRef.current = pdf;
-        setNumPages(pdf.numPages);
-        setCurrentPage(1);
-        setIsLoading(false);
-        
-        toast({
-          title: "PDF Loaded",
-          description: `Document loaded with ${pdf.numPages} pages`
-        });
-      } catch (err) {
-        console.error('Error loading PDF:', err);
-        setError('Failed to load PDF');
-        setIsLoading(false);
-      }
-    };
-
-    loadPDFJS();
-  }, [fileUrl, toast]);
-
-  // Render current page
-  useEffect(() => {
-    const renderPage = async () => {
-      if (!pdfDocRef.current || !canvasRef.current) return;
-      
-      try {
-        const page = await pdfDocRef.current.getPage(currentPage);
-        const canvas = canvasRef.current;
-        const context = canvas.getContext('2d');
-        
-        const viewport = page.getViewport({ 
-          scale: scale,
-          rotation: rotation 
-        });
-        
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport
-        };
-        
-        await page.render(renderContext).promise;
-      } catch (err) {
-        console.error('Error rendering page:', err);
-      }
-    };
-
-    renderPage();
-  }, [currentPage, scale, rotation]);
-
-  const onDocumentLoadSuccess = () => {
-    // This is now handled in the useEffect above
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    toast({
+      title: "PDF Loaded",
+      description: `Document loaded with ${numPages} pages`
+    });
   };
 
   const handlePDFClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -350,34 +259,37 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         {/* PDF Viewer */}
         <div className="border rounded-lg bg-gray-50 p-4 overflow-auto max-h-[600px]">
           <div className="flex justify-center">
-            {isLoading && (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            )}
-            
-            {error && (
-              <div className="text-center p-8">
-                <p className="text-destructive">{error}</p>
-              </div>
-            )}
-            
-            {!isLoading && !error && (
+            <Document
+              file={fileUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              }
+              error={
+                <div className="text-center p-8">
+                  <p className="text-destructive">Failed to load PDF</p>
+                </div>
+              }
+            >
               <div
-                ref={containerRef}
+                ref={pageRef}
                 className="relative w-fit"
                 onClick={handlePDFClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 style={{ cursor: isAddingSignature ? 'crosshair' : 'default' }}
               >
-                <canvas
-                  ref={canvasRef}
-                  className="max-w-full"
-                  style={{ 
-                    display: 'block',
-                    border: '1px solid #e5e7eb'
-                  }}
+                <Page
+                  pageNumber={currentPage}
+                  scale={scale}
+                  rotate={rotation}
+                  loading={
+                    <div className="flex items-center justify-center h-64">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  }
                 />
                 
                 {/* Render signature boxes for current page */}
@@ -385,7 +297,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                   <SignatureBox key={signature.id} signature={signature} />
                 ))}
               </div>
-            )}
+            </Document>
           </div>
         </div>
 
