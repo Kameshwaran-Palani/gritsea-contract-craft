@@ -138,7 +138,7 @@ const HeroSection = () => {
               className="max-w-lg w-full"
             >
               <motion.img 
-                src="/lovable-uploads/logo.png" 
+                src="/logo/logo.png" 
                 alt="Agrezy Logo - Contract and Document Management" 
                 className="w-full h-auto object-contain"
                 animate={{ y: [0, -10, 0] }}
