@@ -1,62 +1,112 @@
-
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Document, Page, pdfjs } from 'react-pdf';
-import SignatureCanvas from 'react-signature-canvas';
-import { FileText, Mail, Phone, User, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, Shield, KeyRound, Mail, Download } from 'lucide-react';
+import ContractStatusBadge from '@/components/contract-builder/ContractStatusBadge';
+import SignatureStep from '@/components/contract-builder/SignatureStep';
+import PDFViewer from '@/components/contract-builder/PDFViewer';
 import SEOHead from '@/components/SEOHead';
-
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+import Navbar from '@/components/ui/navbar';
+import Footer from '@/components/ui/footer';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface UploadedDocument {
   id: string;
   title: string;
   original_filename: string;
   file_url: string;
-  status: string;
+  file_type: string;
+  status: 'draft' | 'sent_for_signature' | 'signed' | 'cancelled';
   client_name?: string;
   client_email?: string;
-  client_phone?: string;
-  signature_positions: any[];
   verification_email_required: boolean;
-  verification_phone_required: boolean;
+  public_link_id: string;
+  signature_positions: any;
+  user_id: string;
 }
 
 const DocumentSign = () => {
   const { publicLinkId } = useParams();
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const secretKey = searchParams.get('key') || '';
   const { toast } = useToast();
   const [document, setDocument] = useState<UploadedDocument | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [signing, setSigning] = useState(false);
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
-  const [showVerification, setShowVerification] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'info' | 'verify' | 'sign'>('info');
-  
-  const signatureRefs = useRef<{[key: string]: SignatureCanvas}>({});
+  const [loading, setLoading] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [showSignature, setShowSignature] = useState(false);
+  const [clientSignature, setClientSignature] = useState('');
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [credentials, setCredentials] = useState({
+    email: '',
+    secretKey: secretKey
+  });
+  const [ownerName, setOwnerName] = useState('');
+  const [creatorLoading, setCreatorLoading] = useState(true);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
   useEffect(() => {
-    if (publicLinkId) {
-      loadDocument();
+    if (secretKey) {
+      setCredentials(prev => ({ ...prev, secretKey }));
     }
+  }, [secretKey]);
+
+  useEffect(() => {
+    const fetchDocumentOwner = async () => {
+      if (!publicLinkId) {
+        setCreatorLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('uploaded_documents')
+          .select(`
+            user_id,
+            profiles!inner(full_name)
+          `)
+          .eq('public_link_id', publicLinkId)
+          .single();
+
+        if (error || !data) return;
+
+        const profile = data.profiles as any;
+        setOwnerName(profile?.full_name || '');
+      } catch {
+        // do nothing
+      } finally {
+        setCreatorLoading(false);
+      }
+    };
+
+    fetchDocumentOwner();
   }, [publicLinkId]);
 
-  const loadDocument = async () => {
+  const handleAccess = async () => {
+    if (!credentials.secretKey) {
+      toast({
+        title: "Secret Key Required",
+        description: "Please enter the secret key provided to you",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!credentials.email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('uploaded_documents')
         .select('*')
@@ -64,423 +114,374 @@ const DocumentSign = () => {
         .eq('status', 'sent_for_signature')
         .single();
 
-      if (error) throw error;
-
-      if (data) {
-        const processedData = {
-          ...data,
-          signature_positions: Array.isArray(data.signature_positions) ? data.signature_positions : []
-        };
-        setDocument(processedData as UploadedDocument);
-        // Pre-fill client info if available
-        if (data.client_name) setClientName(data.client_name);
-        if (data.client_email) setClientEmail(data.client_email);
-        if (data.client_phone) setClientPhone(data.client_phone);
+      if (error || !data) {
+        toast({
+          title: "Document Not Found",
+          description: "Invalid document link or document not found",
+          variant: "destructive"
+        });
+        return;
       }
+
+      const expectedEmail = data.client_email;
+      if (expectedEmail && expectedEmail !== credentials.email) {
+        toast({
+          title: "Authentication Failed",
+          description: `The email doesn't match our records`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setDocument({
+        ...data,
+        status: data.status as UploadedDocument['status'],
+        signature_positions: Array.isArray(data.signature_positions) ? data.signature_positions : []
+      });
+      setHasAccess(true);
+
+      toast({
+        title: "Access Granted",
+        description: "Welcome! You can now review and sign the document."
+      });
     } catch (error) {
-      console.error('Error loading document:', error);
+      console.error('Access error:', error);
       toast({
         title: "Error",
-        description: "Document not found or not available for signing",
+        description: "Failed to access document",
         variant: "destructive"
       });
-      navigate('/');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInfoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!clientName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your name",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (document?.verification_email_required && !clientEmail.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (document?.verification_phone_required && !clientPhone.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your phone number",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // If verification is required, show verification step
-    if (document?.verification_email_required || document?.verification_phone_required) {
-      setCurrentStep('verify');
-      setShowVerification(true);
-      // Here you would typically send verification code
-      toast({
-        title: "Verification Code Sent",
-        description: "Please check your email/phone for the verification code"
-      });
-    } else {
-      setCurrentStep('sign');
-      setIsVerified(true);
-    }
-  };
-
-  const handleVerification = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simple verification for demo - in real app, verify against sent code
-    if (verificationCode.trim()) {
-      setIsVerified(true);
-      setCurrentStep('sign');
-      toast({
-        title: "Verified",
-        description: "Your identity has been verified. You can now sign the document."
-      });
-    }
-  };
-
-  const handleSign = async () => {
+  const handleSignDocument = async (signatureData: string) => {
     if (!document) return;
 
     try {
-      setSigning(true);
-
-      // Collect all signatures
-      const signatureImages: string[] = [];
-      const signaturePositions = Array.isArray(document.signature_positions) 
-        ? document.signature_positions 
-        : [];
-
-      for (let i = 0; i < signaturePositions.length; i++) {
-        const sigRef = signatureRefs.current[`sig-${i}`];
-        if (sigRef && !sigRef.isEmpty()) {
-          const signatureDataUrl = sigRef.getTrimmedCanvas().toDataURL('image/png');
-          signatureImages.push(signatureDataUrl);
-        } else {
-          toast({
-            title: "Error",
-            description: `Please provide signature ${i + 1}`,
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-
-      // Save signatures to storage
-      const signatureUrls: string[] = [];
-      for (let i = 0; i < signatureImages.length; i++) {
-        const response = await fetch(signatureImages[i]);
-        const blob = await response.blob();
-        
-        const fileName = `signature_${document.id}_${i}_${Date.now()}.png`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('signatures')
-          .upload(fileName, blob);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('signatures')
-          .getPublicUrl(fileName);
-
-        signatureUrls.push(publicUrl);
-      }
-
-      // Save signature record
-      const { error: signatureError } = await supabase
+      await supabase
         .from('uploaded_document_signatures')
         .insert({
           document_id: document.id,
-          signer_name: clientName,
-          signer_email: clientEmail || null,
           signer_type: 'client',
-          signature_image_url: signatureUrls[0], // Primary signature
-          client_verified_name: clientName,
-          client_verified_email: clientEmail || null,
-          client_verified_phone: clientPhone || null,
-          ip_address: await getClientIP()
+          signer_name: document.client_name || 'Client',
+          signer_email: document.client_email,
+          signature_image_url: signatureData,
+          client_verified_name: credentials.email,
+          client_verified_email: credentials.email,
+          ip_address: 'client-ip' // TODO: Replace with real IP capture if needed
         });
 
-      if (signatureError) throw signatureError;
+      const signedAtDate = new Date().toISOString();
 
-      // Update document status
-      const { error: updateError } = await supabase
+      const { data: updatedDocument, error: statusError } = await supabase
         .from('uploaded_documents')
-        .update({
+        .update({ 
           status: 'signed',
-          signed_at: new Date().toISOString()
+          signed_at: signedAtDate
         })
-        .eq('id', document.id);
+        .eq('id', document.id)
+        .select()
+        .single();
 
-      if (updateError) throw updateError;
+      if (statusError) throw statusError;
 
+      {/*setDocument({
+        ...updatedDocument,
+        status: updatedDocument.status as UploadedDocument['status'],
+        signature_positions: Array.isArray(updatedDocument.signature_positions) ? updatedDocument.signature_positions : []
+      });*/}
+
+      const signedPositions = (updatedDocument.signature_positions || []).map((pos: any) => ({
+  ...pos,
+  image: signatureData // inject the actual base64 signature
+}));
+
+      setDocument({
+  ...updatedDocument,
+  status: updatedDocument.status as UploadedDocument['status'],
+  signature_positions: Array.isArray(updatedDocument.signature_positions)
+    ? updatedDocument.signature_positions.map((sig) => ({
+        ...sig,
+        image: signatureData // ✅ inject the captured signature into all signature boxes
+      }))
+    : []
+});
+
+      
+      setClientSignature(signatureData);
+      
       toast({
-        title: "Success",
-        description: "Document signed successfully!"
+        title: "Document Signed Successfully",
+        description: "Thank you for signing the document. You can now download the PDF."
       });
 
-      // Show success message or redirect
-      setCurrentStep('info');
-      setDocument(prev => prev ? { ...prev, status: 'signed' } : null);
-
+      setShowSignature(false);
+      setShowDownloadDialog(true);
     } catch (error) {
       console.error('Error signing document:', error);
       toast({
         title: "Error",
-        description: "Failed to sign document. Please try again.",
+        description: "Failed to sign document",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setDownloadingPDF(true);
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your PDF...",
+      });
+
+      const link = document.createElement('a');
+      link.href = document!.file_url;
+      link.download = `Signed_${document!.original_filename}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Download Complete",
+        description: "Document PDF has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Download Error",
+        description: "Failed to download PDF. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setSigning(false);
+      setDownloadingPDF(false);
     }
   };
 
-  const getClientIP = async () => {
-    try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip;
-    } catch {
-      return 'unknown';
-    }
-  };
+  if (!publicLinkId) return <Navigate to="/404" replace />;
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-  };
-
-  if (loading) {
+  if (!hasAccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!document) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Document Not Found</h3>
+      <div className="flex flex-col min-h-screen bg-background">
+        <Navbar variant="centered-logo" />
+        <main className="flex-grow flex flex-col items-center justify-center p-6 pt-24">
+          <SEOHead 
+            title="Document Access - Secure eSign"
+            description="Secure document access and digital signing portal"
+          />
+          {!creatorLoading && ownerName && (
+            <p className="text-center text-muted-foreground mb-4">
+              {ownerName} has shared this document with you.
+            </p>
+          )}
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Document Access</CardTitle>
               <p className="text-muted-foreground">
-                The document you're looking for doesn't exist or is no longer available for signing.
+                Enter your details to securely access and sign the document
               </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Address
+                </Label>
+                <Input
+                  type="email"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="your@email.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="secretKey" className="flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" />
+                  Secret Key
+                </Label>
+                <Input
+                  id="secretKey"
+                  value={credentials.secretKey}
+                  onChange={(e) => setCredentials(prev => ({ ...prev, secretKey: e.target.value.toUpperCase() }))}
+                  placeholder="Enter the secret key provided to you"
+                  className="font-mono"
+                />
+              </div>
+
+              <Button 
+                onClick={handleAccess}
+                disabled={loading}
+                className="w-full"
+                size="lg"
+              >
+                {loading ? 'Verifying...' : 'Access Document'}
+              </Button>
+
+              <div className="text-center text-xs text-muted-foreground">
+                <p>This is a secure document signing portal. Your information is protected and used only for authentication purposes.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
       </div>
     );
   }
-
-  if (document.status === 'signed') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <FileText className="h-12 w-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Document Already Signed</h3>
-              <p className="text-muted-foreground">
-                This document has already been signed and completed.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const signaturePositions = Array.isArray(document.signature_positions) 
-    ? document.signature_positions 
-    : [];
 
   return (
     <>
       <SEOHead 
-        title={`Sign Document - ${document.title}`}
-        description="Sign your document securely"
+        title={`${document?.title || 'Document'} - Document Review`}
+        description="Review and sign your document"
       />
-      <div className="min-h-screen bg-muted/20 py-8">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Sign Document: {document.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {currentStep === 'info' && (
-                <form onSubmit={handleInfoSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="clientName">Full Name *</Label>
-                    <Input
-                      id="clientName"
-                      value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="grid grid-cols-3 h-16 items-center px-6">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-lg font-semibold">Document Review</h1>
+              <ContractStatusBadge status={document?.status || 'sent_for_signature'} />
+            </div>
 
-                  {document.verification_email_required && (
-                    <div>
-                      <Label htmlFor="clientEmail">Email Address *</Label>
-                      <Input
-                        id="clientEmail"
-                        type="email"
-                        value={clientEmail}
-                        onChange={(e) => setClientEmail(e.target.value)}
-                        placeholder="Enter your email address"
-                        required
-                      />
+            <Link to="/" className="flex items-center justify-center space-x-2">
+              <div className="w-6 h-6 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xs">A</span>
+              </div>
+              <span className="text-lg font-bold gradient-text">Agrezy</span>
+            </Link>
+
+            <div className="flex items-center justify-end space-x-4">
+              {document?.status === 'signed' && (
+                <>
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Signed</span>
+                  </div>
+                  <Button
+                    onClick={handleDownloadPDF}
+                    disabled={downloadingPDF}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    {downloadingPDF ? 'Downloading...' : 'Download PDF'}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-grow w-full">
+          <div className="max-w-7xl mx-auto p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white rounded-lg shadow-sm border" id="document-preview">
+                  {document?.file_type.includes('pdf') ? (
+                    <PDFViewer
+                      fileUrl={document.file_url}
+                      signaturePositions={Array.isArray(document.signature_positions) ? document.signature_positions : []}
+                      onSignaturePositionsChange={() => {}}
+                      onSave={() => {}}
+                      readonly
+                    />
+                  ) : (
+                    <div className="p-8 text-center">
+                      <p className="text-muted-foreground">Document preview not available for this file type.</p>
+                      <Button onClick={handleDownloadPDF} variant="outline" className="mt-4">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Document
+                      </Button>
                     </div>
                   )}
-
-                  {document.verification_phone_required && (
-                    <div>
-                      <Label htmlFor="clientPhone">Phone Number *</Label>
-                      <Input
-                        id="clientPhone"
-                        type="tel"
-                        value={clientPhone}
-                        onChange={(e) => setClientPhone(e.target.value)}
-                        placeholder="Enter your phone number"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  <Button type="submit" className="w-full">
-                    Continue to Sign
-                  </Button>
-                </form>
-              )}
-
-              {currentStep === 'verify' && (
-                <form onSubmit={handleVerification} className="space-y-4">
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      We've sent a verification code to your {document.verification_email_required ? 'email' : 'phone'}.
-                      Please enter it below to continue.
-                    </AlertDescription>
-                  </Alert>
-
-                  <div>
-                    <Label htmlFor="verificationCode">Verification Code</Label>
-                    <Input
-                      id="verificationCode"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      placeholder="Enter verification code"
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full">
-                    Verify & Continue
-                  </Button>
-                </form>
-              )}
-
-              {currentStep === 'sign' && (
-                <div className="space-y-6">
-                  <Alert>
-                    <FileText className="h-4 w-4" />
-                    <AlertDescription>
-                      Please review the document and sign in the designated areas.
-                    </AlertDescription>
-                  </Alert>
-
-                  {/* PDF Viewer with Signature Boxes */}
-                  <div className="border rounded-lg overflow-hidden">
-                    <Document
-                      file={document.file_url}
-                      onLoadSuccess={onDocumentLoadSuccess}
-                      loading={
-                        <div className="flex items-center justify-center p-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        </div>
-                      }
-                    >
-                      {numPages && Array.from(new Array(numPages), (_, pageIndex) => (
-                        <div key={pageIndex} className="relative bg-white">
-                          <Page
-                            pageNumber={pageIndex + 1}
-                            width={800}
-                            renderTextLayer={false}
-                            renderAnnotationLayer={false}
-                          />
-                          
-                          {/* Render signature boxes for this page */}
-                          {signaturePositions
-                            .filter((sig) => sig.page === pageIndex + 1)
-                            .map((sig, sigIndex) => (
-                              <div
-                                key={sigIndex}
-                                className="absolute border-2 border-blue-500 bg-blue-50 rounded"
-                                style={{
-                                  top: sig.top,
-                                  left: sig.left,
-                                  width: sig.width,
-                                  height: sig.height,
-                                }}
-                              >
-                                <SignatureCanvas
-                                  ref={(ref) => {
-                                    if (ref) signatureRefs.current[`sig-${sigIndex}`] = ref;
-                                  }}
-                                  canvasProps={{
-                                    width: sig.width,
-                                    height: sig.height,
-                                    className: 'signature-canvas',
-                                    style: { width: '100%', height: '100%' }
-                                  }}
-                                  backgroundColor="rgba(255,255,255,0)"
-                                />
-                              </div>
-                            ))}
-                        </div>
-                      ))}
-                    </Document>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => {
-                        Object.values(signatureRefs.current).forEach(ref => ref?.clear());
-                      }}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      Clear Signatures
-                    </Button>
-                    <Button
-                      onClick={handleSign}
-                      disabled={signing}
-                      className="flex-1"
-                    >
-                      {signing ? 'Signing...' : 'Complete Signing'}
-                    </Button>
-                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+
+                {showSignature && (
+                  <div className="bg-white rounded-lg shadow-sm border p-6" id="signature-section">
+                    <h3 className="text-lg font-semibold mb-4">Sign Document</h3>
+                    <SignatureStep
+                      data={{
+                        clientName: document?.client_name || 'Client',
+                        clientEmail: document?.client_email || '',
+                        clientSignature: clientSignature
+                      }}
+                      updateData={(updates) => {
+                        if (updates.clientSignature) {
+                          setClientSignature(updates.clientSignature);
+                        }
+                      }}
+                      onNext={() => {}}
+                      onPrev={() => setShowSignature(false)}
+                      isFirst={false}
+                      isLast={true}
+                      signerType="client"
+                    />
+                    <div className="flex gap-3 mt-6">
+                      <Button variant="outline" onClick={() => setShowSignature(false)} className="flex-1">
+                        Back to Review
+                      </Button>
+                      <Button
+                        onClick={() => clientSignature && handleSignDocument(clientSignature)}
+                        disabled={!clientSignature}
+                        className="flex-1"
+                      >
+                        Complete Signing
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-1">
+                {document?.status === 'sent_for_signature' && !showSignature && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Next Steps</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Please review the document carefully. Once you're ready, you can sign it digitally.
+                      </p>
+
+                      <div className="space-y-3">
+                        <Button onClick={() => setShowSignature(true)} className="w-full" size="lg">
+                          Sign Document
+                        </Button>
+
+                        <Button variant="outline" onClick={handleDownloadPDF} className="w-full">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download for Review
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Document Signed Successfully</DialogTitle>
+              <DialogDescription>
+                Your signature has been recorded. You can now download the signed document.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>Close</Button>
+              <Button onClick={handleDownloadPDF} disabled={downloadingPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                {downloadingPDF ? 'Downloading...' : 'Download Signed Document'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
