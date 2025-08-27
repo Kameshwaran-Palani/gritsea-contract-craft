@@ -14,11 +14,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// ✅ Use Vite-compatible worker bundle instead of public path
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString();
+// ✅ Load worker from public/ to avoid CORS
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+
 
 interface SignaturePosition {
   id: string;
