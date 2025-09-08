@@ -14,7 +14,6 @@ import SEOHead from '@/components/SEOHead';
 import Navbar from '@/components/ui/navbar';
 import Footer from '@/components/ui/footer';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PDFDocument } from 'pdf-lib';
 
 interface UploadedDocument {
   id: string;
@@ -188,17 +187,29 @@ const DocumentSign = () => {
 
       if (statusError) throw statusError;
 
-      setDocument({
+      {/*setDocument({
         ...updatedDocument,
         status: updatedDocument.status as UploadedDocument['status'],
-        signature_positions: Array.isArray(updatedDocument.signature_positions)
-          ? updatedDocument.signature_positions.map((sig: any) => ({
-              ...sig,
-              image: signatureData // inject the captured signature into all signature boxes
-            }))
-          : []
-      });
+        signature_positions: Array.isArray(updatedDocument.signature_positions) ? updatedDocument.signature_positions : []
+      });*/}
 
+      const signedPositions = (updatedDocument.signature_positions || []).map((pos: any) => ({
+  ...pos,
+  image: signatureData // inject the actual base64 signature
+}));
+
+      setDocument({
+  ...updatedDocument,
+  status: updatedDocument.status as UploadedDocument['status'],
+  signature_positions: Array.isArray(updatedDocument.signature_positions)
+    ? updatedDocument.signature_positions.map((sig) => ({
+        ...sig,
+        image: signatureData // ✅ inject the captured signature into all signature boxes
+      }))
+    : []
+});
+
+      
       setClientSignature(signatureData);
       
       toast({
@@ -218,62 +229,6 @@ const DocumentSign = () => {
     }
   };
 
-  const generateSignedPDF = async () => {
-    if (!document) return null;
-
-    try {
-      // Fetch the original PDF
-      const response = await fetch(document.file_url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch PDF');
-      }
-      const pdfBytes = await response.arrayBuffer();
-
-      // Load the PDF
-      const pdfDoc = await PDFDocument.load(pdfBytes);
-      const pages = pdfDoc.getPages();
-
-      // Process signature positions and embed signatures
-      if (document.signature_positions && document.signature_positions.length > 0) {
-        for (const sig of document.signature_positions) {
-          if (!sig.image) continue;
-
-          const pageIndex = sig.page - 1; // Convert to 0-based index
-          if (pageIndex < 0 || pageIndex >= pages.length) continue;
-
-          const page = pages[pageIndex];
-          
-          try {
-            // Convert base64 signature to image
-            const signatureImage = await pdfDoc.embedPng(sig.image);
-            
-            // Calculate position (PDF coordinates are from bottom-left)
-            const pageHeight = page.getHeight();
-            const x = sig.x;
-            const y = pageHeight - sig.y - sig.height; // Convert from top-left to bottom-left
-            
-            // Draw the signature
-            page.drawImage(signatureImage, {
-              x: x,
-              y: y,
-              width: sig.width,
-              height: sig.height,
-            });
-          } catch (imgError) {
-            console.error('Error embedding signature image:', imgError);
-          }
-        }
-      }
-
-      // Save the PDF with embedded signatures
-      const signedPdfBytes = await pdfDoc.save();
-      return signedPdfBytes;
-    } catch (error) {
-      console.error('Error generating signed PDF:', error);
-      return null;
-    }
-  };
-
   const handleDownloadPDF = async () => {
     setDownloadingPDF(true);
     try {
@@ -282,61 +237,24 @@ const DocumentSign = () => {
         description: "Please wait while we generate your PDF...",
       });
 
-      // If document is signed and has signature positions, generate PDF with signatures
-      if (document?.status === 'signed' && document.signature_positions?.length > 0) {
-        const signedPdfBytes = await generateSignedPDF();
-        
-        if (signedPdfBytes) {
-          // Create blob and download
-          const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `Signed_${document.original_filename}`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+      const link = document.createElement('a');
+      link.href = document!.file_url;
+      link.download = `Signed_${document!.original_filename}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-          toast({
-            title: "Download Complete",
-            description: "Signed document has been downloaded successfully."
-          });
-        } else {
-          throw new Error('Failed to generate signed PDF');
-        }
-      } else {
-        // For unsigned documents or documents without signatures, download original
-        const link = document.createElement('a');
-        link.href = document!.file_url;
-        link.download = document!.original_filename;
-        link.target = '_blank'; // Open in new tab as fallback
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        toast({
-          title: "Download Complete",
-          description: "Document has been downloaded successfully."
-        });
-      }
+      toast({
+        title: "Download Complete",
+        description: "Document PDF has been downloaded successfully."
+      });
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      
-      // Fallback: try direct download
-      try {
-        window.open(document!.file_url, '_blank');
-        toast({
-          title: "Opening Document",
-          description: "Document opened in a new tab. You can save it from there.",
-        });
-      } catch (fallbackError) {
-        toast({
-          title: "Download Error",
-          description: "Failed to download PDF. Please try again or contact support.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Download Error",
+        description: "Failed to download PDF. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setDownloadingPDF(false);
     }
@@ -450,7 +368,7 @@ const DocumentSign = () => {
                     className="flex items-center gap-2"
                   >
                     <Download className="h-4 w-4" />
-                    {downloadingPDF ? 'Generating...' : 'Download PDF'}
+                    {downloadingPDF ? 'Downloading...' : 'Download PDF'}
                   </Button>
                 </>
               )}
@@ -559,7 +477,7 @@ const DocumentSign = () => {
               <Button variant="outline" onClick={() => setShowDownloadDialog(false)}>Close</Button>
               <Button onClick={handleDownloadPDF} disabled={downloadingPDF}>
                 <Download className="h-4 w-4 mr-2" />
-                {downloadingPDF ? 'Generating...' : 'Download Signed Document'}
+                {downloadingPDF ? 'Downloading...' : 'Download Signed Document'}
               </Button>
             </DialogFooter>
           </DialogContent>
