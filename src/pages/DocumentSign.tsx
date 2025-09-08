@@ -193,21 +193,16 @@ const DocumentSign = () => {
         signature_positions: Array.isArray(updatedDocument.signature_positions) ? updatedDocument.signature_positions : []
       });*/}
 
-      const signedPositions = (updatedDocument.signature_positions || []).map((pos: any) => ({
-  ...pos,
-  image: signatureData // inject the actual base64 signature
-}));
-
       setDocument({
-  ...updatedDocument,
-  status: updatedDocument.status as UploadedDocument['status'],
-  signature_positions: Array.isArray(updatedDocument.signature_positions)
-    ? updatedDocument.signature_positions.map((sig) => ({
-        ...sig,
-        image: signatureData // ✅ inject the captured signature into all signature boxes
-      }))
-    : []
-});
+        ...updatedDocument,
+        status: updatedDocument.status as UploadedDocument['status'],
+        signature_positions: Array.isArray(updatedDocument.signature_positions)
+          ? updatedDocument.signature_positions.map((sig: any) => ({
+              ...sig,
+              image: signatureData // inject the captured signature into all signature boxes
+            }))
+          : []
+      });
 
       
       setClientSignature(signatureData);
@@ -237,12 +232,12 @@ const DocumentSign = () => {
         description: "Please wait while we generate your PDF...",
       });
 
-      const link = document.createElement('a');
-      link.href = document!.file_url;
-      link.download = `Signed_${document!.original_filename}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const downloadLink = window.document.createElement('a');
+      downloadLink.href = document!.file_url;
+      downloadLink.download = `Signed_${document!.original_filename}`;
+      window.document.body.appendChild(downloadLink);
+      downloadLink.click();
+      window.document.body.removeChild(downloadLink);
 
       toast({
         title: "Download Complete",
@@ -405,8 +400,40 @@ const DocumentSign = () => {
                     <h3 className="text-lg font-semibold mb-4">Sign Document</h3>
                     <SignatureStep
                       data={{
+                        documentTitle: document?.title || '',
+                        documentSubtitle: '',
+                        logoStyle: 'round',
+                        primaryColor: '#3B82F6',
+                        contentColor: '#374151',
+                        fontFamily: 'Inter',
+                        agreementIntroText: 'This is a service agreement between the parties.',
+                        effectiveDate: new Date().toISOString().split('T')[0],
+                        applyGlobalStyles: true,
+                        sectionStyles: {},
+                        freelancerName: 'Service Provider',
+                        freelancerAddress: 'Provider Address',
+                        freelancerEmail: 'provider@example.com',
                         clientName: document?.client_name || 'Client',
                         clientEmail: document?.client_email || '',
+                        startDate: new Date().toISOString().split('T')[0],
+                        services: 'Service Description',
+                        deliverables: 'Project Deliverables',
+                        milestones: [],
+                        paymentType: 'fixed' as const,
+                        rate: 1000,
+                        paymentSchedule: [],
+                        lateFeeEnabled: false,
+                        isRetainer: false,
+                        autoRenew: false,
+                        responseTime: '24 hours',
+                        revisionLimit: 3,
+                        includeNDA: false,
+                        ipOwnership: 'client' as const,
+                        usageRights: 'full' as const,
+                        terminationConditions: 'Standard termination conditions apply.',
+                        noticePeriod: '30 days',
+                        jurisdiction: 'Local jurisdiction',
+                        arbitrationClause: false,
                         clientSignature: clientSignature
                       }}
                       updateData={(updates) => {
