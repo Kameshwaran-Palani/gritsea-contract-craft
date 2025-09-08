@@ -26,6 +26,8 @@ import AIPrompt from "./pages/AIPrompt";
 import DocumentUpload from "./pages/DocumentUpload";
 import DocumentEdit from "./pages/DocumentEdit";
 import DocumentSign from "./pages/DocumentSign";
+import Revisions from "./pages/Revisions";
+import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +55,8 @@ function App() {
               <Route path="/esign/:contractId/:authMethod" element={<ESignView />} />
               <Route path="/contract/:id" element={<ContractRedirect />} />
               <Route path="/templates" element={<Templates />} />
+              <Route path="/revisions" element={<Revisions />} />
+              <Route path="/billing" element={<Billing />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/community" element={<Community />} />
               <Route path="/ai-assistant" element={<AIAssistant />} />

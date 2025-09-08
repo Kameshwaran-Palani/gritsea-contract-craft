@@ -14,6 +14,8 @@ import SEOHead from '@/components/SEOHead';
 import Navbar from '@/components/ui/navbar';
 import Footer from '@/components/ui/footer';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import DocumentDecisionPanel from '@/components/contract-builder/DocumentDecisionPanel';
+import DocumentRevisionModal from '@/components/contract-builder/DocumentRevisionModal';
 
 interface UploadedDocument {
   id: string;
@@ -48,6 +50,7 @@ const DocumentSign = () => {
   const [ownerName, setOwnerName] = useState('');
   const [creatorLoading, setCreatorLoading] = useState(true);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
 
   useEffect(() => {
     if (secretKey) {
@@ -465,27 +468,10 @@ const DocumentSign = () => {
 
               <div className="lg:col-span-1">
                 {document?.status === 'sent_for_signature' && !showSignature && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Next Steps</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Please review the document carefully. Once you're ready, you can sign it digitally.
-                      </p>
-
-                      <div className="space-y-3">
-                        <Button onClick={() => setShowSignature(true)} className="w-full" size="lg">
-                          Sign Document
-                        </Button>
-
-                        <Button variant="outline" onClick={handleDownloadPDF} className="w-full">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download for Review
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <DocumentDecisionPanel 
+                    onApprove={() => setShowSignature(true)}
+                    onReject={() => setShowRevisionModal(true)}
+                  />
                 )}
               </div>
             </div>
@@ -509,6 +495,23 @@ const DocumentSign = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DocumentRevisionModal 
+          open={showRevisionModal}
+          onClose={() => setShowRevisionModal(false)}
+          documentId={document?.id || ''}
+          clientName={document?.client_name || ''}
+          clientEmail={document?.client_email || ''}
+          onRevisionRequested={() => {
+            setShowRevisionModal(false);
+            toast({
+              title: "Revision Request Sent",
+              description: "Your feedback has been sent. You'll be redirected to the document edit page."
+            });
+            // Redirect to document edit page
+            window.location.href = `/document-edit/${document?.id}`;
+          }}
+        />
       </div>
     </>
   );

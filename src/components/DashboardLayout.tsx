@@ -34,6 +34,10 @@ const DashboardLayout = ({
     href: '/templates',
     icon: Bookmark
   }, {
+    name: 'Revisions',
+    href: '/revisions',
+    icon: FileText
+  }, {
     name: 'AI Prompt',
     href: '/ai-prompt',
     icon: Zap

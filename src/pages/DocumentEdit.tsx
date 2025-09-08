@@ -59,6 +59,9 @@ const DocumentEdit = () => {
     }
   }, [id]);
 
+  // Check if document is read-only (sent for signature)
+  const isReadOnly = document?.status === 'sent_for_signature' || document?.status === 'signed';
+
   const fetchDocument = async () => {
     try {
       const { data, error } = await supabase
@@ -76,6 +79,17 @@ const DocumentEdit = () => {
       setEmailVerification(data.verification_email_required);
       setPhoneVerification(data.verification_phone_required);
       setSignaturePositions(Array.isArray(data.signature_positions) ? data.signature_positions : []);
+      
+      // If document was sent for signature, restore share info
+      if (data.status === 'sent_for_signature' && data.public_link_id) {
+        const signingLink = `${window.location.origin}/document-sign/${data.public_link_id}`;
+        setShareInfo({
+          link: signingLink,
+          secretKey: 'Hidden for security',
+          clientContact: data.client_email,
+          authMethod: data.verification_email_required ? 'email' : 'phone'
+        });
+      }
     } catch (error: any) {
       console.error('Error fetching document:', error);
       toast({
@@ -171,9 +185,12 @@ const DocumentEdit = () => {
 
     setSaving(true);
     try {
-      // Generate secret key
+      // Generate secret key only once
       const secretKey = Math.random().toString(36).substring(2) + 
                        Math.random().toString(36).substring(2);
+
+      // Use existing public_link_id or current one
+      const currentPublicLinkId = document.public_link_id;
 
       const { data, error } = await supabase
         .from('uploaded_documents')
@@ -191,7 +208,7 @@ const DocumentEdit = () => {
 
       if (error) throw error;
 
-      const signingLink = `${window.location.origin}/document-sign/${data.public_link_id}?key=${secretKey}`;
+      const signingLink = `${window.location.origin}/document-sign/${currentPublicLinkId}?key=${secretKey}`;
       
       const shareData = {
         link: signingLink,
@@ -328,6 +345,7 @@ const DocumentEdit = () => {
                       value={clientName}
                       onChange={(e) => setClientName(e.target.value)}
                       placeholder="Enter client's full name"
+                      disabled={isReadOnly}
                     />
                   </div>
 
@@ -339,6 +357,7 @@ const DocumentEdit = () => {
                       value={clientEmail}
                       onChange={(e) => setClientEmail(e.target.value)}
                       placeholder="client@example.com"
+                      disabled={isReadOnly}
                     />
                   </div>
 
@@ -350,6 +369,7 @@ const DocumentEdit = () => {
                       value={clientPhone}
                       onChange={(e) => setClientPhone(e.target.value)}
                       placeholder="+1 234 567 8900"
+                      disabled={isReadOnly}
                     />
                   </div>
 
@@ -367,6 +387,7 @@ const DocumentEdit = () => {
                       <Switch
                         checked={emailVerification}
                         onCheckedChange={setEmailVerification}
+                        disabled={isReadOnly}
                       />
                     </div>
 
@@ -380,30 +401,39 @@ const DocumentEdit = () => {
                       <Switch
                         checked={phoneVerification}
                         onCheckedChange={setPhoneVerification}
+                        disabled={isReadOnly}
                       />
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col gap-3 pt-4">
-                    <Button
-                      variant="outline"
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="w-full"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Draft
-                    </Button>
-                    <Button
-                      onClick={handleSendForSignature}
-                      disabled={saving || !clientName.trim() || !clientEmail.trim()}
-                      className="w-full"
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      Send for Signature
-                    </Button>
-                  </div>
+                  {!isReadOnly ? (
+                    <div className="flex flex-col gap-3 pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="w-full"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Draft
+                      </Button>
+                      <Button
+                        onClick={handleSendForSignature}
+                        disabled={saving || !clientName.trim() || !clientEmail.trim()}
+                        className="w-full"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Send for Signature
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground text-center">
+                        Document is in read-only mode as it has been sent for signature.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -413,8 +443,9 @@ const DocumentEdit = () => {
               <PDFViewer
                 fileUrl={document.file_url}
                 signaturePositions={signaturePositions}
-                onSignaturePositionsChange={setSignaturePositions}
-                onSave={handleSaveSignaturePositions}
+                onSignaturePositionsChange={isReadOnly ? () => {} : setSignaturePositions}
+                onSave={isReadOnly ? () => {} : handleSaveSignaturePositions}
+                readonly={isReadOnly}
               />
             </div>
           </div>
