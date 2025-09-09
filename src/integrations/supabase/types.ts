@@ -7,13 +7,46 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
+      admin_templates: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_logs: {
         Row: {
           created_at: string
@@ -185,6 +218,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin: string | null
           company_name: string | null
           created_at: string
           email: string | null
@@ -195,6 +229,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin?: string | null
           company_name?: string | null
           created_at?: string
           email?: string | null
@@ -205,6 +240,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin?: string | null
           company_name?: string | null
           created_at?: string
           email?: string | null
@@ -350,6 +386,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      termination_requests: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          contract_id: string | null
+          created_at: string
+          document_id: string | null
+          id: string
+          reason: string
+          request_type: string
+          requested_by: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          contract_id?: string | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          reason: string
+          request_type: string
+          requested_by: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          contract_id?: string | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          reason?: string
+          request_type?: string
+          requested_by?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       uploaded_document_signatures: {
         Row: {

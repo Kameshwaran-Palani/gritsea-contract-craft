@@ -15,7 +15,7 @@ import Navbar from '@/components/ui/navbar';
 import Footer from '@/components/ui/footer';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DocumentDecisionPanel from '@/components/contract-builder/DocumentDecisionPanel';
-import DocumentRevisionModal from '@/components/contract-builder/DocumentRevisionModal';
+import DocumentTerminationModal from '@/components/contract-builder/DocumentTerminationModal';
 
 interface UploadedDocument {
   id: string;
@@ -51,6 +51,7 @@ const DocumentSign = () => {
   const [creatorLoading, setCreatorLoading] = useState(true);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [showTerminationModal, setShowTerminationModal] = useState(false);
 
   useEffect(() => {
     if (secretKey) {
@@ -467,12 +468,38 @@ const DocumentSign = () => {
               </div>
 
               <div className="lg:col-span-1">
-                {document?.status === 'sent_for_signature' && !showSignature && (
-                  <DocumentDecisionPanel 
-                    onApprove={() => setShowSignature(true)}
-                    onReject={() => setShowRevisionModal(true)}
-                  />
-                )}
+                  {document?.status === 'signed' && (
+                    <>
+                      <div className="flex items-center gap-2 text-green-600 mb-4">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="font-medium">Document Signed Successfully</span>
+                      </div>
+                      <div className="space-y-3">
+                        <Button
+                          onClick={handleDownloadPDF}
+                          disabled={downloadingPDF}
+                          className="w-full"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          {downloadingPDF ? 'Downloading...' : 'Download Signed Document'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowTerminationModal(true)}
+                          className="w-full text-red-600 border-red-600 hover:bg-red-50"
+                        >
+                          Request Termination
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                  
+                  {document?.status === 'sent_for_signature' && !showSignature && (
+                    <DocumentDecisionPanel 
+                      onApprove={() => setShowSignature(true)}
+                      onReject={() => setShowRevisionModal(true)}
+                    />
+                  )}
               </div>
             </div>
           </div>
@@ -496,20 +523,18 @@ const DocumentSign = () => {
           </DialogContent>
         </Dialog>
 
-        <DocumentRevisionModal 
-          open={showRevisionModal}
-          onClose={() => setShowRevisionModal(false)}
+        <DocumentTerminationModal 
+          open={showTerminationModal}
+          onClose={() => setShowTerminationModal(false)}
           documentId={document?.id || ''}
           clientName={document?.client_name || ''}
           clientEmail={document?.client_email || ''}
-          onRevisionRequested={() => {
-            setShowRevisionModal(false);
+          onTerminationRequested={() => {
+            setShowTerminationModal(false);
             toast({
-              title: "Revision Request Sent",
-              description: "Your feedback has been sent. You'll be redirected to the document edit page."
+              title: "Termination Request Submitted",
+              description: "Your termination request has been sent to the document owner."
             });
-            // Redirect to document edit page
-            window.location.href = `/document-edit/${document?.id}`;
           }}
         />
       </div>

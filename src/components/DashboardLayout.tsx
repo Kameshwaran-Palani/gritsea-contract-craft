@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { LayoutDashboard, FileText, Bot, CreditCard, Settings, LogOut, Menu, User, Users, Bookmark, Zap, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Bot, CreditCard, Settings, LogOut, Menu, User, Users, Bookmark, Zap, PanelLeft, Send, XCircle } from 'lucide-react';
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -37,6 +37,14 @@ const DashboardLayout = ({
     name: 'Revisions',
     href: '/revisions',
     icon: FileText
+  }, {
+    name: 'Sent for E-sign',
+    href: '/sent-for-esign',
+    icon: Send
+  }, {
+    name: 'Termination Requests',
+    href: '/termination-requests',
+    icon: XCircle
   }, {
     name: 'AI Prompt',
     href: '/ai-prompt',
