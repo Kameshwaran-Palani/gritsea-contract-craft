@@ -11,11 +11,12 @@ import { KeyRound, Mail, Phone, Send, Copy, CheckCircle } from 'lucide-react';
 interface ESignDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  contractId: string | null;
+  contractId?: string | null;
+  documentId?: string | null;
   onSuccess?: (shareInfo: any) => void;
 }
 
-const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, onSuccess }) => {
+const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, documentId, onSuccess }) => {
   const { toast } = useToast();
   const [step, setStep] = useState<'setup' | 'generated'>('setup');
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
@@ -34,10 +35,10 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, 
   };
 
   const handleGenerateLink = async () => {
-    if (!contractId) {
+    if (!contractId && !documentId) {
       toast({
         title: "Error",
-        description: "No contract ID available",
+        description: "No contract or document ID available",
         variant: "destructive"
       });
       return;
@@ -57,22 +58,49 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, 
     try {
       const generatedKey = secretKey || generateSecretKey();
       
-      // Update contract with client info and lock it
-      const { error } = await supabase
-        .from('contracts')
-        .update({
-          status: 'sent_for_signature',
-          [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
-          verification_email_required: authMethod === 'email',
-          verification_phone_required: authMethod === 'phone',
-          is_locked: true,
-          locked_at: new Date().toISOString()
-        })
-        .eq('id', contractId);
+      let link = '';
+      
+      if (contractId) {
+        // Update contract with client info and lock it
+        const { error } = await supabase
+          .from('contracts')
+          .update({
+            status: 'sent_for_signature',
+            [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
+            verification_email_required: authMethod === 'email',
+            verification_phone_required: authMethod === 'phone',
+            is_locked: true,
+            locked_at: new Date().toISOString()
+          })
+          .eq('id', contractId);
 
-      if (error) throw error;
+        if (error) throw error;
+        link = `${window.location.origin}/esign/${contractId}/${authMethod}`;
+      } else if (documentId) {
+        // Update document with client info and send for signature
+        const { error } = await supabase
+          .from('uploaded_documents')
+          .update({
+            status: 'sent_for_signature',
+            [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
+            verification_email_required: authMethod === 'email',
+            verification_phone_required: authMethod === 'phone'
+          })
+          .eq('id', documentId);
 
-      const link = `${window.location.origin}/esign/${contractId}/${authMethod}`;
+        if (error) throw error;
+        
+        // Get the public_link_id for the document
+        const { data: doc, error: docError } = await supabase
+          .from('uploaded_documents')
+          .select('public_link_id')
+          .eq('id', documentId)
+          .single();
+          
+        if (docError) throw docError;
+        link = `${window.location.origin}/document-sign/${doc.public_link_id}?key=${generatedKey}`;
+      }
+      
       setShareLink(link);
       setStep('generated');
 
@@ -88,7 +116,7 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, 
 
       toast({
         title: "eSign Link Generated",
-        description: "Contract is now locked for editing. Share this link and secret key with your client for secure access."
+        description: `${contractId ? 'Contract' : 'Document'} is now ready for signing. Share this link and secret key with your client for secure access.`
       });
     } catch (error) {
       console.error('Error generating eSign link:', error);

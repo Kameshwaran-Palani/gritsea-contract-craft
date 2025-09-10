@@ -32,14 +32,14 @@ const SentForEsign = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/auth" />;
-
   useEffect(() => {
     if (user) {
       fetchESignItems();
     }
   }, [user]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/auth" />;
 
   const fetchESignItems = async () => {
     try {

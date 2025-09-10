@@ -30,7 +30,8 @@ const GetESignButton: React.FC<GetESignButtonProps> = ({
       <ESignDialog
         isOpen={showESignDialog}
         onClose={() => setShowESignDialog(false)}
-        contractId={contractId || null}
+        contractId={contractId}
+        documentId={documentId}
         onSuccess={(shareInfo) => {
           setShowESignDialog(false);
           onSuccess?.();

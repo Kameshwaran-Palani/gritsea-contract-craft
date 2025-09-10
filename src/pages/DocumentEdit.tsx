@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import ESignDetails from '@/components/contract-builder/ESignDetails';
 import PDFViewer from '@/components/contract-builder/PDFViewer';
+import GetESignButton from '@/components/contract-builder/GetESignButton';
 import { 
   ArrowLeft, 
   FileText, 
@@ -418,14 +419,23 @@ const DocumentEdit = () => {
                         <Save className="h-4 w-4 mr-2" />
                         Save Draft
                       </Button>
-                      <Button
-                        onClick={handleSendForSignature}
-                        disabled={saving || !clientName.trim() || !clientEmail.trim()}
-                        className="w-full"
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        Send for Signature
-                      </Button>
+                      {signaturePositions.length > 0 ? (
+                        <GetESignButton
+                          documentId={document.id}
+                          onSuccess={() => {
+                            fetchDocument();
+                          }}
+                        />
+                      ) : (
+                        <Button
+                          onClick={handleSendForSignature}
+                          disabled={saving || !clientName.trim() || !clientEmail.trim()}
+                          className="w-full"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Send for Signature
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="p-3 bg-muted/50 rounded-lg">

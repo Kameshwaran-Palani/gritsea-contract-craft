@@ -229,29 +229,82 @@ const DocumentSign = () => {
   };
 
   const handleDownloadPDF = async () => {
+    if (!document || !clientSignature) return;
+    
     setDownloadingPDF(true);
     try {
       toast({
-        title: "Generating PDF",
-        description: "Please wait while we generate your PDF...",
+        title: "Generating Signed PDF",
+        description: "Please wait while we generate your signed PDF...",
       });
 
-      const downloadLink = window.document.createElement('a');
-      downloadLink.href = document!.file_url;
-      downloadLink.download = `Signed_${document!.original_filename}`;
-      window.document.body.appendChild(downloadLink);
-      downloadLink.click();
-      window.document.body.removeChild(downloadLink);
+      // Dynamically import jsPDF
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+
+      // Get the PDF viewer container
+      const pdfContainer = window.document.getElementById('document-preview');
+      if (!pdfContainer) {
+        throw new Error('PDF container not found');
+      }
+
+      // Create a new PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      // Capture the PDF viewer as canvas
+      const canvas = await html2canvas(pdfContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        // Multi-page handling
+        let position = 0;
+        let remainingHeight = imgHeight;
+
+        while (remainingHeight > 0) {
+          const currentPageHeight = Math.min(pageHeight, remainingHeight);
+          
+          pdf.addImage(
+            imgData, 
+            'PNG', 
+            0, 
+            -position, 
+            imgWidth, 
+            imgHeight
+          );
+
+          remainingHeight -= pageHeight;
+          position += pageHeight;
+
+          if (remainingHeight > 0) {
+            pdf.addPage();
+          }
+        }
+      }
+
+      // Save the PDF
+      pdf.save(`Signed_${document.original_filename}`);
 
       toast({
         title: "Download Complete",
-        description: "Document PDF has been downloaded successfully."
+        description: "Signed document PDF has been downloaded successfully."
       });
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error generating signed PDF:', error);
       toast({
         title: "Download Error",
-        description: "Failed to download PDF. Please try again.",
+        description: "Failed to generate signed PDF. Please try again.",
         variant: "destructive"
       });
     } finally {
