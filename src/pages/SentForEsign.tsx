@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, FileText, Search, Download, ExternalLink, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import SEOHead from '@/components/SEOHead';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import DashboardLayout from '@/components/DashboardLayout';
 
 interface ESignItem {
   id: string;
@@ -31,6 +32,9 @@ const SentForEsign = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/auth" />;
+
   useEffect(() => {
     if (user) {
       fetchESignItems();
@@ -39,22 +43,22 @@ const SentForEsign = () => {
 
   const fetchESignItems = async () => {
     try {
-      // Fetch contracts sent for signature
+      // Fetch contracts sent for signature (only pending signature, not signed)
       const { data: contracts, error: contractsError } = await supabase
         .from('contracts')
         .select('*')
         .eq('user_id', user?.id)
-        .in('status', ['sent_for_signature', 'signed'])
+        .eq('status', 'sent_for_signature')
         .order('updated_at', { ascending: false });
 
       if (contractsError) throw contractsError;
 
-      // Fetch uploaded documents sent for signature
+      // Fetch uploaded documents sent for signature (only pending signature, not signed)
       const { data: documents, error: documentsError } = await supabase
         .from('uploaded_documents')
         .select('*')
         .eq('user_id', user?.id)
-        .in('status', ['sent_for_signature', 'signed'])
+        .eq('status', 'sent_for_signature')
         .order('updated_at', { ascending: false });
 
       if (documentsError) throw documentsError;
@@ -138,7 +142,7 @@ const SentForEsign = () => {
   }
 
   return (
-    <>
+    <DashboardLayout>
       <SEOHead 
         title="Sent for E-sign - Agrezy"
         description="Track contracts and documents sent for electronic signature"
@@ -244,7 +248,7 @@ const SentForEsign = () => {
           )}
         </div>
       </div>
-    </>
+    </DashboardLayout>
   );
 };
 

@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle, Search, FileText, Calendar, Check, X, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import SEOHead from '@/components/SEOHead';
+import DashboardLayout from '@/components/DashboardLayout';
+import { Navigate } from 'react-router-dom';
 
 interface TerminationRequest {
   id: string;
@@ -37,16 +39,19 @@ interface SignedItem {
 }
 
 const TerminationRequests = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const [requests, setRequests] = useState<TerminationRequest[]>([]);
   const [signedItems, setSignedItems] = useState<SignedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SignedItem | null>(null);
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/auth" />;
 
   useEffect(() => {
     if (user) {
@@ -144,7 +149,7 @@ const TerminationRequests = () => {
     } catch (error: any) {
       console.error('Error fetching signed items:', error);
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -243,7 +248,7 @@ const TerminationRequests = () => {
     );
   };
 
-  if (loading) {
+  if (loadingData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -252,7 +257,7 @@ const TerminationRequests = () => {
   }
 
   return (
-    <>
+    <DashboardLayout>
       <SEOHead 
         title="Termination Requests - Agrezy"
         description="Manage contract and document termination requests"
@@ -410,7 +415,7 @@ const TerminationRequests = () => {
           )}
         </div>
       </div>
-    </>
+    </DashboardLayout>
   );
 };
 

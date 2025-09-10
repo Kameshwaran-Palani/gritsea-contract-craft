@@ -4,7 +4,7 @@ import html2canvas from 'html2canvas';
 interface Contract {
   id: string;
   title: string;
-  status: 'draft' | 'signed' | 'shared';
+  status: 'draft' | 'signed' | 'shared' | 'terminated';
   client_name: string;
   client_email: string;
   contract_amount: number;

@@ -17,7 +17,7 @@ import { generateContractCardImage } from '@/utils/contractCardImageGenerator';
 interface Contract {
   id: string;
   title: string;
-  status: 'draft' | 'signed' | 'shared';
+  status: 'draft' | 'signed' | 'shared' | 'terminated';
   client_name: string;
   client_email: string;
   contract_amount: number;
@@ -230,6 +230,7 @@ const Contracts = () => {
       case 'draft': return 'bg-gray-100 text-gray-800';
       case 'shared': return 'bg-blue-100 text-blue-800';
       case 'signed': return 'bg-green-100 text-green-800';
+      case 'terminated': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -365,12 +366,15 @@ const Contracts = () => {
           </div>
 
           <Tabs defaultValue="draft" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="draft">
                 Draft ({contracts.filter(c => c.status === 'draft').length})
               </TabsTrigger>
               <TabsTrigger value="signed">
                 Signed ({contracts.filter(c => c.status === 'signed').length})
+              </TabsTrigger>
+              <TabsTrigger value="terminated">
+                Terminated ({contracts.filter(c => c.status === 'terminated').length})
               </TabsTrigger>
               <TabsTrigger value="expired">
                 Expired (0)
@@ -439,6 +443,39 @@ const Contracts = () => {
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {contracts.filter(c => c.status === 'signed').map(renderContractCard)}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Terminated Contracts Tab */}
+            <TabsContent value="terminated" className="space-y-4">
+              {contractsLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="aspect-[794/1123] bg-muted rounded mb-4"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted rounded"></div>
+                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : contracts.filter(c => c.status === 'terminated').length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No terminated contracts</h3>
+                    <p className="text-muted-foreground">
+                      Mutually terminated contracts will appear here
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {contracts.filter(c => c.status === 'terminated').map(renderContractCard)}
                 </div>
               )}
             </TabsContent>
