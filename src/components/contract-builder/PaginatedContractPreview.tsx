@@ -491,16 +491,49 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                 style={{
                   width: `${PAGE_WIDTH}px`,
                   minHeight: `${PAGE_HEIGHT}px`,
-                  padding: `${PAGE_MARGIN}px`,
+                  padding: 0,
                   fontFamily: data.fontFamily === 'inter' ? 'Inter, sans-serif' : data.fontFamily === 'serif' ? 'Times, serif' : data.fontFamily === 'sans' ? 'Arial, sans-serif' : data.fontFamily === 'mono' ? 'Courier, monospace' : 'Inter, sans-serif',
                   lineHeight: data.lineSpacing || 1.6,
                   color: data.contentColor || '#1f2937',
-                  pageBreakAfter: 'always'
-                }} 
-                dangerouslySetInnerHTML={{
-                  __html: page.innerHTML
-                }} 
-              />
+                  pageBreakAfter: 'always',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                {/* Top Banner */}
+                {(data.bannerPosition === 'top' || data.bannerPosition === 'both') && data.topBanner && (
+                  <div style={{ width: '100%', height: `${data.bannerHeight}px`, overflow: 'hidden', flexShrink: 0 }}>
+                    <img 
+                      src={data.topBanner} 
+                      alt="Top banner" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+                
+                {/* Page Content */}
+                <div 
+                  style={{ 
+                    flex: 1,
+                    padding: `${PAGE_MARGIN}px`,
+                    overflow: 'hidden'
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: page.innerHTML
+                  }} 
+                />
+                
+                {/* Bottom Banner */}
+                {(data.bannerPosition === 'bottom' || data.bannerPosition === 'both') && data.bottomBanner && (
+                  <div style={{ width: '100%', height: `${data.bannerHeight}px`, overflow: 'hidden', flexShrink: 0 }}>
+                    <img 
+                      src={data.bottomBanner} 
+                      alt="Bottom banner" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

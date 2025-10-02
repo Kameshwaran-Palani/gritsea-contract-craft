@@ -58,6 +58,12 @@ export interface ContractData {
   rightLogo?: string;
   logoStyle: 'round' | 'rectangle';
   
+  // Brand Banners
+  topBanner?: string;
+  bottomBanner?: string;
+  bannerPosition: 'top' | 'bottom' | 'both';
+  bannerHeight: number;
+  
   // Design
   primaryColor: string; // Header Color
   contentColor: string;
@@ -183,6 +189,16 @@ const ContractBuilder = () => {
     { id: 'global-font-sizes', title: 'Global Font Sizes', component: GlobalFontSizes },
     { id: 'section-specific-styles', title: 'Section-Specific Overrides', component: SectionSpecificStyling },
   ];
+
+  const AI_STEPS = [
+    { id: 'ai-assistant', title: 'AI Contract Assistant', component: () => (
+      <div className="text-center py-12">
+        <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
+        <h3 className="text-xl font-semibold mb-2">AI Assistant Coming Soon</h3>
+        <p className="text-muted-foreground">Generate and improve contract clauses with AI</p>
+      </div>
+    )},
+  ];
   
   const [activeTab, setActiveTab] = useState('edit');
   const [activeSection, setActiveSection] = useState<string | undefined>(isEditMode ? 'headers' : 'template');
@@ -192,6 +208,8 @@ const ContractBuilder = () => {
     agreementIntroText: 'This Service Agreement ("Agreement") is entered into between the parties identified below for the provision of professional services as outlined in this document.',
     effectiveDate: '',
     logoStyle: 'round',
+    bannerPosition: 'top',
+    bannerHeight: 80,
     primaryColor: '#3B82F6',
     contentColor: '#374151',
     fontFamily: 'inter',
@@ -912,12 +930,16 @@ const ContractBuilder = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="edit" disabled={isLocked}>
                   Edit Contract {isLocked && <Lock className="h-3 w-3 ml-1" />}
                 </TabsTrigger>
                 <TabsTrigger value="design" disabled={isLocked}>
                   Design {isLocked && <Lock className="h-3 w-3 ml-1" />}
+                </TabsTrigger>
+                <TabsTrigger value="ai" disabled={isLocked}>
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI {isLocked && <Lock className="h-3 w-3 ml-1" />}
                 </TabsTrigger>
               </TabsList>
 
@@ -981,6 +1003,19 @@ const ContractBuilder = () => {
                     );
                   })}
                 </Accordion>
+              </TabsContent>
+
+              <TabsContent value="ai" className="space-y-3">
+                <div className="text-center py-16">
+                  <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">AI Contract Assistant</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Generate and improve contract clauses with AI
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Coming soon - AI-powered contract generation and optimization
+                  </p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>

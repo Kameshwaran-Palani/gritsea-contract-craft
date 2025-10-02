@@ -26,7 +26,7 @@ const PartiesInformation: React.FC<PartiesInformationProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Freelancer Information */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}

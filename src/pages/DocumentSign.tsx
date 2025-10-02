@@ -460,6 +460,8 @@ const DocumentSign = () => {
                         documentTitle: document?.title || '',
                         documentSubtitle: '',
                         logoStyle: 'round',
+                        bannerPosition: 'top',
+                        bannerHeight: 80,
                         primaryColor: '#3B82F6',
                         contentColor: '#374151',
                         fontFamily: 'Inter',

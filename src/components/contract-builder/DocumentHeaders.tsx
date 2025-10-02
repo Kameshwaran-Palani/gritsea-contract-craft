@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { ContractData } from '@/pages/ContractBuilder';
-import { FileText, Upload, Image as ImageIcon } from 'lucide-react';
+import { FileText, Upload, Image as ImageIcon, Layers } from 'lucide-react';
 
 interface DocumentHeadersProps {
   data: ContractData;
@@ -34,12 +36,160 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
     }
   };
 
+  const handleBannerUpload = (position: 'top' | 'bottom', event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        updateData({ 
+          [position === 'top' ? 'topBanner' : 'bottomBanner']: result 
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
         <h2 className="text-2xl font-semibold mb-2">Document Headers & Branding</h2>
       </div>
+
+      {/* Brand Banners */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Layers className="h-5 w-5" />
+            Brand Banners
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Banner Position</Label>
+            <Select 
+              value={data.bannerPosition} 
+              onValueChange={(value: 'top' | 'bottom' | 'both') => updateData({ bannerPosition: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="top">Top Only</SelectItem>
+                <SelectItem value="bottom">Bottom Only</SelectItem>
+                <SelectItem value="both">Both Top and Bottom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Banner Height: {data.bannerHeight}px</Label>
+            <Slider
+              value={[data.bannerHeight]}
+              onValueChange={(value) => updateData({ bannerHeight: value[0] })}
+              min={40}
+              max={200}
+              step={10}
+              className="mt-2"
+            />
+          </div>
+
+          {(data.bannerPosition === 'top' || data.bannerPosition === 'both') && (
+            <div>
+              <Label htmlFor="topBanner">Top Banner Image</Label>
+              <div className="mt-2 space-y-2">
+                {data.topBanner && (
+                  <div className="relative">
+                    <img 
+                      src={data.topBanner} 
+                      alt="Top banner" 
+                      className="w-full object-cover rounded-lg border"
+                      style={{ height: `${data.bannerHeight}px` }}
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('topBanner')?.click()}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {data.topBanner ? 'Change' : 'Upload'} Top Banner
+                  </Button>
+                  {data.topBanner && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateData({ topBanner: undefined })}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                  <Input
+                    id="topBanner"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleBannerUpload('top', e)}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(data.bannerPosition === 'bottom' || data.bannerPosition === 'both') && (
+            <div>
+              <Label htmlFor="bottomBanner">Bottom Banner Image</Label>
+              <div className="mt-2 space-y-2">
+                {data.bottomBanner && (
+                  <div className="relative">
+                    <img 
+                      src={data.bottomBanner} 
+                      alt="Bottom banner" 
+                      className="w-full object-cover rounded-lg border"
+                      style={{ height: `${data.bannerHeight}px` }}
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('bottomBanner')?.click()}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {data.bottomBanner ? 'Change' : 'Upload'} Bottom Banner
+                  </Button>
+                  {data.bottomBanner && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateData({ bottomBanner: undefined })}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                  <Input
+                    id="bottomBanner"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleBannerUpload('bottom', e)}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Document Headers */}
       <Card>
@@ -126,7 +276,7 @@ const DocumentHeaders: React.FC<DocumentHeadersProps> = ({
             </RadioGroup>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="leftLogo">Service Provider Logo</Label>
               <div className="mt-2 space-y-2">
