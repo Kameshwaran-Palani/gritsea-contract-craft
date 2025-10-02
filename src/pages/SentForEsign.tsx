@@ -32,15 +32,6 @@ const SentForEsign = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchESignItems();
-    }
-  }, [user]);
-
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/auth" />;
-
   const fetchESignItems = async () => {
     try {
       // Fetch contracts sent for signature (only pending signature, not signed)
@@ -107,6 +98,22 @@ const SentForEsign = () => {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      fetchESignItems();
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" />;
+
   const filteredItems = items.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -132,14 +139,6 @@ const SentForEsign = () => {
       window.open(url, '_blank');
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <DashboardLayout>
