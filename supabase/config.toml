@@ -1,1 +1,13 @@
 project_id = "ylradkwueviqxrniwqrw"
+
+[functions.create-razorpay-order]
+verify_jwt = true
+
+[functions.get-razorpay-key]
+verify_jwt = false
+
+[functions.verify-razorpay-payment]
+verify_jwt = true
+
+[functions.contract-ai-chat]
+verify_jwt = true

@@ -17,6 +17,7 @@ import TemplateSelection from '@/components/contract-builder/TemplateSelection';
 import DocumentHeaders from '@/components/contract-builder/DocumentHeaders';
 import AgreementIntroduction from '@/components/contract-builder/AgreementIntroduction';
 import PartiesInformation from '@/components/contract-builder/PartiesInformation';
+import { AIContractChat } from '@/components/contract-builder/AIContractChat';
 import ScopeOfWork from '@/components/contract-builder/ScopeOfWork';
 import PaymentTerms from '@/components/contract-builder/PaymentTerms';
 import OngoingWork from '@/components/contract-builder/OngoingWork';
@@ -1006,16 +1007,12 @@ const ContractBuilder = () => {
               </TabsContent>
 
               <TabsContent value="ai" className="space-y-3">
-                <div className="text-center py-16">
-                  <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">AI Contract Assistant</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Generate and improve contract clauses with AI
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Coming soon - AI-powered contract generation and optimization
-                  </p>
-                </div>
+                <AIContractChat
+                  contractData={contractData}
+                  onContractUpdate={(updates) => {
+                    updateContractData(updates);
+                  }}
+                />
               </TabsContent>
             </Tabs>
           </div>
