@@ -1,7 +1,5 @@
-
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import Razorpay from 'https://cdn.skypack.dev/razorpay';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 serve(async (req) => {
@@ -28,10 +26,11 @@ serve(async (req) => {
       })
     }
 
-    const razorpay = new Razorpay({
-      key_id: Deno.env.get('RAZORPAY_KEY_ID')!,
-      key_secret: Deno.env.get('RAZORPAY_KEY_SECRET')!,
-    })
+    const keyId = Deno.env.get('RAZORPAY_KEY_ID')!
+    const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET')!
+    
+    // Create Basic Auth header
+    const basicAuth = btoa(`${keyId}:${keySecret}`)
 
     const options = {
       amount: amount * 100, // amount in the smallest currency unit
@@ -39,7 +38,22 @@ serve(async (req) => {
       receipt: `receipt_order_${new Date().getTime()}`,
     }
 
-    const order = await razorpay.orders.create(options)
+    // Call Razorpay API directly using fetch
+    const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    })
+
+    if (!razorpayResponse.ok) {
+      const errorData = await razorpayResponse.json()
+      throw new Error(`Razorpay API error: ${JSON.stringify(errorData)}`)
+    }
+
+    const order = await razorpayResponse.json()
 
     const { data: subscription, error: subscriptionError } = await supabase
       .from('subscriptions')
