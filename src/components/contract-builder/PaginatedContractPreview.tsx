@@ -500,23 +500,18 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   flexDirection: 'column'
                 }}
               >
-                {/* Top Banner */}
-                {(data.bannerPosition === 'top' || data.bannerPosition === 'both') && data.topBanner && (
-                  <div style={{ width: '100%', height: `${data.bannerHeight}px`, overflow: 'hidden', flexShrink: 0 }}>
-                    <img 
-                      src={data.topBanner} 
-                      alt="Top banner" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                )}
-                
-                {/* Page Content */}
+                {/* Page Content with Header Background */}
                 <div 
                   style={{ 
                     flex: 1,
                     padding: `${PAGE_MARGIN}px`,
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    ...(index === 0 && (data.bannerPosition === 'top' || data.bannerPosition === 'both') && data.topBanner ? {
+                      backgroundImage: `url(${data.topBanner})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center top',
+                      backgroundRepeat: 'no-repeat'
+                    } : {})
                   }}
                   dangerouslySetInnerHTML={{
                     __html: page.innerHTML
