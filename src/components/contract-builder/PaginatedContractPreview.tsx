@@ -204,14 +204,27 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
           lineHeight: data.lineSpacing || 1.6,
           color: data.contentColor || '#1f2937'
         }}>
-          <div className="text-center mb-4 pb-4">
+          {/* Header Section with optional background image */}
+          <div 
+            className="text-center mb-4 pb-4"
+            style={{
+              ...(data.headerBackgroundImage ? {
+                backgroundImage: `url(${data.headerBackgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                padding: '24px 16px',
+                borderRadius: '4px'
+              } : {})
+            }}
+          >
             <h1 className="font-bold mb-2 tracking-tight" style={getHeaderStyle('document')}>
               {data.documentTitle || 'SERVICE AGREEMENT'}
             </h1>
             <h2 className="font-medium" style={getHeaderStyle('sub')}>
               {data.documentSubtitle || 'PROFESSIONAL SERVICE CONTRACT'}
             </h2>
-            <hr className="border-gray-300 my-4" />
+            <hr className="border-gray-300 my-4" style={{ ...(data.headerBackgroundImage ? { display: 'none' } : {}) }} />
           </div>
 
           {hasAgreementIntro() && (
@@ -500,16 +513,16 @@ const PaginatedContractPreview: React.FC<PaginatedContractPreviewProps> = ({
                   flexDirection: 'column'
                 }}
               >
-                {/* Page Content with Header Background */}
+              {/* Page Content with Document Background Image */}
                 <div 
                   style={{ 
                     flex: 1,
                     padding: `${PAGE_MARGIN}px`,
                     overflow: 'hidden',
-                    ...(index === 0 && (data.bannerPosition === 'top' || data.bannerPosition === 'both') && data.topBanner ? {
-                      backgroundImage: `url(${data.topBanner})`,
+                    ...(data.documentBackgroundImage ? {
+                      backgroundImage: `url(${data.documentBackgroundImage})`,
                       backgroundSize: 'cover',
-                      backgroundPosition: 'center top',
+                      backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat'
                     } : {})
                   }}
