@@ -91,6 +91,10 @@ export interface ContractData {
   documentSubtitleColor?: string;
   documentSubtitleFontSize?: number;
   documentSubtitleAlignment?: 'left' | 'center' | 'right';
+  
+  // Background Images
+  headerBackgroundImage?: string;  // Background for header section only
+  documentBackgroundImage?: string;  // Background for all pages
 
   // Section-specific styles
   applyGlobalStyles: boolean;
