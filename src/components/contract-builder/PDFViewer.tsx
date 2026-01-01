@@ -161,13 +161,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           src={signature.image}
           alt="Signature"
           className="w-full h-full object-contain pointer-events-none"
+          loading="lazy"
         />
       ) : (
-        !readonly && (
-          <div className="w-full h-full border border-dashed border-gray-400 bg-white/60 text-xs text-gray-600 flex items-center justify-center">
-            Sign Here
-          </div>
-        )
+        <div className="w-full h-full border border-dashed border-border bg-background/60 text-xs text-muted-foreground flex items-center justify-center">
+          Sign Here
+        </div>
       )}
 
       {!readonly && (

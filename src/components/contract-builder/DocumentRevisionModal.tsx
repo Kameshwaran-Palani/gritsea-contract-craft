@@ -40,24 +40,19 @@ const DocumentRevisionModal: React.FC<DocumentRevisionModalProps> = ({
 
     setSubmitting(true);
     try {
-      // Create revision request for contract
+      // Create revision request for uploaded document (stored as a request in termination_requests)
       const { error } = await supabase
-        .from('revision_requests')
+        .from('termination_requests')
         .insert({
-          contract_id: documentId,
+          document_id: documentId,
+          request_type: 'revision',
+          requested_by: 'client',
           client_name: clientName,
           client_email: clientEmail || null,
-          message: message.trim(),
-          resolved: false
+          reason: message.trim()
         });
 
       if (error) throw error;
-
-      // Update contract status to revision requested
-      await supabase
-        .from('contracts')
-        .update({ status: 'revision_requested' })
-        .eq('id', documentId);
 
       toast({
         title: "Revision Request Sent",

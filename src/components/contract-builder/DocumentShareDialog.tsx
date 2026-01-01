@@ -73,6 +73,7 @@ const DocumentShareDialog: React.FC<DocumentShareDialogProps> = ({
           client_email: clientEmail.trim(),
           status: 'sent_for_signature',
           public_link_id: publicLinkId,
+          signature_positions: signaturePositions,
           verification_email_required: authMethod === 'email'
         })
         .eq('id', documentId);
