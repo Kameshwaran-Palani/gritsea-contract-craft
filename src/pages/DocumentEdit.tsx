@@ -184,6 +184,16 @@ const DocumentEdit = () => {
       return;
     }
 
+    // Check if signature positions are added
+    if (!signaturePositions || signaturePositions.length === 0) {
+      toast({
+        title: "Signature box required",
+        description: "Please add at least one signature box to the document before sending for signature",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Generate secret key only once
@@ -419,23 +429,13 @@ const DocumentEdit = () => {
                         <Save className="h-4 w-4 mr-2" />
                         Save Draft
                       </Button>
-                      {signaturePositions.length > 0 ? (
-                        <GetESignButton
-                          documentId={document.id}
-                          onSuccess={() => {
-                            fetchDocument();
-                          }}
-                        />
-                      ) : (
-                        <Button
-                          onClick={handleSendForSignature}
-                          disabled={saving || !clientName.trim() || !clientEmail.trim()}
-                          className="w-full"
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          Send for Signature
-                        </Button>
-                      )}
+                      <GetESignButton
+                        documentId={document.id}
+                        signaturePositions={signaturePositions}
+                        onSuccess={() => {
+                          fetchDocument();
+                        }}
+                      />
                     </div>
                   ) : (
                     <div className="p-3 bg-muted/50 rounded-lg">

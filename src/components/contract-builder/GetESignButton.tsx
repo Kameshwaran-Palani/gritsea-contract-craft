@@ -7,12 +7,14 @@ interface GetESignButtonProps {
   contractId?: string;
   documentId?: string;
   onSuccess?: () => void;
+  signaturePositions?: any[];
 }
 
 const GetESignButton: React.FC<GetESignButtonProps> = ({
   contractId,
   documentId,
-  onSuccess
+  onSuccess,
+  signaturePositions = []
 }) => {
   const [showESignDialog, setShowESignDialog] = useState(false);
 
@@ -32,6 +34,7 @@ const GetESignButton: React.FC<GetESignButtonProps> = ({
         onClose={() => setShowESignDialog(false)}
         contractId={contractId}
         documentId={documentId}
+        signaturePositions={signaturePositions}
         onSuccess={(shareInfo) => {
           setShowESignDialog(false);
           onSuccess?.();

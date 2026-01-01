@@ -14,9 +14,10 @@ interface ESignDialogProps {
   contractId?: string | null;
   documentId?: string | null;
   onSuccess?: (shareInfo: any) => void;
+  signaturePositions?: any[];
 }
 
-const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, documentId, onSuccess }) => {
+const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, documentId, onSuccess, signaturePositions = [] }) => {
   const { toast } = useToast();
   const [step, setStep] = useState<'setup' | 'generated'>('setup');
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
@@ -39,6 +40,16 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, 
       toast({
         title: "Error",
         description: "No contract or document ID available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if signature positions are added for documents
+    if (documentId && (!signaturePositions || signaturePositions.length === 0)) {
+      toast({
+        title: "Signature box required",
+        description: "Please add at least one signature box to the document before sending for signature",
         variant: "destructive"
       });
       return;

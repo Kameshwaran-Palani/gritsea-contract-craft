@@ -15,13 +15,15 @@ interface DocumentShareDialogProps {
   onClose: () => void;
   documentId: string;
   onSuccess: () => void;
+  signaturePositions?: any[];
 }
 
 const DocumentShareDialog: React.FC<DocumentShareDialogProps> = ({
   open,
   onClose,
   documentId,
-  onSuccess
+  onSuccess,
+  signaturePositions = []
 }) => {
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -43,6 +45,16 @@ const DocumentShareDialog: React.FC<DocumentShareDialogProps> = ({
       toast({
         title: "Missing Information",
         description: "Please provide client name and email.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if signature positions are added
+    if (!signaturePositions || signaturePositions.length === 0) {
+      toast({
+        title: "Signature box required",
+        description: "Please add at least one signature box to the document before sharing.",
         variant: "destructive"
       });
       return;
