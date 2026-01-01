@@ -88,11 +88,12 @@ const ESignDialog: React.FC<ESignDialogProps> = ({ isOpen, onClose, contractId, 
         if (error) throw error;
         link = `${window.location.origin}/esign/${contractId}/${authMethod}`;
       } else if (documentId) {
-        // Update document with client info and send for signature
+        // Update document with client info and send for signature (and persist signature boxes)
         const { error } = await supabase
           .from('uploaded_documents')
           .update({
             status: 'sent_for_signature',
+            signature_positions: signaturePositions,
             [authMethod === 'email' ? 'client_email' : 'client_phone']: contactInfo,
             verification_email_required: authMethod === 'email',
             verification_phone_required: authMethod === 'phone'

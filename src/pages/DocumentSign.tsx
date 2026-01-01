@@ -15,6 +15,7 @@ import Navbar from '@/components/ui/navbar';
 import Footer from '@/components/ui/footer';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import DocumentDecisionPanel from '@/components/contract-builder/DocumentDecisionPanel';
+import DocumentRevisionModal from '@/components/contract-builder/DocumentRevisionModal';
 import DocumentTerminationModal from '@/components/contract-builder/DocumentTerminationModal';
 
 interface UploadedDocument {
@@ -164,7 +165,7 @@ const DocumentSign = () => {
     if (!document) return;
 
     try {
-      await supabase
+      const { error: insertError } = await supabase
         .from('uploaded_document_signatures')
         .insert({
           document_id: document.id,
@@ -177,11 +178,13 @@ const DocumentSign = () => {
           ip_address: 'client-ip' // TODO: Replace with real IP capture if needed
         });
 
+      if (insertError) throw insertError;
+
       const signedAtDate = new Date().toISOString();
 
       const { data: updatedDocument, error: statusError } = await supabase
         .from('uploaded_documents')
-        .update({ 
+        .update({
           status: 'signed',
           signed_at: signedAtDate
         })
@@ -191,26 +194,19 @@ const DocumentSign = () => {
 
       if (statusError) throw statusError;
 
-      {/*setDocument({
-        ...updatedDocument,
-        status: updatedDocument.status as UploadedDocument['status'],
-        signature_positions: Array.isArray(updatedDocument.signature_positions) ? updatedDocument.signature_positions : []
-      });*/}
-
       setDocument({
         ...updatedDocument,
         status: updatedDocument.status as UploadedDocument['status'],
         signature_positions: Array.isArray(updatedDocument.signature_positions)
           ? updatedDocument.signature_positions.map((sig: any) => ({
               ...sig,
-              image: signatureData // inject the captured signature into all signature boxes
+              image: signatureData
             }))
           : []
       });
 
-      
       setClientSignature(signatureData);
-      
+
       toast({
         title: "Document Signed Successfully",
         description: "Thank you for signing the document. You can now download the PDF."
@@ -218,11 +214,11 @@ const DocumentSign = () => {
 
       setShowSignature(false);
       setShowDownloadDialog(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing document:', error);
       toast({
-        title: "Error",
-        description: "Failed to sign document",
+        title: "Failed to sign document",
+        description: error?.message || "Please try again.",
         variant: "destructive"
       });
     }
@@ -577,6 +573,21 @@ const DocumentSign = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <DocumentRevisionModal
+          open={showRevisionModal}
+          onClose={() => setShowRevisionModal(false)}
+          documentId={document?.id || ''}
+          clientName={document?.client_name || ''}
+          clientEmail={document?.client_email || ''}
+          onRevisionRequested={() => {
+            setShowRevisionModal(false);
+            toast({
+              title: "Revision request sent",
+              description: "Your request has been sent to the document owner."
+            });
+          }}
+        />
 
         <DocumentTerminationModal 
           open={showTerminationModal}
