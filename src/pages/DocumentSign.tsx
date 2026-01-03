@@ -25,6 +25,7 @@ interface UploadedDocument {
   file_url: string;
   file_type: string;
   status: 'draft' | 'sent_for_signature' | 'signed' | 'cancelled';
+  signed_at?: string | null;
   client_name?: string;
   client_email?: string;
   verification_email_required: boolean;
@@ -182,27 +183,32 @@ const DocumentSign = () => {
 
       const signedAtDate = new Date().toISOString();
 
-      const { data: updatedDocument, error: statusError } = await supabase
+      const { error: statusError } = await supabase
         .from('uploaded_documents')
         .update({
           status: 'signed',
           signed_at: signedAtDate
         })
-        .eq('id', document.id)
-        .select()
-        .single();
+        .eq('id', document.id);
 
       if (statusError) throw statusError;
 
-      setDocument({
-        ...updatedDocument,
-        status: updatedDocument.status as UploadedDocument['status'],
-        signature_positions: Array.isArray(updatedDocument.signature_positions)
-          ? updatedDocument.signature_positions.map((sig: any) => ({
+      // Update UI locally (do not rely on RETURNING data, which can be blocked by RLS SELECT rules)
+      setDocument(prev => {
+        if (!prev) return prev;
+        const nextPositions = Array.isArray(prev.signature_positions)
+          ? prev.signature_positions.map((sig: any) => ({
               ...sig,
               image: signatureData
             }))
-          : []
+          : [];
+
+        return {
+          ...prev,
+          status: 'signed',
+          signed_at: signedAtDate,
+          signature_positions: nextPositions
+        };
       });
 
       setClientSignature(signatureData);
